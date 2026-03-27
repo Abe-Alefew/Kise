@@ -36,6 +36,6 @@ Kise is an offline-first mobile app designed to help university students track t
 * **Update:** Users can adjust their goal parameters, such as extending the timeline or increasing the target amount.
 * **Delete:** Users can delete goals that are completed or no longer relevant.
 
-#### Intelligent Allowance and Insights Management
+#### Dynamic Allowance and Insights Management
 * **Create/Update:** Users can define and adjust an allowance cycle, such as a monthly stipend, to calculate a safe daily spending limit.
 * **Read:** The system reads transaction behaviors to assign a spending personality, such as Balanced, Spender, or Saver, and generates rule-based alerts such as low balance warnings and category spike detections.
