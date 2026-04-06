@@ -39,3 +39,11 @@ Kise is an offline-first mobile app designed to help university students track t
 #### Dynamic Allowance and Insights Management
 * **Create/Update:** Users can define and adjust an allowance cycle, such as a monthly stipend, to calculate a safe daily spending limit.
 * **Read:** The system reads transaction behaviors to assign a spending personality, such as Balanced, Spender, or Saver, and generates rule-based alerts such as low balance warnings and category spike detections.
+
+#### Debt, Lending & Adjustable Balance Tracking
+
+* **Create:** Users can record money they lend to others or borrow from others by specifying the person’s name, amount, type (lent or borrowed), date, and optional notes.
+* **Read:** Users can view all records categorized into **money owed to them** and **money they owe**, track remaining balances, and monitor repayment status (pending, partial, settled). Users can also toggle between **actual balance** and **adjusted balance** (including lent money).
+* **Update:** Users can edit debt details and record partial repayments, with the system automatically updating the remaining balance.
+* **Delete:** Users can remove incorrect records or automatically clear entries once the debt is fully settled.
+
