@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'core/theme/app_theme.dart';
 import 'features/transactions/pages/test_pill_filter.dart';
 
 void main() {
@@ -12,12 +13,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'KISE App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFD4AF37), // KISE Gold
-        ),
-      ),
-      home: const TestPillFilterPage(), // 👈 THIS is your test screen
+      theme: AppTheme.light,
+      home: const TestPillFilterPage(),
     );
   }
 }
