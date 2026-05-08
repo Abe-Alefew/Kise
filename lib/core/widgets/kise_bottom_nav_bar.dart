@@ -117,7 +117,7 @@ class _NavBarItem extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             decoration: BoxDecoration(
               color: isSelected ? activeBgColor : Colors.transparent,
-              borderRadius: AppDimensions.radiusLg,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
