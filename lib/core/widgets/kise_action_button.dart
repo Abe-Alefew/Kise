@@ -24,6 +24,7 @@ class KiseActionButton extends StatelessWidget {
     this.width,
     this.height = AppDimensions.buttonHeight,
     this.expanded = true, // full-width by default
+    this.borderRadius,
   });
 
   final String label;
@@ -34,6 +35,7 @@ class KiseActionButton extends StatelessWidget {
   final double? width;
   final double height;
   final bool expanded;
+  final double? borderRadius;
 
   // ── Resolve effective callback ──────────────
   // Blocks tap during loading without extra flags
@@ -49,6 +51,7 @@ class KiseActionButton extends StatelessWidget {
           isLoading: isLoading,
           leadingIcon: leadingIcon,
           height: height,
+          borderRadius: borderRadius,
         ),
       KiseButtonVariant.outline => _OutlineButton(
           label: label,
@@ -56,12 +59,14 @@ class KiseActionButton extends StatelessWidget {
           isLoading: isLoading,
           leadingIcon: leadingIcon,
           height: height,
+          borderRadius: borderRadius,
         ),
       KiseButtonVariant.ghost => _GhostButton(
           label: label,
           onPressed: _effectiveOnPressed,
           isLoading: isLoading,
           height: height,
+          borderRadius: borderRadius,
         ),
     };
 
@@ -89,6 +94,7 @@ class _PrimaryButton extends StatelessWidget {
     required this.isLoading,
     required this.height,
     this.leadingIcon,
+    this.borderRadius, 
   });
 
   final String label;
@@ -96,6 +102,8 @@ class _PrimaryButton extends StatelessWidget {
   final bool isLoading;
   final IconData? leadingIcon;
   final double height;
+  final double? borderRadius;
+  
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +112,14 @@ class _PrimaryButton extends StatelessWidget {
       height: height,
       child: ElevatedButton(
         onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          // CORRECTION 2: Adjusted rounding to be less "pill-like"
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius ?? 12), 
+          ),
+          // Ensure enough horizontal padding so text isn't cut off
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+        ),
         child: _ButtonContent(
           label: label,
           leadingIcon: leadingIcon,
@@ -126,6 +142,7 @@ class _OutlineButton extends StatelessWidget {
     required this.isLoading,
     required this.height,
     this.leadingIcon,
+    this.borderRadius, 
   });
 
   final String label;
@@ -133,7 +150,8 @@ class _OutlineButton extends StatelessWidget {
   final bool isLoading;
   final IconData? leadingIcon;
   final double height;
-
+  final double? borderRadius;
+  
   @override
   Widget build(BuildContext context) {
     // OutlinedButtonTheme from app_theme.dart is inherited automatically
@@ -162,12 +180,14 @@ class _GhostButton extends StatelessWidget {
     required this.onPressed,
     required this.isLoading,
     required this.height,
+    this.borderRadius, 
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
   final double height;
+  final double? borderRadius;
 
   @override
   Widget build(BuildContext context) {
