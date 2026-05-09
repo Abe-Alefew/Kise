@@ -26,21 +26,23 @@ class BudgetStatusCard extends StatelessWidget {
                   child: const Icon(Icons.balance, color: AppColorsLight.primary),
                 ),
                 const SizedBox(width: 12),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Budget Spender",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Budget Spender",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
-                    ),
-                    Text(
-                      "Good Balance between spending and saving",
-                      style: TextStyle(color: AppColorsLight.textHint, fontSize: 12),
-                    ),
-                  ],
+                      Text(
+                        "Good Balance between spending and saving",
+                        style: TextStyle(color: AppColorsLight.textHint, fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -72,9 +74,11 @@ class BudgetStatusCard extends StatelessWidget {
                   color: AppColorsLight.primary,
                 ),
                 SizedBox(width: 4),
-                Text(
-                  "Try to push your savings a bit higher.",
-                  style: TextStyle(fontSize: 12),
+                Expanded(
+                  child: Text(
+                    "Try to push your savings a bit higher.",
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ),
