@@ -8,13 +8,16 @@ import '../widgets/trend_chart.dart';
 import '../widgets/catagory_spending_chart.dart';
 import '../widgets/recent_transaction_list.dart';
 
+// Colors
+import '../../../../core/theme/colors.dart';
+
 class HomeDashboard extends StatelessWidget {
   const HomeDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColorsLight.scaffold,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -24,14 +27,14 @@ class HomeDashboard extends StatelessWidget {
               // Header Section
               const Text(
                 "Welcome back,",
-                style: TextStyle(color: Colors.grey, fontSize: 14),
+                style: TextStyle(color: AppColorsLight.textHint, fontSize: 14),
               ),
               const Text(
                 "Betsinat Wendwesen",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: AppColorsLight.textHeading,
                 ),
               ),
 
@@ -62,7 +65,7 @@ class HomeDashboard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: AppColorsLight.textHeading,
                 ),
               ),
               const SizedBox(height: 16),

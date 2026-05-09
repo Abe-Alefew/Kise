@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/kise_card_holder.dart';
+import '../../../../core/theme/colors.dart';
 
 class RecentTransactionsList extends StatelessWidget {
   const RecentTransactionsList({super.key});
@@ -16,14 +17,14 @@ class RecentTransactionsList extends StatelessWidget {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: AppColorsLight.textHeading,
               ),
             ),
             TextButton(
               onPressed: () {},
               child: const Text(
                 "View all",
-                style: TextStyle(color: Color(0xFFD4AF37)),
+                style: TextStyle(color: AppColorsLight.primary),
               ),
             ),
           ],
@@ -53,7 +54,7 @@ class RecentTransactionsList extends StatelessWidget {
             ),
             subtitle: const Text(
               "something. April 15",
-              style: TextStyle(color: Colors.grey, fontSize: 12),
+              style: TextStyle(color: AppColorsLight.textHint, fontSize: 12),
             ),
             trailing: const Text(
               "-20,000.00 ETB",

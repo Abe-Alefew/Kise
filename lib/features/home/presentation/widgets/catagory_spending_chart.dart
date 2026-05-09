@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/theme/colors.dart';
 
 class CategorySpendingChart extends StatelessWidget {
   const CategorySpendingChart({super.key});
@@ -14,7 +15,7 @@ class CategorySpendingChart extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: AppColorsLight.textHeading,
           ),
         ),
         const SizedBox(height: 16),
@@ -22,9 +23,9 @@ class CategorySpendingChart extends StatelessWidget {
           height: 220,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColorsLight.card,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.grey.shade100),
+            border: Border.all(color: AppColorsLight.secondaryBg),
           ),
           child: Column(
             children: [

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/colors.dart';
 
 class BalanceCard extends StatelessWidget {
   final double totalBalance;
@@ -17,7 +18,7 @@ class BalanceCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFD4AF37), // KISE Gold
+        color: AppColorsLight.primary,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -26,14 +27,14 @@ class BalanceCard extends StatelessWidget {
           const Text(
             "TOTAL BALANCE",
             style: TextStyle(
-              color: Colors.white70,
+              color: AppColorsLight.textOnPrimary,
               fontWeight: FontWeight.bold,
             ),
           ),
           Text(
             "${totalBalance.toStringAsFixed(2)} ETB",
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColorsLight.textOnPrimary,
               fontSize: 32,
               fontWeight: FontWeight.bold,
             ),
@@ -56,8 +57,8 @@ class BalanceCard extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 14,
-          backgroundColor: Colors.white24,
-          child: Icon(icon, color: Colors.white, size: 16),
+          backgroundColor: AppColorsLight.textOnPrimary.withOpacity(0.2),
+          child: Icon(icon, color: AppColorsLight.textOnPrimary, size: 16),
         ),
         const SizedBox(width: 8),
         Column(
@@ -65,12 +66,12 @@ class BalanceCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              style: const TextStyle(color: AppColorsLight.textOnPrimary, fontSize: 12),
             ),
             Text(
               "${amount.toStringAsFixed(2)} ETB",
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColorsLight.textOnPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),

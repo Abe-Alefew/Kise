@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/kise_card_holder.dart';
+import '../../../../core/theme/colors.dart';
 
 class AllowanceCard extends StatelessWidget {
   const AllowanceCard({super.key});
@@ -13,13 +14,13 @@ class AllowanceCard extends StatelessWidget {
         child: ListTile(
           leading: const Icon(
             Icons.lightbulb_outline,
-            color: Color(0xFFD4AF37),
+            color: AppColorsLight.primary,
           ),
           title: const Text(
             "Set your allowance",
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Color(0xFFD4AF37),
+              color: AppColorsLight.primary,
             ),
           ),
           subtitle: const Text(
