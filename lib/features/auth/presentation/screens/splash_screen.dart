@@ -16,7 +16,7 @@ class SplashScreen extends StatelessWidget {
 		final textTheme = Theme.of(context).textTheme;
 
 		return Scaffold(
-			backgroundColor: AppColorsLight.scaffold,
+			backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 			body: Stack(
 				children: [
 					Center(
@@ -34,7 +34,7 @@ class SplashScreen extends StatelessWidget {
 									'your personal budget tracker',
 									style: GoogleFonts.playfairDisplay(
 										textStyle: textTheme.bodyMedium?.copyWith(
-											color: colorScheme.secondary,
+											color: colorScheme.onSecondary,
 											fontStyle: FontStyle.italic,
 											fontWeight: FontWeight.w700,
 											fontSize: 19,
