@@ -23,8 +23,12 @@ class KisePillFilter extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).colorScheme.primary;
     final onPrimaryColor = Theme.of(context).colorScheme.onPrimary;
-    final unselectedBg = isDark ? AppColorsDark.secondaryBg : AppColorsLight.secondaryBg;
-    final unselectedText = isDark ? AppColorsDark.textBody : AppColorsLight.textBody;
+    final unselectedBg = isDark
+        ? AppColorsDark.secondaryBg
+        : AppColorsLight.secondaryBg;
+    final unselectedText = isDark
+        ? AppColorsDark.textBody
+        : AppColorsLight.textBody;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -54,7 +58,9 @@ class KisePillFilter extends StatelessWidget {
                         option,
                         style: AppTextStyles.label.copyWith(
                           color: isSelected ? onPrimaryColor : unselectedText,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                         ),
                       ),
                     ),
