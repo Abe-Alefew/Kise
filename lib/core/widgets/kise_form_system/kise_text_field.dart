@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/app_dimensions.dart';
+
 class KiseTextField extends StatelessWidget {
   final String label;
   final String? hint;
@@ -23,7 +25,7 @@ class KiseTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: AppDimensions.md),
       child: TextFormField(
         controller: controller,
         obscureText: isPassword,
@@ -32,7 +34,9 @@ class KiseTextField extends StatelessWidget {
           labelText: label,
           hintText: hint,
           prefixIcon: icon != null ? Icon(icon) : null,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          ),
         ),
         validator: validator,
       ),
