@@ -39,8 +39,6 @@ class HomeDashboard extends StatelessWidget {
               ),
 
               const SizedBox(height: 24),
-
-              // 1. Gold Balance Card
               const BalanceCard(
                 totalBalance: 10000.00,
                 income: 30000.00,
@@ -48,17 +46,11 @@ class HomeDashboard extends StatelessWidget {
               ),
 
               const SizedBox(height: 24),
-
-              // 2. Allowance Reminder
               const AllowanceCard(),
 
               const SizedBox(height: 16),
-
-              // 3. Budget Status
               const BudgetStatusCard(spendRatio: 0.67),
-
               const SizedBox(height: 32),
-
               // 4. 6-Month Trend Chart
               const Text(
                 "6-month trend",

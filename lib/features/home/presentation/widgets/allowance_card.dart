@@ -8,7 +8,6 @@ class AllowanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return KiseCardHolder(
-      // Kirubel's core widget
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: ListTile(
