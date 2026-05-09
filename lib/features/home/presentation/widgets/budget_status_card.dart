@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/kise_card_holder.dart';
 import '../../../../core/widgets/kise_progress_bar.dart';
+import '../../../../core/theme/colors.dart';
 
 class BudgetStatusCard extends StatelessWidget {
   final double spendRatio;
@@ -19,27 +20,35 @@ class BudgetStatusCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4AF37).withOpacity(0.1),
+                    color: AppColorsLight.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.balance, color: Color(0xFFD4AF37)),
+                  child: const Icon(
+                    Icons.balance,
+                    color: AppColorsLight.primary,
+                  ),
                 ),
                 const SizedBox(width: 12),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Budget Spender",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Budget Spender",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
-                    ),
-                    Text(
-                      "Good Balance between spending and saving",
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                  ],
+                      Text(
+                        "Good Balance between spending and saving",
+                        style: TextStyle(
+                          color: AppColorsLight.textHint,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -49,7 +58,10 @@ class BudgetStatusCard extends StatelessWidget {
               children: [
                 const Text(
                   "Spend ration",
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColorsLight.textHint,
+                    fontSize: 12,
+                  ),
                 ),
                 Text(
                   "${(spendRatio * 100).toInt()}%",
@@ -68,12 +80,14 @@ class BudgetStatusCard extends StatelessWidget {
                 Icon(
                   Icons.lightbulb_outline,
                   size: 16,
-                  color: Color(0xFFD4AF37),
+                  color: AppColorsLight.primary,
                 ),
                 SizedBox(width: 4),
-                Text(
-                  "Try to push your savings a bit higher.",
-                  style: TextStyle(fontSize: 12),
+                Expanded(
+                  child: Text(
+                    "Try to push your savings a bit higher.",
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ),

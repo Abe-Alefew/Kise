@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/theme/colors.dart';
 
 class TrendChart extends StatelessWidget {
   const TrendChart({super.key});
@@ -17,7 +18,7 @@ class TrendChart extends StatelessWidget {
                 const months = ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr']; // 6-month history
                 if (value.toInt() >= 0 && value.toInt() < months.length) {
                   return Text(months[value.toInt()], 
-                    style: const TextStyle(color: Colors.grey, fontSize: 12));
+                    style: const TextStyle(color: AppColorsLight.textHint, fontSize: 12));
                 }
                 return const Text('');
               },
@@ -39,9 +40,9 @@ class TrendChart extends StatelessWidget {
           LineChartBarData(
             spots: const [FlSpot(0, 200), FlSpot(5, 20000)], // Income
             isCurved: true,
-            color: const Color(0xFFD4AF37),
+            color: AppColorsLight.primary,
             barWidth: 3,
-            belowBarData: BarAreaData(show: true, color: const Color(0xFFD4AF37).withOpacity(0.1)),
+            belowBarData: BarAreaData(show: true, color: AppColorsLight.primary.withOpacity(0.1)),
           ),
         ],
       ),
