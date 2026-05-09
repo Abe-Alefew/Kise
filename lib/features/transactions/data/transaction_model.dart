@@ -1,17 +1,13 @@
-class TransactionModel{
-  final String title;
-  final String category;
-  final double amount;
-  final String type;
-  final String date;
-  final String icon;
+import '../domain/transaction_entity.dart';
 
-  TransactionModel({
-    required this.title,
-    required this.category,
-    required this.amount,
-    required this.type,
-    required this.date,
-    required this.icon,
+class TransactionModel extends TransactionEntity {
+
+  const TransactionModel({
+    required super.title,
+    required super.category,
+    required super.amount,
+    required super.type,
+    required super.date,
+    required super.icon,
   });
 }
