@@ -38,14 +38,12 @@ dependencies:
   # State Management
   flutter_riverpod: ^2.6.1
 
-  # Navigation
-  go_router: ^14.6.3
+  
 
   # HTTP & Networking
   http: ^1.2.2
 
-  # Local Storage
-  shared_preferences: ^2.3.3
+ 
   flutter_secure_storage: ^9.2.4
 
   # Charts
