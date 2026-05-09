@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/widgets/kise_action_button.dart';
 import '../../../../core/widgets/kise_card_holder.dart';
 
 import '../../data/transaction_repository.dart';
@@ -10,6 +9,8 @@ import '../../domain/transaction_usecases.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_filter_bar.dart';
 import '../widgets/analytics_bar_chart.dart';
+import '../widgets/add_transaction_modal.dart';
+import 'add_transaction_screen.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -80,7 +81,21 @@ class _TransactionsScreenState
         backgroundColor:
             const Color(0xFFD4AF37),
 
-        onPressed: () {},
+        onPressed: () {
+          showModalBottomSheet(
+
+            context: context,
+
+            isScrollControlled: true,
+
+            backgroundColor: Colors.transparent,
+
+            builder: (context) {
+
+              return const AddTransactionModal();
+            },
+          );
+        },
 
         child: const Icon(Icons.add),
       ),

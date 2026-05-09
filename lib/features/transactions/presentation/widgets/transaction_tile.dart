@@ -37,8 +37,8 @@ class TransactionTile extends StatelessWidget {
 
                 color:
                     isIncome
-                    ? Colors.green.withOpacity(0.12)
-                    : Colors.orange.withOpacity(0.12),
+                    ? Colors.green.withValues(alpha: 0.12)
+                    : Colors.orange.withValues(alpha: 0.12),
 
                 shape: BoxShape.circle,
               ),
