@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kise/core/theme/app_dimensions.dart';
 
 class KiseTextField extends StatelessWidget {
   final String label;
@@ -32,7 +33,9 @@ class KiseTextField extends StatelessWidget {
           labelText: label,
           hintText: hint,
           prefixIcon: icon != null ? Icon(icon) : null,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          ),
         ),
         validator: validator,
       ),

@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
-import 'features/transactions/pages/test_pill_filter.dart';
+import 'package:kise/core/routing/app_router.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const KiseApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class KiseApp extends StatelessWidget {
+  const KiseApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'KISE App',
+    
+    return MaterialApp.router(
+      title: 'KISE',
       theme: AppTheme.light,
-      home: const TestPillFilterPage(),
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.light,
+      routerConfig: AppRouter.router,
     );
   }
 }
