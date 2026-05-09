@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../../theme/app_dimensions.dart';
+import 'package:kise/core/theme/app_dimensions.dart';
 
 class KiseTextField extends StatelessWidget {
   final String label;
@@ -25,7 +24,7 @@ class KiseTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppDimensions.md),
+      padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
         obscureText: isPassword,

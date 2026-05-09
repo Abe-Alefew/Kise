@@ -68,7 +68,7 @@ abstract class AppRouter {
             routes: <RouteBase>[
               GoRoute(
                 path: AppRoutes.home,
-                builder: (context, state) => const HomeDashboardScreen(),
+                builder: (context, state) => const HomeDashboard(),
               ),
             ],
           ),
