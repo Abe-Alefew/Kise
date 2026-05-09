@@ -9,6 +9,7 @@ import '../../domain/transaction_usecases.dart';
 
 import '../widgets/transaction_tile.dart';
 import '../widgets/transaction_filter_bar.dart';
+import '../widgets/analytics_bar_chart.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -84,188 +85,104 @@ class _TransactionsScreenState
         child: const Icon(Icons.add),
       ),
 
-      body: Padding(
+      body: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
 
-        padding: const EdgeInsets.all(16),
-
-        child: Column(
-
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-
-          children: [
-
-            /// TOTAL BALANCE CARD
-            KiseCardHolder(
-
-              backgroundColor:
-                  const Color(0xFFD4AF37),
-
-              borderColor: Colors.transparent,
-
-              child: Column(
-
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-
-                children: [
-
-                  const Text(
-                    "Total Balance",
-
-                    style: TextStyle(
-                      color: Colors.white70,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Text(
-
-                    "ETB ${balance.toStringAsFixed(0)}",
-
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight:
-                          FontWeight.bold,
-                      fontSize: 28,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 18),
-
-            /// INCOME + EXPENSE ROW
-            Row(
-
-              children: [
-
-                Expanded(
-
-                  child: KiseCardHolder(
-
-                    child: Column(
-
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
-
-                      children: [
-
-                        Text(
-                          "Income",
-
-                          style: TextStyle(
-                            color:
-                                Colors.grey[600],
-                          ),
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        Text(
-
-                          "ETB ${totalIncome.toStringAsFixed(0)}",
-
-                          style: const TextStyle(
-                            fontWeight:
-                                FontWeight.bold,
-                            fontSize: 18,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ],
-                    ),
+                /// TOTAL BALANCE CARD
+                KiseCardHolder(
+                  backgroundColor: const Color(0xFFD4AF37),
+                  borderColor: Colors.transparent,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Total Balance", style: TextStyle(color: Colors.white70)),
+                      const SizedBox(height: 8),
+                      Text(
+                        "ETB ${balance.toStringAsFixed(0)}",
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+                      ),
+                    ],
                   ),
                 ),
 
-                const SizedBox(width: 12),
+                const SizedBox(height: 18),
 
-                Expanded(
-
-                  child: KiseCardHolder(
-
-                    child: Column(
-
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
-
-                      children: [
-
-                        Text(
-                          "Expense",
-
-                          style: TextStyle(
-                            color:
-                                Colors.grey[600],
-                          ),
+                /// INCOME + EXPENSE ROW
+                Row(
+                  children: [
+                    Expanded(
+                      child: KiseCardHolder(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Income", style: TextStyle(color: Colors.grey[600])),
+                            const SizedBox(height: 6),
+                            Text("ETB ${totalIncome.toStringAsFixed(0)}",
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green)),
+                          ],
                         ),
-
-                        const SizedBox(height: 6),
-
-                        Text(
-
-                          "ETB ${totalExpense.toStringAsFixed(0)}",
-
-                          style: const TextStyle(
-                            fontWeight:
-                                FontWeight.bold,
-                            fontSize: 18,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: KiseCardHolder(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Expense", style: TextStyle(color: Colors.grey[600])),
+                            const SizedBox(height: 6),
+                            Text("ETB ${totalExpense.toStringAsFixed(0)}",
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+
+                const SizedBox(height: 24),
+
+                /// FILTER BAR
+                TransactionsFilterBar(
+                  filters: const ["All", "Income", "Expense"],
+                  selectedFilter: selectedFilter,
+                  onSelected: (value) => setState(() => selectedFilter = value),
+                ),
+
+                const SizedBox(height: 16),
+
+                /// ANALYTICS SECTION
+                const KiseCardHolder(
+                  child: AnalyticsBarChart(),
+                ),
+
+                const SizedBox(height: 20),
+
+                /// TRANSACTIONS HEADER
+                const Text("Transactions", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+
+                const SizedBox(height: 12),
+              ]),
             ),
+          ),
 
-            const SizedBox(height: 24),
-
-            /// FILTER BAR
-            TransactionsFilterBar(
-
-              filters: const [
-                "All",
-                "Income",
-                "Expense",
-              ],
-
-              selectedFilter:
-                  selectedFilter,
-
-              onSelected: (value) {
-
-                setState(() {
-                  selectedFilter = value;
-                });
-              },
-            ),
-
-            const SizedBox(height: 20),
-
-            /// TRANSACTION LIST
-            Expanded(
-
-              child: ListView.builder(
-
-                itemCount:
-                    filteredTransactions.length,
-
-                itemBuilder:
-                    (context, index) {
-
-                  return TransactionTile(
-                    transaction:
-                        filteredTransactions[index],
-                  );
-                },
+          /// TRANSACTION LIST
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => TransactionTile(transaction: filteredTransactions[index]),
+                childCount: filteredTransactions.length,
               ),
             ),
-          ],
-        ),
+          ),
+
+          const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+        ],
       ),
     );
   }
