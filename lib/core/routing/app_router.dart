@@ -31,7 +31,7 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(de
 abstract class AppRouter {
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: AppRoutes.splash, // Usually splash controls navigation, will act as the first screen
+    initialLocation: AppRoutes.transactions,
     routes: <RouteBase>[
       // Screens without bottom nav bar
       GoRoute(
