@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'features/transactions/pages/test_pill_filter.dart';
+import 'package:kise/core/routing/app_router.dart';
+import 'package:kise/core/theme/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,14 +11,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'KISE App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFD4AF37), // KISE Gold
-        ),
-      ),
-      home: const TestPillFilterPage(), // 👈 THIS is your test screen
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
+      routerConfig: AppRouter.router,
     );
   }
 }
