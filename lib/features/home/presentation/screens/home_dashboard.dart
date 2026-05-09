@@ -14,7 +14,7 @@ class HomeDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, 
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -46,17 +46,17 @@ class HomeDashboard extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // 2. Allowance Reminder 
+              // 2. Allowance Reminder
               const AllowanceCard(),
 
               const SizedBox(height: 16),
 
-              // 3. Budget Status 
+              // 3. Budget Status
               const BudgetStatusCard(spendRatio: 0.67),
 
               const SizedBox(height: 32),
 
-              // 4. 6-Month Trend Chart 
+              // 4. 6-Month Trend Chart
               const Text(
                 "6-month trend",
                 style: TextStyle(
@@ -71,7 +71,7 @@ class HomeDashboard extends StatelessWidget {
               const CategorySpendingChart(),
               const SizedBox(height: 32),
               const RecentTransactionsList(),
-              const SizedBox(height: 40), 
+              const SizedBox(height: 40),
             ],
           ),
         ),
