@@ -23,7 +23,10 @@ class BudgetStatusCard extends StatelessWidget {
                     color: AppColorsLight.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.balance, color: AppColorsLight.primary),
+                  child: const Icon(
+                    Icons.balance,
+                    color: AppColorsLight.primary,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -39,7 +42,10 @@ class BudgetStatusCard extends StatelessWidget {
                       ),
                       Text(
                         "Good Balance between spending and saving",
-                        style: TextStyle(color: AppColorsLight.textHint, fontSize: 12),
+                        style: TextStyle(
+                          color: AppColorsLight.textHint,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -52,7 +58,10 @@ class BudgetStatusCard extends StatelessWidget {
               children: [
                 const Text(
                   "Spend ration",
-                  style: TextStyle(color: AppColorsLight.textHint, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColorsLight.textHint,
+                    fontSize: 12,
+                  ),
                 ),
                 Text(
                   "${(spendRatio * 100).toInt()}%",
