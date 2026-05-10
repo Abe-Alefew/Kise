@@ -5,20 +5,24 @@ import 'package:uuid/uuid.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/colors.dart';
 import 'package:kise/core/theme/text_theme.dart';
-import 'package:kise/core/widgets/kise_action_button.dart';
-import 'package:kise/core/widgets/kise_form_system/kise_text_field.dart';
+import 'package:kise/core/widgets/kise_card_holder.dart';
 import 'package:kise/core/widgets/kise_progress_bar.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
+import 'package:kise/features/debt/presentation/screens/add_edit_debt_screen.dart';
 import 'package:kise/features/debt/presentation/widgets/status_badge.dart';
 
 class DebtDetailModal extends StatefulWidget {
   final DebtEntity debt;
   final void Function(PaymentRecord) onPayment;
+  final void Function(DebtEntity) onEdit;
+  final VoidCallback onDelete;
 
   const DebtDetailModal({
     super.key,
     required this.debt,
     required this.onPayment,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -27,12 +31,13 @@ class DebtDetailModal extends StatefulWidget {
 
 class _DebtDetailModalState extends State<DebtDetailModal> {
   bool _paymentFormVisible = false;
-  final _amountCtrl = TextEditingController();
-  final _dateCtrl = TextEditingController();
-  final _notesCtrl = TextEditingController();
+
+  final _amountCtrl = TextEditingController(text: '0.00');
+  final _dateCtrl   = TextEditingController();
+  final _notesCtrl  = TextEditingController();
   DateTime _paymentDate = DateTime.now();
 
-  static final _amountFmt = NumberFormat('#,##0.00');
+  static final _amtFmt  = NumberFormat('#,##0.00');
   static final _dateFmt = DateFormat('MM/dd/yyyy');
 
   @override
@@ -80,22 +85,43 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
     widget.onPayment(record);
   }
 
+  void _openEditModal() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddEditDebtModal(
+        existingDebt: widget.debt,
+        onAdd: (_) {},
+        onEdit: (updated) {
+          Navigator.pop(context);
+          widget.onEdit(updated);
+        },
+        onDelete: () {
+          Navigator.pop(context);
+          widget.onDelete();
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final debt = widget.debt;
-    final isLent = debt.type == DebtType.lent;
-    final amountColor =
-        isLent ? AppColorsLight.success : AppColorsLight.error;
+    final debt    = widget.debt;
+    final isLent  = debt.type == DebtType.lent;
     final progress = debt.totalAmount > 0
         ? (debt.paidAmount / debt.totalAmount).clamp(0.0, 1.0)
         : 0.0;
+    final pct = (progress * 100).round();
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
         AppDimensions.md,
-        AppDimensions.sm,
         AppDimensions.md,
-        AppDimensions.md + MediaQuery.of(context).viewInsets.bottom,
+        AppDimensions.md,
+        AppDimensions.md + bottomInset,
       ),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -108,79 +134,164 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _ModalHandle(),
-            const SizedBox(height: AppDimensions.sm),
+            // ── Header: icon · name + pencil · close ──────────
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(debt.personName, style: AppTextStyles.h3),
+                _TypeIcon(isLent: isLent),
                 const SizedBox(width: AppDimensions.sm),
-                const Icon(
-                  LucideIcons.pencil,
-                  size: 16,
-                  color: AppColorsLight.textBody,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(debt.personName, style: AppTextStyles.h3),
+                          const SizedBox(width: AppDimensions.xs + 2),
+                          GestureDetector(
+                            onTap: _openEditModal,
+                            child: const Icon(
+                              LucideIcons.pencil,
+                              size: 15,
+                              color: AppColorsLight.textBody,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${isLent ? 'You lent' : 'You borrowed'}  ·  '
+                        '${DateFormat('MMM d, yyyy').format(debt.date)}',
+                        style: AppTextStyles.micro.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: AppColorsLight.textHeading
+                              .withValues(alpha: 0.50),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(
-                    LucideIcons.x,
-                    size: 20,
-                    color: AppColorsLight.textBody,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColorsLight.secondaryBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      LucideIcons.x,
+                      size: 15,
+                      color: AppColorsLight.textBody,
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: AppDimensions.md),
+
+            // ── Financial status: amount · badge ───────────────
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _TypeChip(type: debt.type),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${_amtFmt.format(debt.remaining)} ETB',
+                        style: AppTextStyles.amountLg.copyWith(
+                          color: AppColorsLight.textHeading,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'remaining of ${_amtFmt.format(debt.totalAmount)} ETB',
+                        style: AppTextStyles.bodySm.copyWith(
+                          color: AppColorsLight.textHeading
+                              .withValues(alpha: 0.55),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(width: AppDimensions.sm),
                 StatusBadge(status: debt.status),
               ],
             ),
-            const SizedBox(height: AppDimensions.md),
-            Text(
-              '${_amountFmt.format(debt.remaining)} ETB',
-              style: AppTextStyles.amountLg.copyWith(color: amountColor),
-            ),
-            Text(
-              'remaining of ${_amountFmt.format(debt.totalAmount)} ETB',
-              style: AppTextStyles.bodySm,
-            ),
             const SizedBox(height: AppDimensions.sm),
-            KiseProgressBar(progress: progress, height: 8),
-            const SizedBox(height: AppDimensions.sm),
-            Text(
-              'Paid so far: ${_amountFmt.format(debt.paidAmount)} ETB',
-              style: AppTextStyles.bodySm
-                  .copyWith(color: AppColorsLight.textBody),
-            ),
-            const SizedBox(height: AppDimensions.lg),
-            AnimatedCrossFade(
-              crossFadeState: _paymentFormVisible
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 250),
-              firstChild: SizedBox(
-                width: double.infinity,
-                child: KiseActionButton(
-                  label: '+ Record Payment Received',
-                  variant: KiseButtonVariant.outline,
-                  onPressed: () =>
-                      setState(() => _paymentFormVisible = true),
+
+            // ── Progress ───────────────────────────────────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Paid so far',
+                  style: AppTextStyles.bodySm.copyWith(
+                    color: AppColorsLight.textHeading
+                        .withValues(alpha: 0.55),
+                  ),
                 ),
-              ),
-              secondChild: _PaymentForm(
-                amountCtrl: _amountCtrl,
-                dateCtrl: _dateCtrl,
-                notesCtrl: _notesCtrl,
-                onDateTap: _pickDate,
-                onCancel: () =>
-                    setState(() => _paymentFormVisible = false),
-                onConfirm: _confirmPayment,
+                Text(
+                  '${_amtFmt.format(debt.paidAmount)} ETB ($pct%)',
+                  style: AppTextStyles.bodySm.copyWith(
+                    color: AppColorsLight.textHeading
+                        .withValues(alpha: 0.55),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.xs),
+            KiseProgressBar(
+              progress: progress,
+              height: 6,
+              fillColor: AppColorsLight.primary,
+              trackColor: AppColorsLight.secondaryBg,
+            ),
+            const SizedBox(height: AppDimensions.md),
+
+            // ── Payment button / expandable form ───────────────
+            ClipRect(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOut,
+                child: _paymentFormVisible
+                    ? _PaymentFormCard(
+                        amountCtrl: _amountCtrl,
+                        dateCtrl: _dateCtrl,
+                        notesCtrl: _notesCtrl,
+                        onDateTap: _pickDate,
+                        onCancel: () =>
+                            setState(() => _paymentFormVisible = false),
+                        onConfirm: _confirmPayment,
+                      )
+                    : SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: () =>
+                              setState(() => _paymentFormVisible = true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColorsLight.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                  AppDimensions.radiusSm),
+                            ),
+                          ),
+                          child: Text(
+                            '+ Record Payment Received',
+                            style: AppTextStyles.bodySm.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ),
               ),
             ),
-            const SizedBox(height: AppDimensions.sm),
           ],
         ),
       ),
@@ -188,36 +299,43 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
   }
 }
 
-class _TypeChip extends StatelessWidget {
-  final DebtType type;
 
-  const _TypeChip({required this.type});
+// Type icon — matches DebtCard
+
+
+class _TypeIcon extends StatelessWidget {
+  final bool isLent;
+  const _TypeIcon({required this.isLent});
 
   @override
   Widget build(BuildContext context) {
-    final isLent = type == DebtType.lent;
-    final color =
-        isLent ? AppColorsLight.success : AppColorsLight.error;
+    final bg = isLent
+        ? AppColorsLight.lentCardBg
+        : AppColorsLight.borrowedCardBg;
+    final iconColor = isLent
+        ? AppColorsLight.lentCardIcon
+        : AppColorsLight.borrowedCardIcon;
+    final icon =
+        isLent ? LucideIcons.arrowUpRight : LucideIcons.arrowDownLeft;
+
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      width: 42,
+      height: 42,
       decoration: BoxDecoration(
-        color: color.withValues(alpha:0.1),
-        borderRadius: BorderRadius.circular(100),
+        color: bg,
+        borderRadius:
+            BorderRadius.circular(AppDimensions.radiusSm + 2),
       ),
-      child: Text(
-        isLent ? 'Lent' : 'Borrowed',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
+      child: Icon(icon, color: iconColor, size: 20),
     );
   }
 }
 
-class _PaymentForm extends StatelessWidget {
+
+// Payment Form Card
+
+
+class _PaymentFormCard extends StatelessWidget {
   final TextEditingController amountCtrl;
   final TextEditingController dateCtrl;
   final TextEditingController notesCtrl;
@@ -225,7 +343,7 @@ class _PaymentForm extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onConfirm;
 
-  const _PaymentForm({
+  const _PaymentFormCard({
     required this.amountCtrl,
     required this.dateCtrl,
     required this.notesCtrl,
@@ -236,75 +354,297 @@ class _PaymentForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return KiseCardHolder(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Record Payment Received',
+            style: AppTextStyles.h3,
+          ),
+          const SizedBox(height: AppDimensions.md),
+
+          // Amount (ETB) + Date row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _FormLabel(
+                  label: 'Amount (ETB)',
+                  child: _SpinnerInput(controller: amountCtrl),
+                ),
+              ),
+              const SizedBox(width: AppDimensions.sm),
+              Expanded(
+                child: _FormLabel(
+                  label: 'Date',
+                  child: _PaymentInput(
+                    controller: dateCtrl,
+                    hint: '',
+                    readOnly: true,
+                    onTap: onDateTap,
+                    suffixIcon: LucideIcons.calendar,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.sm),
+
+          // Note (optional)
+          _FormLabel(
+            label: 'Note (optional)',
+            child: _PaymentInput(
+              controller: notesCtrl,
+              hint: 'e.g. half payment via Telebirr',
+              maxLines: 3,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.md),
+
+          // Cancel + Confirm
+          Row(
+            children: [
+              Expanded(child: _FormCancelBtn(onPressed: onCancel)),
+              const SizedBox(width: AppDimensions.sm),
+              Expanded(child: _FormConfirmBtn(onPressed: onConfirm)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+// Label above field
+
+
+class _FormLabel extends StatelessWidget {
+  final String label;
+  final Widget child;
+
+  const _FormLabel({required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Record Payment Received', style: AppTextStyles.h3),
-        const SizedBox(height: AppDimensions.md),
-        KiseTextField(
-          label: 'Amount ETB',
-          hint: '0.00',
-          controller: amountCtrl,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: TextFormField(
-            controller: dateCtrl,
-            readOnly: true,
-            onTap: onDateTap,
-            decoration: InputDecoration(
-              labelText: 'Date',
-              prefixIcon: const Icon(LucideIcons.calendar),
-              border: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(AppDimensions.radiusMd),
-              ),
-            ),
+        Text(
+          label,
+          style: AppTextStyles.label.copyWith(
+            color: AppColorsLight.textHeading,
+            fontWeight: FontWeight.w500,
           ),
         ),
-        KiseTextField(
-          label: 'Notes (optional)',
-          hint: 'e.g. half payment via Telebirr',
-          controller: notesCtrl,
-        ),
-        const SizedBox(height: AppDimensions.sm),
-        Row(
-          children: [
-            Expanded(
-              child: KiseActionButton(
-                label: 'Cancel',
-                variant: KiseButtonVariant.ghost,
-                onPressed: onCancel,
-              ),
-            ),
-            const SizedBox(width: AppDimensions.sm),
-            Expanded(
-              child: KiseActionButton(
-                label: 'Confirm Payment',
-                onPressed: onConfirm,
-              ),
-            ),
-          ],
-        ),
+        const SizedBox(height: AppDimensions.xs),
+        child,
       ],
     );
   }
 }
 
-class _ModalHandle extends StatelessWidget {
-  const _ModalHandle();
+
+// Shared input border helper
+
+
+OutlineInputBorder _inputBorder({double width = 1.0, Color? color}) =>
+    OutlineInputBorder(
+      borderRadius:
+          BorderRadius.circular(AppDimensions.radiusSm),
+      borderSide: BorderSide(
+        color: color ??
+            AppColorsLight.textHeading.withValues(alpha: 0.18),
+        width: width,
+      ),
+    );
+
+
+// Spinner input (amount with up/down chevrons)
+
+
+class _SpinnerInput extends StatelessWidget {
+  final TextEditingController controller;
+  const _SpinnerInput({required this.controller});
+
+  void _adjust(double delta) {
+    final val =
+        double.tryParse(controller.text.replaceAll(',', '')) ?? 0;
+    final next = (val + delta).clamp(0.0, double.infinity);
+    controller.text = next.toStringAsFixed(2);
+    controller.selection =
+        TextSelection.collapsed(offset: controller.text.length);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 40,
-        height: 4,
-        decoration: BoxDecoration(
-          color: AppColorsLight.textHint.withValues(alpha:0.4),
-          borderRadius: BorderRadius.circular(2),
+    return TextFormField(
+      controller: controller,
+      keyboardType:
+          const TextInputType.numberWithOptions(decimal: true),
+      style: AppTextStyles.bodySm
+          .copyWith(color: AppColorsLight.textHeading),
+      decoration: InputDecoration(
+        hintText: '0.00',
+        hintStyle: AppTextStyles.bodySm
+            .copyWith(color: AppColorsLight.textHint),
+        filled: true,
+        fillColor: Colors.white,
+        border: _inputBorder(),
+        enabledBorder: _inputBorder(),
+        focusedBorder: _inputBorder(
+            width: 1.5, color: AppColorsLight.lentCardIcon),
+        errorBorder:
+            _inputBorder(width: 1.0, color: AppColorsLight.error),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.sm + 4,
+          vertical: AppDimensions.sm + 2,
+        ),
+        suffixIcon: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onTap: () => _adjust(1),
+              child: const Icon(LucideIcons.chevronUp,
+                  size: 13, color: AppColorsLight.textBody),
+            ),
+            GestureDetector(
+              onTap: () => _adjust(-1),
+              child: const Icon(LucideIcons.chevronDown,
+                  size: 13, color: AppColorsLight.textBody),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+// Plain input (date / notes)
+
+
+class _PaymentInput extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final IconData? suffixIcon;
+  final int maxLines;
+
+  const _PaymentInput({
+    required this.controller,
+    required this.hint,
+    this.readOnly = false,
+    this.onTap,
+    this.suffixIcon,
+    this.maxLines = 1,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      keyboardType: maxLines > 1
+          ? TextInputType.multiline
+          : TextInputType.text,
+      maxLines: maxLines,
+      onTap: onTap,
+      style: AppTextStyles.bodySm
+          .copyWith(color: AppColorsLight.textHeading),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: AppTextStyles.bodySm
+            .copyWith(color: AppColorsLight.textHint),
+        filled: true,
+        fillColor: Colors.white,
+        border: _inputBorder(),
+        enabledBorder: _inputBorder(),
+        focusedBorder: _inputBorder(
+            width: 1.5, color: AppColorsLight.lentCardIcon),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.sm + 4,
+          vertical: AppDimensions.sm + 2,
+        ),
+        suffixIcon: suffixIcon != null
+            ? Icon(suffixIcon, size: 18,
+                color: AppColorsLight.textBody)
+            : null,
+      ),
+    );
+  }
+}
+
+
+// Cancel button
+
+
+class _FormCancelBtn extends StatelessWidget {
+  final VoidCallback onPressed;
+  const _FormCancelBtn({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: AppDimensions.authButtonHeight + 6,
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(
+            color: AppColorsLight.textHeading.withValues(alpha: 0.2),
+            width: 1,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(AppDimensions.radiusSm),
+          ),
+        ),
+        child: Text(
+          'Cancel',
+          style: AppTextStyles.bodySm.copyWith(
+            color: AppColorsLight.textHeading,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+// Confirm Payment button
+
+
+class _FormConfirmBtn extends StatelessWidget {
+  final VoidCallback onPressed;
+  const _FormConfirmBtn({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: AppDimensions.authButtonHeight + 6,
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColorsLight.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(AppDimensions.radiusSm),
+          ),
+        ),
+        child: Text(
+          'Confirm Payment',
+          style: AppTextStyles.bodySm.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       ),
     );

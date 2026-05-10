@@ -139,6 +139,16 @@ class _DebtScreenState extends State<DebtScreen> {
             }
           });
         },
+        onEdit: (updated) {
+          setState(() {
+            final idx = _debts.indexWhere((d) => d.id == debt.id);
+            if (idx >= 0) _debts = List.of(_debts)..[idx] = updated;
+          });
+        },
+        onDelete: () {
+          setState(() =>
+              _debts = _debts.where((d) => d.id != debt.id).toList());
+        },
       ),
     );
   }

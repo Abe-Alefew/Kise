@@ -9,8 +9,17 @@ import 'package:kise/features/debt/domain/debt_entity.dart';
 
 class AddEditDebtModal extends StatefulWidget {
   final void Function(DebtEntity) onAdd;
+  final DebtEntity? existingDebt;           // non-null → edit mode
+  final void Function(DebtEntity)? onEdit;
+  final VoidCallback? onDelete;
 
-  const AddEditDebtModal({super.key, required this.onAdd});
+  const AddEditDebtModal({
+    super.key,
+    required this.onAdd,
+    this.existingDebt,
+    this.onEdit,
+    this.onDelete,
+  });
 
   @override
   State<AddEditDebtModal> createState() => _AddEditDebtModalState();
@@ -33,6 +42,14 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
   @override
   void initState() {
     super.initState();
+    final existing = widget.existingDebt;
+    if (existing != null) {
+      _type = existing.type;
+      _selectedDate = existing.date;
+      _nameCtrl.text = existing.personName;
+      _amountCtrl.text = existing.totalAmount.toStringAsFixed(2);
+      _remainCtrl.text = existing.remaining.toStringAsFixed(2);
+    }
     _dateCtrl.text = _dateFmt.format(_selectedDate);
     _amountCtrl.addListener(_syncRemaining);
   }
@@ -69,17 +86,28 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
 
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final existing = widget.existingDebt;
     final debt = DebtEntity(
-      id: const Uuid().v4(),
+      id: existing?.id ?? const Uuid().v4(),
       personName: _nameCtrl.text.trim(),
       type: _type,
       totalAmount:
           double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0,
-      paidAmount: 0,
+      paidAmount: existing?.paidAmount ?? 0,
       date: _selectedDate,
+      payments: existing?.payments ?? const [],
     );
     Navigator.pop(context);
-    widget.onAdd(debt);
+    if (existing != null) {
+      widget.onEdit?.call(debt);
+    } else {
+      widget.onAdd(debt);
+    }
+  }
+
+  void _delete() {
+    Navigator.pop(context);
+    widget.onDelete?.call();
   }
 
   @override
@@ -110,22 +138,51 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('New Debt Record', style: AppTextStyles.h3),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: AppColorsLight.secondaryBg,
-                        shape: BoxShape.circle,
+                  Text(
+                    widget.existingDebt != null
+                        ? 'Edit Record'
+                        : 'New Debt Record',
+                    style: AppTextStyles.h3,
+                  ),
+                  Row(
+                    children: [
+                      if (widget.existingDebt != null)
+                        GestureDetector(
+                          onTap: _delete,
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: AppColorsLight.error
+                                  .withValues(alpha: 0.10),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              LucideIcons.trash2,
+                              size: 14,
+                              color: AppColorsLight.error,
+                            ),
+                          ),
+                        ),
+                      if (widget.existingDebt != null)
+                        const SizedBox(width: AppDimensions.xs),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: AppColorsLight.secondaryBg,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            LucideIcons.x,
+                            size: 15,
+                            color: AppColorsLight.textBody,
+                          ),
+                        ),
                       ),
-                      child: Icon(
-                        LucideIcons.x,
-                        size: 15,
-                        color: AppColorsLight.textBody,
-                      ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -222,7 +279,12 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
                   ),
                   const SizedBox(width: AppDimensions.sm),
                   Expanded(
-                    child: _AddButton(onPressed: _submit),
+                    child: _AddButton(
+                      onPressed: _submit,
+                      label: widget.existingDebt != null
+                          ? 'Save Changes'
+                          : 'Add Record',
+                    ),
                   ),
                 ],
               ),
@@ -464,7 +526,8 @@ class _CancelButton extends StatelessWidget {
 
 class _AddButton extends StatelessWidget {
   final VoidCallback onPressed;
-  const _AddButton({required this.onPressed});
+  final String label;
+  const _AddButton({required this.onPressed, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -483,7 +546,7 @@ class _AddButton extends StatelessWidget {
           ),
         ),
         child: Text(
-          'Add Record',
+          label,
           style: AppTextStyles.bodySm.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w400,
