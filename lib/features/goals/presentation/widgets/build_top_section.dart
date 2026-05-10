@@ -67,7 +67,9 @@ Widget buildTopSection(BuildContext context, GoalCard widget) {
           ],
         ),
         const SizedBox(height: AppDimensions.sm),
+
         KiseProgressBar(progress: progress, height: 8),
+        
         const SizedBox(height: AppDimensions.sm),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

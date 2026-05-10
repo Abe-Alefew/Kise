@@ -3,7 +3,6 @@ import 'package:kise/features/goals/presentation/widgets/build_top_section.dart'
 import 'package:kise/features/goals/presentation/widgets/goal_action_buttons.dart';
 import 'package:kise/features/goals/presentation/widgets/goal_deposit_form.dart';
 import 'package:kise/features/goals/presentation/widgets/goal_edit_form.dart';
-import 'package:kise/core/theme/colors.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/widgets/kise_card_holder.dart';
 

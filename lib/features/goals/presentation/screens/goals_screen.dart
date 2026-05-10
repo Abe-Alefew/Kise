@@ -6,6 +6,7 @@ import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/widgets/kise_pill_filter.dart';
 import 'package:kise/features/goals/presentation/widgets/goal_card.dart';
+import 'package:kise/features/goals/presentation/widgets/new_goal_bottom_sheet.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -78,6 +79,35 @@ class _GoalsScreenState extends State<GoalsScreen> {
     });
   }
 
+  void _handleAddGoal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return NewGoalBottomSheet(
+          onSave: (title, targetAmount, currentAmount, deadline, period, note) {
+            setState(() {
+              _goals.add(
+                Goal(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  title: title,
+                  period: period,
+                  dueDate: deadline,
+                  currentAmount: currentAmount,
+                  targetAmount: targetAmount,
+                  isCompleted: currentAmount >= targetAmount,
+                  isLocked: false,
+                ),
+              );
+            });
+            Navigator.of(context).pop();
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
@@ -110,7 +140,13 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       ),
                     ],
                   ),
-                  KiseActionButton(leadingIcon: LucideIcons.plus, label: 'New', onPressed: () {}, expanded: false, width: 110.0,),
+                  KiseActionButton(
+                    leadingIcon: LucideIcons.plus, 
+                    label: 'New', 
+                    onPressed: _handleAddGoal, 
+                    expanded: false, 
+                    width: 110.0,
+                  ),
                 ],
               ),
               const SizedBox(height: AppDimensions.xl),
