@@ -42,7 +42,7 @@ class AnalyticsScreen extends StatelessWidget {
                 borderColor:
                     Colors.transparent,
 
-                child: const Column(
+                child: Column(
 
                   crossAxisAlignment:
                       CrossAxisAlignment.start,
@@ -53,7 +53,7 @@ class AnalyticsScreen extends StatelessWidget {
                       "Monthly Spending",
 
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
                       ),
                     ),
 

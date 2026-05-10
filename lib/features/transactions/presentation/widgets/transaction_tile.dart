@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/widgets/kise_card_holder.dart';
 import '../../domain/transaction_entity.dart';
 
 class TransactionTile extends StatelessWidget {
@@ -42,9 +41,12 @@ class TransactionTile extends StatelessWidget {
               ),
 
               child: Center(
-                child: Text(
+                child: Icon(
                   transaction.icon,
-                  style: const TextStyle(fontSize: 22),
+                  size: 22,
+                  color: isIncome
+                      ? Theme.of(context).colorScheme.tertiary
+                      : Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),

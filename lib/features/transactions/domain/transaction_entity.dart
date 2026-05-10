@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class TransactionEntity {
 
   final String title;
@@ -5,7 +7,7 @@ class TransactionEntity {
   final double amount;
   final String type;
   final String date;
-  final String icon;
+  final IconData icon;
   final String month;
 
   const TransactionEntity({
