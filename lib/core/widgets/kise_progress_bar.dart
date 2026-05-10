@@ -6,12 +6,16 @@ class KiseProgressBar extends StatelessWidget {
     final double progress;
     final double height;
     final Duration duration;
+    final Color? fillColor;
+    final Color? trackColor;
 
     const KiseProgressBar({
         super.key,
         required this.progress,
         this.height = 20,
-        this.duration = const Duration(milliseconds: 400),    
+        this.duration = const Duration(milliseconds: 400),
+        this.fillColor,
+        this.trackColor,
     });
 
     @override
@@ -23,7 +27,7 @@ class KiseProgressBar extends StatelessWidget {
                     return Container(
                         width: double.infinity,
                         height: height,
-                        color: Color(0xFFF2EAD9),
+                        color: trackColor ?? const Color(0xFFF2EAD9),
                         child: Stack(
                             children: [
                                 AnimatedContainer(
@@ -32,9 +36,9 @@ class KiseProgressBar extends StatelessWidget {
                                     width: constraints.maxWidth * progress.clamp(0.0, 1.0),
                                     height: height,
                                     decoration: BoxDecoration(
-                                        color: Color(0xffDDA22C),
+                                        color: fillColor ?? const Color(0xffDDA22C),
                                         borderRadius: BorderRadius.circular(height / 2),
-                                    ), 
+                                    ),
                                 )
                             ],
                         ),
