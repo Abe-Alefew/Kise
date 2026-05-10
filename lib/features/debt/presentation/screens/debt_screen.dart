@@ -336,6 +336,7 @@ class _SummaryCard extends StatelessWidget {
 // Net Position Card
 
 
+
 class _NetPositionCard extends StatelessWidget {
   final double netAmount;
   final double recoveryRate;
@@ -354,41 +355,73 @@ class _NetPositionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
     final isPositive = netAmount >= 0;
-    final netColor =
-        isPositive ? AppColorsLight.success : AppColorsLight.error;
+    final netColor = isPositive ? AppColorsLight.success : AppColorsLight.error;
 
     return KiseCardHolder(
       padding: const EdgeInsets.all(AppDimensions.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // ── Left Side ──────────────────────
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Net Position',
+                  style: tt.bodyMedium?.copyWith( // Increased size
+                    // fontWeight: FontWeight.w600,
+                    color: cs.onSurface.withValues(alpha: 0.9),
+                  ),
+                ),
+                const SizedBox(height: 4), // Tighter gap
+                Text(
+                  _amtFmt.format(netAmount),
+                  style: AppTextStyles.h2.copyWith(color: netColor, height: 1.1),
+                ),
+                // 1. ETB moved below the amount
+                Text(
+                  'ETB',
+                  style: AppTextStyles.h2.copyWith(color: netColor, height: 1.1),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Recovery rate: ${_pctFmt.format(recoveryRate * 100)}%',
+                  style: tt.bodyMedium?.copyWith( // Increased size
+                    // fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // ── Right Side ──────────────────────
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Net Position', style: AppTextStyles.label),
+              Text(
+                'Balance view',
+                style: tt.bodyMedium?.copyWith( // Increased size
+                  // fontWeight: FontWeight.w500,
+                  color: cs.onSurface.withValues(alpha: 0.9),
+                ),
+              ),
+              const SizedBox(height: AppDimensions.xs),
               ToggleActualAdjusted(
                 isActual: isActual,
                 onChanged: onToggle,
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.sm),
-          Text(
-            '${_amtFmt.format(netAmount)} ETB',
-            style: AppTextStyles.amountLg.copyWith(color: netColor),
-          ),
-          const SizedBox(height: AppDimensions.xs),
-          Text(
-            'Recovery rate: ${_pctFmt.format(recoveryRate * 100)}%',
-            style: AppTextStyles.bodySm,
-          ),
         ],
       ),
     );
   }
 }
-
 
 // Analytics Accordion
 
