@@ -8,6 +8,7 @@ class KisePillFilter extends StatelessWidget {
   final Function(String) onSelected;
   final double? height;
   final double? width;
+  final Color? selectedColor;
 
   const KisePillFilter({
     super.key,
@@ -16,6 +17,7 @@ class KisePillFilter extends StatelessWidget {
     required this.onSelected,
     this.height,
     this.width,
+    this.selectedColor,
   });
 
   @override
@@ -40,7 +42,7 @@ class KisePillFilter extends StatelessWidget {
             key: ValueKey(option),
             margin: const EdgeInsets.only(right: 8),
             child: Material(
-              color: isSelected ? primaryColor : unselectedBg,
+              color: isSelected ? (selectedColor ?? primaryColor) : unselectedBg,
               borderRadius: BorderRadius.circular(20),
               child: InkWell(
                 borderRadius: BorderRadius.circular(20),
@@ -57,10 +59,12 @@ class KisePillFilter extends StatelessWidget {
                       child: Text(
                         option,
                         style: AppTextStyles.label.copyWith(
-                          color: isSelected ? onPrimaryColor : unselectedText,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.w500,
+                          color: isSelected
+                              ? (selectedColor != null
+                                  ? Theme.of(context).colorScheme.onSurface
+                                  : onPrimaryColor)
+                              : unselectedText,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                         ),
                       ),
                     ),

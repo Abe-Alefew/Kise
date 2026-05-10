@@ -288,7 +288,7 @@ class _AddTransactionScreenState
             /// CATEGORY DROPDOWN
             DropdownButtonFormField<String>(
 
-              initialValue: selectedCategory,
+              value: selectedCategory,
 
               decoration: InputDecoration(
 

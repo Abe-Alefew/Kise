@@ -23,17 +23,23 @@ class KiseActionButton extends StatelessWidget {
     this.leadingIcon,
     this.width,
     this.height = AppDimensions.buttonHeight,
-    this.expanded = true, // full-width by default
+    this.expanded = true,
+    this.borderRadius,
+    this.textStyle,
+    this.outlineBorderSide,
   });
 
   final String label;
-  final VoidCallback? onPressed;   // null = auto-disabled
+  final VoidCallback? onPressed;
   final bool isLoading;
   final KiseButtonVariant variant;
   final IconData? leadingIcon;
   final double? width;
   final double height;
   final bool expanded;
+  final double? borderRadius;
+  final TextStyle? textStyle;
+  final BorderSide? outlineBorderSide;
 
   // ── Resolve effective callback ──────────────
   // Blocks tap during loading without extra flags
@@ -49,6 +55,9 @@ class KiseActionButton extends StatelessWidget {
           isLoading: isLoading,
           leadingIcon: leadingIcon,
           height: height,
+          shrink: !expanded && width == null,
+          borderRadius: borderRadius,
+          textStyle: textStyle,
         ),
       KiseButtonVariant.outline => _OutlineButton(
           label: label,
@@ -56,6 +65,10 @@ class KiseActionButton extends StatelessWidget {
           isLoading: isLoading,
           leadingIcon: leadingIcon,
           height: height,
+          shrink: !expanded && width == null,
+          borderRadius: borderRadius,
+          textStyle: textStyle,
+          outlineBorderSide: outlineBorderSide,
         ),
       KiseButtonVariant.ghost => _GhostButton(
           label: label,
@@ -89,6 +102,9 @@ class _PrimaryButton extends StatelessWidget {
     required this.isLoading,
     required this.height,
     this.leadingIcon,
+    this.shrink = false,
+    this.borderRadius,
+    this.textStyle,
   });
 
   final String label;
@@ -96,19 +112,31 @@ class _PrimaryButton extends StatelessWidget {
   final bool isLoading;
   final IconData? leadingIcon;
   final double height;
+  final bool shrink;
+  final double? borderRadius;
+  final TextStyle? textStyle;
 
   @override
   Widget build(BuildContext context) {
-    // ElevatedButtonTheme from app_theme.dart is inherited automatically
+    final shape = borderRadius != null
+        ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius!))
+        : null;
     return SizedBox(
       height: height,
       child: ElevatedButton(
         onPressed: onPressed,
+        style: shrink || shape != null || textStyle != null
+            ? ElevatedButton.styleFrom(
+                minimumSize: shrink ? Size.zero : null,
+                padding: shrink ? const EdgeInsets.symmetric(horizontal: 16) : null,
+                shape: shape,
+                textStyle: textStyle,
+              )
+            : null,
         child: _ButtonContent(
           label: label,
           leadingIcon: leadingIcon,
           isLoading: isLoading,
-          // spinner color — white on gold
           spinnerColor: Theme.of(context).colorScheme.onPrimary,
         ),
       ),
@@ -126,6 +154,10 @@ class _OutlineButton extends StatelessWidget {
     required this.isLoading,
     required this.height,
     this.leadingIcon,
+    this.shrink = false,
+    this.borderRadius,
+    this.textStyle,
+    this.outlineBorderSide,
   });
 
   final String label;
@@ -133,19 +165,33 @@ class _OutlineButton extends StatelessWidget {
   final bool isLoading;
   final IconData? leadingIcon;
   final double height;
+  final bool shrink;
+  final double? borderRadius;
+  final TextStyle? textStyle;
+  final BorderSide? outlineBorderSide;
 
   @override
   Widget build(BuildContext context) {
-    // OutlinedButtonTheme from app_theme.dart is inherited automatically
+    final shape = borderRadius != null
+        ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius!))
+        : null;
     return SizedBox(
       height: height,
       child: OutlinedButton(
         onPressed: onPressed,
+        style: shrink || shape != null || outlineBorderSide != null
+            ? OutlinedButton.styleFrom(
+                minimumSize: shrink ? Size.zero : null,
+                padding: shrink ? const EdgeInsets.symmetric(horizontal: 16) : null,
+                shape: shape,
+                side: outlineBorderSide,
+                textStyle: textStyle,
+              )
+            : null,
         child: _ButtonContent(
           label: label,
           leadingIcon: leadingIcon,
           isLoading: isLoading,
-          // spinner color — gold on transparent
           spinnerColor: Theme.of(context).colorScheme.primary,
         ),
       ),

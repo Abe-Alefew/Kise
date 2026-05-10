@@ -19,9 +19,7 @@ class TransactionTile extends StatelessWidget {
         transaction.type == "Income";
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-
-      child: KiseCardHolder(
+      padding: const EdgeInsets.symmetric(vertical: 10),
 
         child: Row(
 
@@ -68,7 +66,8 @@ class TransactionTile extends StatelessWidget {
 
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: 14,
+                      color: Colors.black,
                     ),
                   ),
 
@@ -92,7 +91,7 @@ class TransactionTile extends StatelessWidget {
 
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 15,
+                fontSize: 12,
 
                 color:
                     isIncome
@@ -102,7 +101,6 @@ class TransactionTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }
