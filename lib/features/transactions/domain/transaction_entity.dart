@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class TransactionEntity {
-
   final String title;
   final String category;
   final double amount;

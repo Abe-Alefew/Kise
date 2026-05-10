@@ -9,64 +9,47 @@ class AnalyticsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
-      backgroundColor:
-          Theme.of(context).scaffoldBackgroundColor,
-
-      appBar: AppBar(
-        title: const Text("Analytics"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Analytics"), centerTitle: true),
 
       body: Padding(
-
         padding: const EdgeInsets.all(16),
 
         child: SingleChildScrollView(
-
           child: Column(
-
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
-
               /// MONTHLY SUMMARY
               KiseCardHolder(
+                backgroundColor: Theme.of(context).colorScheme.primary,
 
-                backgroundColor:
-                    Theme.of(context).colorScheme.primary,
-
-                borderColor:
-                    Colors.transparent,
+                borderColor: Colors.transparent,
 
                 child: Column(
-
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
                   children: [
-
                     Text(
                       "Monthly Spending",
 
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary.withOpacity(0.7),
                       ),
                     ),
 
                     SizedBox(height: 10),
 
                     Text(
-
                       "ETB 45,000",
 
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onPrimary,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                         fontSize: 28,
                       ),
                     ),
@@ -85,13 +68,9 @@ class AnalyticsScreen extends StatelessWidget {
 
               /// CATEGORY BREAKDOWN
               const Text(
-
                 "Top Categories",
 
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 16),
@@ -121,41 +100,27 @@ class AnalyticsScreen extends StatelessWidget {
 
               /// INSIGHTS
               const Text(
-
                 "Insights",
 
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 16),
 
               const KiseCardHolder(
-
                 child: Column(
-
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
                   children: [
-
-                    Text(
-                      "• Your highest spending was in April.",
-                    ),
+                    Text("• Your highest spending was in April."),
 
                     SizedBox(height: 10),
 
-                    Text(
-                      "• Education takes 44% of your expenses.",
-                    ),
+                    Text("• Education takes 44% of your expenses."),
 
                     SizedBox(height: 10),
 
-                    Text(
-                      "• Savings improved by 12% this month.",
-                    ),
+                    Text("• Savings improved by 12% this month."),
                   ],
                 ),
               ),
@@ -172,35 +137,19 @@ class AnalyticsScreen extends StatelessWidget {
     required String percent,
     required Color color,
   }) {
-
     return Padding(
-
-      padding:
-          const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 14),
 
       child: KiseCardHolder(
-
         child: Row(
-
           children: [
-
-            CircleAvatar(
-              radius: 8,
-              backgroundColor: color,
-            ),
+            CircleAvatar(radius: 8, backgroundColor: color),
 
             const SizedBox(width: 14),
 
-            Expanded(
-              child: Text(title),
-            ),
+            Expanded(child: Text(title)),
 
-            Text(
-              amount,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text(amount, style: const TextStyle(fontWeight: FontWeight.bold)),
 
             const SizedBox(width: 12),
 
