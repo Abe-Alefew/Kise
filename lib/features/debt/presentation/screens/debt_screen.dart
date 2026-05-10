@@ -100,6 +100,8 @@ class _DebtScreenState extends State<DebtScreen> {
           _debts.where((d) => d.type == DebtType.lent).toList(),
         'Borrowed' =>
           _debts.where((d) => d.type == DebtType.borrowed).toList(),
+        'Settled' =>
+          _debts.where((d) => d.status == DebtStatus.settled).toList(),
         _ => List.of(_debts),
       };
 
@@ -176,7 +178,7 @@ class _DebtScreenState extends State<DebtScreen> {
               ),
               const SizedBox(height: AppDimensions.sm),
               KisePillFilter(
-                options: const ['All', 'Active', 'Lent', 'Borrowed'],
+                options: const ['All', 'Active', 'Lent', 'Borrowed', 'Settled'],
                 selected: _selectedFilter,
                 onSelected: (f) =>
                     setState(() => _selectedFilter = f),

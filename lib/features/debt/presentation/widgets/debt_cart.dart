@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/colors.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/core/widgets/kise_card_holder.dart';
@@ -12,71 +14,96 @@ class DebtCard extends StatelessWidget {
 
   const DebtCard({super.key, required this.debt, required this.onTap});
 
-  static final _amountFmt = NumberFormat('#,##0.00');
-  static final _dateFmt = DateFormat('MMM d, y');
+  static final _amtFmt  = NumberFormat('#,##0.00');
+  static final _dateFmt = DateFormat('MMM d, yyyy');
 
   @override
   Widget build(BuildContext context) {
     final isLent = debt.type == DebtType.lent;
-    final amountColor =
-        isLent ? AppColorsLight.success : AppColorsLight.error;
+
+    // For settled cards remaining = 0, show totalAmount as main figure instead.
+    final mainAmount = debt.status == DebtStatus.settled
+        ? debt.totalAmount
+        : debt.remaining;
+
+    final subLabel =
+        '${isLent ? 'You lent' : 'You borrowed'} · ${_dateFmt.format(debt.date)}';
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: AppDimensions.sm + 2),
       child: GestureDetector(
         onTap: onTap,
         child: KiseCardHolder(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.md,
+            vertical: AppDimensions.sm + 4,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Avatar(initial: debt.personInitial, isLent: isLent),
-              const SizedBox(width: 12),
+              // ── Leading: tint-bg square + coloured arrow icon ──
+              _TypeIcon(isLent: isLent),
+              const SizedBox(width: AppDimensions.sm + 4),
+
+              // ── Content column ──
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Row 1: name  |  status badge
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Flexible(
+                        Expanded(
                           child: Text(
                             debt.personName,
-                            style:
-                                AppTextStyles.h3.copyWith(fontSize: 15),
+                            style: AppTextStyles.bodySm.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColorsLight.textHeading,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8),
                         StatusBadge(status: debt.status),
                       ],
                     ),
                     const SizedBox(height: 3),
+
+                    // Row 2: "You lent · Apr 16, 2026"
                     Text(
-                      'Recovered: ${_dateFmt.format(debt.date)}',
-                      style: AppTextStyles.micro
-                          .copyWith(color: AppColorsLight.textHint),
+                      subLabel,
+                      style: AppTextStyles.micro.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: AppColorsLight.textHeading
+                            .withValues(alpha: 0.62),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Row 3: big remaining amount  |  "of total ETB"
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          '${_amtFmt.format(mainAmount)} ETB',
+                          style: AppTextStyles.h3.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'of ${_amtFmt.format(debt.totalAmount)} ETB',
+                          style: AppTextStyles.label.copyWith(
+                            color: AppColorsLight.textHeading
+                                .withValues(alpha: 0.55),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${isLent ? '+' : '-'}${_amountFmt.format(debt.remaining)} ETB',
-                    style: AppTextStyles.bodySm.copyWith(
-                      color: amountColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'of ${_amountFmt.format(debt.totalAmount)} ETB',
-                    style: AppTextStyles.micro,
-                  ),
-                ],
               ),
             ],
           ),
@@ -86,33 +113,30 @@ class DebtCard extends StatelessWidget {
   }
 }
 
-class _Avatar extends StatelessWidget {
-  final String initial;
+class _TypeIcon extends StatelessWidget {
   final bool isLent;
-
-  const _Avatar({required this.initial, required this.isLent});
+  const _TypeIcon({required this.isLent});
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        isLent ? AppColorsLight.success : AppColorsLight.error;
+    final bg = isLent
+        ? AppColorsLight.lentCardBg
+        : AppColorsLight.borrowedCardBg;
+    final iconColor = isLent
+        ? AppColorsLight.lentCardIcon
+        : AppColorsLight.borrowedCardIcon;
+    final icon =
+        isLent ? LucideIcons.arrowUpRight : LucideIcons.arrowDownLeft;
+
     return Container(
-      width: 40,
-      height: 40,
+      width: 42,
+      height: 42,
       decoration: BoxDecoration(
-        color: color.withValues(alpha:0.12),
-        shape: BoxShape.circle,
+        color: bg,
+        borderRadius:
+            BorderRadius.circular(AppDimensions.radiusSm + 2),
       ),
-      child: Center(
-        child: Text(
-          initial,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
-        ),
-      ),
+      child: Icon(icon, color: iconColor, size: 20),
     );
   }
 }
