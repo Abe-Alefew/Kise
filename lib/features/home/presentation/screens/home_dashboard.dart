@@ -16,8 +16,10 @@ class HomeDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: AppColorsLight.scaffold,
+      backgroundColor: isDark ? AppColorsDark.scaffold : AppColorsLight.scaffold,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -25,16 +27,16 @@ class HomeDashboard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Section
-              const Text(
+              Text(
                 "Welcome back,",
-                style: TextStyle(color: AppColorsLight.textHint, fontSize: 14),
+                style: TextStyle(color: isDark ? AppColorsDark.textHint : AppColorsLight.textHint, fontSize: 14),
               ),
-              const Text(
+              Text(
                 "Betsinat Wendwesen",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColorsLight.textHeading,
+                  color: isDark ? AppColorsDark.textHeading : AppColorsLight.textHeading,
                 ),
               ),
 
@@ -52,12 +54,12 @@ class HomeDashboard extends StatelessWidget {
               const BudgetStatusCard(spendRatio: 0.67),
               const SizedBox(height: 32),
               // 4. 6-Month Trend Chart
-              const Text(
+              Text(
                 "6-month trend",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColorsLight.textHeading,
+                  color: isDark ? AppColorsDark.textHeading : AppColorsLight.textHeading,
                 ),
               ),
               const SizedBox(height: 16),
