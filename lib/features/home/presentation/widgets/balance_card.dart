@@ -57,7 +57,7 @@ class BalanceCard extends StatelessWidget {
     String title,
     double amount,
   ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
 
     return Row(
       children: [
