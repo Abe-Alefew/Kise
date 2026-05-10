@@ -16,7 +16,7 @@ class BalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -28,10 +28,7 @@ class BalanceCard extends StatelessWidget {
         children: [
           Text(
             "TOTAL BALANCE",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           Text(
             "${totalBalance.toStringAsFixed(2)} ETB",
@@ -54,9 +51,14 @@ class BalanceCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStat(BuildContext context, IconData icon, String title, double amount) {
+  Widget _buildStat(
+    BuildContext context,
+    IconData icon,
+    String title,
+    double amount,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Row(
       children: [
         CircleAvatar(
@@ -68,10 +70,7 @@ class BalanceCard extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: TextStyle(color: Colors.white, fontSize: 12),
-            ),
+            Text(title, style: TextStyle(color: Colors.white, fontSize: 12)),
             Text(
               "${amount.toStringAsFixed(2)} ETB",
               style: TextStyle(
