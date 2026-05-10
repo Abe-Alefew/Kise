@@ -24,7 +24,7 @@ class KisePillFilter extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: options.map((option) {
-          final isSelected = option == selected;
+          final bool isSelected = option == selected;
 
           return Container(
             key: ValueKey(option),

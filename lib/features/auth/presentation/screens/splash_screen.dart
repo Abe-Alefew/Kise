@@ -16,7 +16,7 @@ class SplashScreen extends StatelessWidget {
 		final textTheme = Theme.of(context).textTheme;
 
 		return Scaffold(
-			backgroundColor: AppColorsLight.textHeading,
+			backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 			body: Stack(
 				children: [
 					Center(
@@ -29,12 +29,12 @@ class SplashScreen extends StatelessWidget {
 									height: AppDimensions.logoHeight,
 									fit: BoxFit.contain,
 								),
-								const SizedBox(height: AppDimensions.sm),
+								const SizedBox(height: 2.5),
 								Text(
 									'your personal budget tracker',
 									style: GoogleFonts.playfairDisplay(
 										textStyle: textTheme.bodyMedium?.copyWith(
-											color: colorScheme.secondary,
+											color: colorScheme.onSecondary,
 											fontStyle: FontStyle.italic,
 											fontWeight: FontWeight.w700,
 											fontSize: 19,
@@ -51,12 +51,17 @@ class SplashScreen extends StatelessWidget {
 							child: Align(
 								alignment: Alignment.bottomRight,
 								child: SizedBox(
-									width: 110,
+									width: 90,
+                  height: 37,
 									// TODO: restore production navigation logic
 									child: KiseActionButton(
 										label: 'NEXT',
 										onPressed: () => context.go(AppRoutes.onboarding),
 										expanded: false,
+                    width:85,
+                    height: 37,
+                    textColor: AppColorsLight.textOnPrimary,
+                    fontSize: 14,
 									),
 								),
 							),
