@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_dimensions.dart';
 
-
 // Variant Enum
 
 enum KiseButtonVariant {
@@ -9,7 +8,6 @@ enum KiseButtonVariant {
   outline,   // gold border  — secondary actions
   ghost,     // text only    — Skip, Cancel
 }
-
 
 // KiseActionButton
 
@@ -27,10 +25,12 @@ class KiseActionButton extends StatelessWidget {
     this.height = AppDimensions.buttonHeight,
     this.expanded = true, // full-width by default
     this.borderRadius,
+    this.textStyle,
+    this.outlineBorderSide,
   });
 
   final String label;
-  final VoidCallback? onPressed;   // null = auto-disabled
+  final VoidCallback? onPressed;
   final bool isLoading;
   final KiseButtonVariant variant;
   final IconData? leadingIcon;
@@ -40,6 +40,8 @@ class KiseActionButton extends StatelessWidget {
   final double height;
   final bool expanded;
   final double? borderRadius;
+  final TextStyle? textStyle;
+  final BorderSide? outlineBorderSide;
 
   // ── Resolve effective callback ──────────────
   // Blocks tap during loading without extra flags
@@ -57,7 +59,9 @@ class KiseActionButton extends StatelessWidget {
           textColor: textColor,
           fontSize: fontSize,
           height: height,
+          shrink: !expanded && width == null,
           borderRadius: borderRadius,
+          textStyle: textStyle,
         ),
       KiseButtonVariant.outline => _OutlineButton(
           label: label,
@@ -67,7 +71,10 @@ class KiseActionButton extends StatelessWidget {
           textColor: textColor,
           fontSize: fontSize,
           height: height,
+          shrink: !expanded && width == null,
           borderRadius: borderRadius,
+          textStyle: textStyle,
+          outlineBorderSide: outlineBorderSide,
         ),
       KiseButtonVariant.ghost => _GhostButton(
           label: label,
@@ -105,7 +112,9 @@ class _PrimaryButton extends StatelessWidget {
     required this.isLoading,
     required this.height,
     this.leadingIcon,
-    this.borderRadius, 
+    this.shrink = false,
+    this.borderRadius,
+    this.textStyle,
     this.textColor,
     this.fontSize,
   });
@@ -117,26 +126,28 @@ class _PrimaryButton extends StatelessWidget {
   final Color? textColor;
   final double? fontSize;
   final double height;
+  final bool shrink;
   final double? borderRadius;
-  
+  final TextStyle? textStyle;
 
   @override
   Widget build(BuildContext context) {
-    // ElevatedButtonTheme from app_theme.dart is inherited automatically
+    final shape = borderRadius != null
+        ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius!))
+        : null;
     return SizedBox(
       height: height,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
+          shape: shape ?? RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius ?? 12),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          // Allow compact use — parent SizedBox (width:/height:) controls the size.
-          // Without this, the global theme's minimumSize: Size(∞, 52) fights
-          // any fixed-width wrapper and causes layout overflow on small buttons.
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: shrink ? const EdgeInsets.symmetric(horizontal: 16) : const EdgeInsets.symmetric(horizontal: 16),
+          minimumSize: shrink ? Size.zero : Size.zero,
+          tapTargetSize: shrink ? MaterialTapTargetSize.shrinkWrap : MaterialTapTargetSize.shrinkWrap,
+          textStyle: textStyle,
+          foregroundColor: textColor,
         ),
         child: _ButtonContent(
           label: label,
@@ -144,7 +155,6 @@ class _PrimaryButton extends StatelessWidget {
           isLoading: isLoading,
           textColor: textColor,
           fontSize: fontSize,
-          // spinner color — white on gold
           spinnerColor: Theme.of(context).colorScheme.onPrimary,
         ),
       ),
@@ -162,9 +172,12 @@ class _OutlineButton extends StatelessWidget {
     required this.isLoading,
     required this.height,
     this.leadingIcon,
-    this.borderRadius, 
+    this.shrink = false,
+    this.borderRadius,
+    this.textStyle,
     this.textColor,
     this.fontSize,
+    this.outlineBorderSide,
   });
 
   final String label;
@@ -174,22 +187,37 @@ class _OutlineButton extends StatelessWidget {
   final Color? textColor;
   final double? fontSize;
   final double height;
+  final bool shrink;
   final double? borderRadius;
-  
+  final TextStyle? textStyle;
+  final BorderSide? outlineBorderSide;
+
   @override
   Widget build(BuildContext context) {
-    // OutlinedButtonTheme from app_theme.dart is inherited automatically
+    final shape = borderRadius != null
+        ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius!))
+        : null;
     return SizedBox(
       height: height,
       child: OutlinedButton(
         onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          shape: shape ?? RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius ?? 12),
+          ),
+          padding: shrink ? const EdgeInsets.symmetric(horizontal: 16) : const EdgeInsets.symmetric(horizontal: 16),
+          minimumSize: shrink ? Size.zero : Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          textStyle: textStyle,
+          foregroundColor: textColor,
+          side: outlineBorderSide,
+        ),
         child: _ButtonContent(
           label: label,
           leadingIcon: leadingIcon,
           isLoading: isLoading,
           textColor: textColor,
           fontSize: fontSize,
-          // spinner color — gold on transparent
           spinnerColor: Theme.of(context).colorScheme.primary,
         ),
       ),
@@ -206,7 +234,7 @@ class _GhostButton extends StatelessWidget {
     required this.onPressed,
     required this.isLoading,
     required this.height,
-    this.borderRadius, 
+    this.borderRadius,
     this.textColor,
     this.fontSize,
   });
@@ -221,11 +249,18 @@ class _GhostButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final shape = borderRadius != null
+        ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius!))
+        : null;
     // TextButtonTheme from app_theme.dart is inherited automatically
     return SizedBox(
       height: height,
       child: TextButton(
         onPressed: onPressed,
+        style: TextButton.styleFrom(
+          foregroundColor: textColor,
+          shape: shape,
+        ),
         child: _ButtonContent(
           label: label,
           isLoading: isLoading,

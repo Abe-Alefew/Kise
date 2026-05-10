@@ -7,15 +7,19 @@ class CategorySpendingChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           "Spending by Category",
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColorsLight.textHeading,
+            color: isDark
+                ? AppColorsDark.textHeading
+                : AppColorsLight.textHeading,
           ),
         ),
         const SizedBox(height: 16),
@@ -23,9 +27,13 @@ class CategorySpendingChart extends StatelessWidget {
           height: 220,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColorsLight.card,
+            color: isDark ? AppColorsDark.card : AppColorsLight.card,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColorsLight.secondaryBg),
+            border: Border.all(
+              color: isDark
+                  ? AppColorsDark.secondaryBg
+                  : AppColorsLight.secondaryBg,
+            ),
           ),
           child: Column(
             children: [
@@ -36,7 +44,7 @@ class CategorySpendingChart extends StatelessWidget {
                     centerSpaceRadius: 50,
                     sections: [
                       PieChartSectionData(
-                        color: const Color(0xFFA855F7), // Purple from image
+                        color: Color(0xFFA855F7),
                         value: 20000,
                         title: '',
                         radius: 20,
@@ -46,13 +54,28 @@ class CategorySpendingChart extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const Row(
+              Row(
                 children: [
                   Icon(Icons.circle, size: 12, color: Color(0xFFA855F7)),
-                  SizedBox(width: 8),
-                  Text("Education", style: TextStyle(color: Colors.grey)),
-                  Spacer(),
-                  Text("20,000", style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Education",
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColorsDark.textBody
+                          : AppColorsLight.textBody,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    "20,000",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark
+                          ? AppColorsDark.textHeading
+                          : AppColorsLight.textHeading,
+                    ),
+                  ),
                 ],
               ),
             ],
