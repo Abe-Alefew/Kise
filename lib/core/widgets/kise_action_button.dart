@@ -82,6 +82,7 @@ class KiseActionButton extends StatelessWidget {
           isLoading: isLoading,
           textColor: textColor,
           fontSize: fontSize,
+         
           height: height,
           borderRadius: borderRadius,
         ),

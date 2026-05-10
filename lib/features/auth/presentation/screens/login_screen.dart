@@ -7,6 +7,7 @@ import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/widgets.dart';
+import 'success_screen.dart';
 
 class LoginScreen extends StatefulWidget {
 	const LoginScreen({super.key});
@@ -30,10 +31,16 @@ class _LoginScreenState extends State<LoginScreen> {
 	Future<void> _handleLogin() async {
 		if (!(_formKey.currentState?.validate() ?? false)) return;
 
+		final router = GoRouter.of(context);
+		router.push(AppRoutes.loading);
+
 		final prefs = await SharedPreferences.getInstance();
 		await prefs.setBool(AppStorageKeys.authLoggedIn, true);
 		if (!mounted) return;
-		context.go(AppRoutes.home);
+		if (router.canPop()) {
+			router.pop();
+		}
+		router.go(AppRoutes.success, extra: SuccessType.signIn);
 	}
 
 	@override
@@ -50,24 +57,35 @@ class _LoginScreenState extends State<LoginScreen> {
 					// ── Gold top area with back button + title ──
 					SafeArea(
 						child: Padding(
-							padding: const EdgeInsets.symmetric(horizontal: AppDimensions.md),
+              padding: const EdgeInsets.all(12),
 							child: Column(
 								crossAxisAlignment: CrossAxisAlignment.start,
 								children: [
 									IconButton(
 										onPressed: () => context.go(AppRoutes.onboarding),
 										icon: Icon(Icons.arrow_back, color: scaffoldColor),
-										padding: EdgeInsets.zero,
+										
+                     constraints: const BoxConstraints.tightFor(
+                        width: 38,
+                        height: 34,
+                      ),
 									),
-									const SizedBox(height: AppDimensions.sm),
-									Text(
+									const SizedBox(height: AppDimensions.lg),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child:  Text(
 										'Log In',
+                    
 										style: textTheme.displayLarge?.copyWith(
 											color: scaffoldColor,
 											fontWeight: FontWeight.w700,
 											letterSpacing: 1.8,
+                      
 										),
+                    
 									),
+                  )
+									
 								],
 							),
 						),
@@ -97,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
 							child: SingleChildScrollView(
 								padding: const EdgeInsets.fromLTRB(
 									AppDimensions.md,
-									AppDimensions.xl2,
+									100,
 									AppDimensions.md,
 									AppDimensions.lg,
 								),
@@ -109,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
 											'YOUR EMAIL ADDRESS',
 											style: textTheme.bodyMedium?.copyWith(
 												color: AppColorsLight.textHint,
-												fontWeight: FontWeight.w600,
+												fontWeight: FontWeight.w800,
 											),
 											maxLines: 1,
 											overflow: TextOverflow.ellipsis,
@@ -123,6 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
 													controller: _emailController,
 													keyboardType: TextInputType.emailAddress,
 													validator: Validators.email,
+                        
 												),
 
 												const SizedBox(height: AppDimensions.sm),
@@ -136,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
 																'PASSWORD',
 																style: textTheme.bodyMedium?.copyWith(
 																	color: AppColorsLight.textHint,
-																	fontWeight: FontWeight.w600,
+																	fontWeight: FontWeight.w800,
 																),
 																maxLines: 1,
 																overflow: TextOverflow.ellipsis,
@@ -179,6 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
 														height: AppDimensions.authButtonHeight,
 														width: AppDimensions.authButtonWidth,
 														expanded: false,
+                            fontSize: 14,
 													),
 												),
 											],

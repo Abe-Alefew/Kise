@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/colors.dart';
 
@@ -16,6 +17,30 @@ class TermsAndConditionsScreen extends StatefulWidget {
 
 class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
   bool _agreed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAgreement();
+  }
+
+  Future<void> _loadAgreement() async {
+    final prefs = await SharedPreferences.getInstance();
+    final agreed = prefs.getBool(AppStorageKeys.termsAccepted) ?? false;
+    if (!mounted) return;
+    setState(() {
+      _agreed = agreed;
+    });
+  }
+
+  Future<void> _updateAgreement(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppStorageKeys.termsAccepted, value);
+    if (!mounted) return;
+    setState(() {
+      _agreed = value;
+    });
+  }
 
   // ── Content ───────────────────────────────────────────────────────────────
 
@@ -388,7 +413,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
 
                     // ── Agreement radio ───────────────────────────────────
                     GestureDetector(
-                      onTap: () => setState(() => _agreed = !_agreed),
+                      onTap: () => _updateAgreement(!_agreed),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -396,7 +421,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
                             value: true,
                             groupValue: _agreed ? true : null,
                             onChanged: (val) =>
-                                setState(() => _agreed = val ?? false),
+                                _updateAgreement(val ?? false),
                             activeColor: colorScheme.primary,
                             visualDensity: VisualDensity.compact,
                             materialTapTargetSize:
