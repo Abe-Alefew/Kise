@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/colors.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/core/widgets/kise_action_button.dart';
 import 'package:kise/features/settings/presentation/widgets/settings_widgets.dart';
+import 'package:kise/core/providers/theme_provider.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ── Allowance ──────────────────────────────────────────────
   final TextEditingController _monthlyAllowanceController = TextEditingController(text: '3000');
   final TextEditingController _cycleStartDayController = TextEditingController(text: '1');
@@ -118,6 +120,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeMode = ref.watch(themeProvider);
+    final bool useSystemDefault = themeMode == ThemeMode.system;
 
     return Scaffold(
       body: SafeArea(
@@ -226,40 +230,83 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   const SizedBox(height: AppDimensions.lg),
 
-                  // ── Dark Mode ────────────────────────────
+                  // ── Appearance ───────────────────────────
                   SettingsSectionHeader(
-                    title: 'Dark Mode',
-                    subtitle: 'Switch between light and dark mode.',
+                    title: 'Appearance',
+                    subtitle: 'Personalize your interface theme.',
                     icon: LucideIcons.sun,
                   ),
                   SettingsCard(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
                       children: [
+                        // Use System Default
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(
-                              isDark ? LucideIcons.moon : LucideIcons.sun,
-                              size: 20,
-                              color: Theme.of(context).colorScheme.primary,
+                            Row(
+                              children: [
+                                Icon(
+                                  LucideIcons.monitor,
+                                  size: 20,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: AppDimensions.sm),
+                                Text(
+                                  'Use system default',
+                                  style: isDark ? AppTextStylesDark.bodyLg : AppTextStyles.bodyLg,
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: AppDimensions.sm),
-                            Text(
-                              isDark ? 'Dark Mode' : 'Light Mode',
-                              style: isDark
-                                  ? AppTextStylesDark.bodyLg
-                                  : AppTextStyles.bodyLg,
+                            Switch.adaptive(
+                              value: useSystemDefault,
+                              activeThumbColor: Theme.of(context).colorScheme.primary,
+                              onChanged: (val) {
+                                if (val) {
+                                  ref.read(themeProvider.notifier).setThemeMode(ThemeMode.system);
+                                } else {
+                                  // When turning off, default to whatever the current brightness is
+                                  ref.read(themeProvider.notifier).setThemeMode(
+                                    isDark ? ThemeMode.dark : ThemeMode.light,
+                                  );
+                                }
+                              },
                             ),
                           ],
                         ),
-                        Switch.adaptive(
-                          value: isDark,
-                          activeThumbColor: Theme.of(context).colorScheme.primary,
-                          onChanged: (val) {
-                            // Theme toggling is managed at the app level.
-                            // Notify via callback or provider — placeholder:
-                            // ref.read(themeProvider.notifier).toggle();
-                          },
+                        const Divider(height: AppDimensions.md),
+                        // Dark Mode Toggle
+                        Opacity(
+                          opacity: useSystemDefault ? 0.5 : 1.0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    isDark ? LucideIcons.moon : LucideIcons.sun,
+                                    size: 20,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: AppDimensions.sm),
+                                  Text(
+                                    isDark ? 'Dark Mode' : 'Light Mode',
+                                    style: isDark ? AppTextStylesDark.bodyLg : AppTextStyles.bodyLg,
+                                  ),
+                                ],
+                              ),
+                              Switch.adaptive(
+                                value: isDark,
+                                activeThumbColor: Theme.of(context).colorScheme.primary,
+                                onChanged: useSystemDefault 
+                                  ? null 
+                                  : (val) {
+                                      ref.read(themeProvider.notifier).setThemeMode(
+                                        val ? ThemeMode.dark : ThemeMode.light,
+                                      );
+                                    },
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -275,25 +322,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   SettingsCard(
                     child: Column(
-                      children: _languages
-                          .asMap()
-                          .entries
-                          .map(
-                            (e) => Column(
-                              children: [
-                                SettingsOptionRow(
-                                  label: e.value,
-                                  isSelected: _selectedLanguage == e.value,
-                                  onTap: () => setState(
-                                    () => _selectedLanguage = e.value,
-                                  ),
-                                ),
-                                if (e.key < _languages.length - 1)
-                                  const Divider(height: 1),
-                              ],
+                      children: _languages.asMap().entries.map(
+                        (e) => Column(
+                          children: [
+                            SettingsOptionRow(
+                              label: e.value,
+                              isSelected: _selectedLanguage == e.value,
+                              onTap: () => setState(
+                                () => _selectedLanguage = e.value,
+                              ),
                             ),
-                          )
-                          .toList(),
+                            if (e.key < _languages.length - 1)
+                              const Divider(height: 1),
+                          ],
+                        ),
+                      )
+                      .toList(),
                     ),
                   ),
 
@@ -324,11 +368,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // ── Footer ───────────────────────────────
                   Center(
                     child: Text(
-                      'Kise v1.0 — Built for students',
+                      'Kise (ኪሴ) v1.0 — Built for students',
                       style: AppTextStyles.micro.copyWith(
-                        color: isDark
-                            ? AppColorsDark.textHint
-                            : AppColorsLight.textHint,
+                        color: isDark ? AppColorsDark.textHint : AppColorsLight.textHint,
                       ),
                     ),
                   ),
