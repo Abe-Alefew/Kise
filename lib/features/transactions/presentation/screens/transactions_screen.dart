@@ -134,7 +134,7 @@ class _TransactionsScreenState
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
+                        color: Theme.of(context).shadowColor.withValues(alpha: 0.06),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -246,7 +246,7 @@ class _TransactionsScreenState
                 KisePillFilter(
                   options: const ["1 Month", "3 Months", "6 Months", "1 Year"],
                   selected: selectedAnalyticsRange,
-                  selectedColor: const Color(0xFFF2EAD9),
+                  selectedColor: Theme.of(context).colorScheme.secondary,
                   onSelected: (value) => setState(() => selectedAnalyticsRange = value),
                 ),
 

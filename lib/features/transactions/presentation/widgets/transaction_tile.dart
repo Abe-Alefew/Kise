@@ -35,8 +35,8 @@ class TransactionTile extends StatelessWidget {
 
                 color:
                     isIncome
-                    ? Colors.green.withValues(alpha: 0.12)
-                    : Colors.orange.withValues(alpha: 0.12),
+                    ? Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.12)
+                    : Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
 
                 shape: BoxShape.circle,
               ),
@@ -64,10 +64,10 @@ class TransactionTile extends StatelessWidget {
                   Text(
                     transaction.title,
 
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
 
@@ -77,7 +77,7 @@ class TransactionTile extends StatelessWidget {
                     "${transaction.category} • ${transaction.date}",
 
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -95,8 +95,8 @@ class TransactionTile extends StatelessWidget {
 
                 color:
                     isIncome
-                    ? Colors.green
-                    : Colors.red,
+                    ? Theme.of(context).colorScheme.tertiary
+                    : Theme.of(context).colorScheme.error,
               ),
             ),
           ],

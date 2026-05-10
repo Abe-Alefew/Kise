@@ -26,6 +26,7 @@ class KiseActionButton extends StatelessWidget {
     this.expanded = true,
     this.borderRadius,
     this.textStyle,
+    this.textColor,
     this.outlineBorderSide,
   });
 
@@ -39,6 +40,7 @@ class KiseActionButton extends StatelessWidget {
   final bool expanded;
   final double? borderRadius;
   final TextStyle? textStyle;
+  final Color? textColor;
   final BorderSide? outlineBorderSide;
 
   // ── Resolve effective callback ──────────────
@@ -58,6 +60,7 @@ class KiseActionButton extends StatelessWidget {
           shrink: !expanded && width == null,
           borderRadius: borderRadius,
           textStyle: textStyle,
+          textColor: textColor,
         ),
       KiseButtonVariant.outline => _OutlineButton(
           label: label,
@@ -68,6 +71,7 @@ class KiseActionButton extends StatelessWidget {
           shrink: !expanded && width == null,
           borderRadius: borderRadius,
           textStyle: textStyle,
+          textColor: textColor,
           outlineBorderSide: outlineBorderSide,
         ),
       KiseButtonVariant.ghost => _GhostButton(
@@ -75,6 +79,7 @@ class KiseActionButton extends StatelessWidget {
           onPressed: _effectiveOnPressed,
           isLoading: isLoading,
           height: height,
+          textColor: textColor,
         ),
     };
 
@@ -105,6 +110,7 @@ class _PrimaryButton extends StatelessWidget {
     this.shrink = false,
     this.borderRadius,
     this.textStyle,
+    this.textColor,
   });
 
   final String label;
@@ -115,6 +121,7 @@ class _PrimaryButton extends StatelessWidget {
   final bool shrink;
   final double? borderRadius;
   final TextStyle? textStyle;
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -131,8 +138,9 @@ class _PrimaryButton extends StatelessWidget {
                 padding: shrink ? const EdgeInsets.symmetric(horizontal: 16) : null,
                 shape: shape,
                 textStyle: textStyle,
+                foregroundColor: textColor,
               )
-            : null,
+            : (textColor != null ? ElevatedButton.styleFrom(foregroundColor: textColor) : null),
         child: _ButtonContent(
           label: label,
           leadingIcon: leadingIcon,
@@ -157,6 +165,7 @@ class _OutlineButton extends StatelessWidget {
     this.shrink = false,
     this.borderRadius,
     this.textStyle,
+    this.textColor,
     this.outlineBorderSide,
   });
 
@@ -168,6 +177,7 @@ class _OutlineButton extends StatelessWidget {
   final bool shrink;
   final double? borderRadius;
   final TextStyle? textStyle;
+  final Color? textColor;
   final BorderSide? outlineBorderSide;
 
   @override
@@ -186,8 +196,9 @@ class _OutlineButton extends StatelessWidget {
                 shape: shape,
                 side: outlineBorderSide,
                 textStyle: textStyle,
+                foregroundColor: textColor,
               )
-            : null,
+            : (textColor != null || outlineBorderSide != null ? OutlinedButton.styleFrom(foregroundColor: textColor, side: outlineBorderSide) : null),
         child: _ButtonContent(
           label: label,
           leadingIcon: leadingIcon,
@@ -208,12 +219,14 @@ class _GhostButton extends StatelessWidget {
     required this.onPressed,
     required this.isLoading,
     required this.height,
+    this.textColor,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
   final double height;
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -222,6 +235,7 @@ class _GhostButton extends StatelessWidget {
       height: height,
       child: TextButton(
         onPressed: onPressed,
+        style: textColor != null ? TextButton.styleFrom(foregroundColor: textColor) : null,
         child: _ButtonContent(
           label: label,
           isLoading: isLoading,

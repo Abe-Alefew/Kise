@@ -13,7 +13,7 @@ class AnalyticsScreen extends StatelessWidget {
     return Scaffold(
 
       backgroundColor:
-          const Color(0xFFF8F8F8),
+          Theme.of(context).scaffoldBackgroundColor,
 
       appBar: AppBar(
         title: const Text("Analytics"),
@@ -37,7 +37,7 @@ class AnalyticsScreen extends StatelessWidget {
               KiseCardHolder(
 
                 backgroundColor:
-                    const Color(0xFFD4AF37),
+                    Theme.of(context).colorScheme.primary,
 
                 borderColor:
                     Colors.transparent,
@@ -53,7 +53,7 @@ class AnalyticsScreen extends StatelessWidget {
                       "Monthly Spending",
 
                       style: TextStyle(
-                        color: Colors.white70,
+                        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
                       ),
                     ),
 
@@ -64,7 +64,7 @@ class AnalyticsScreen extends StatelessWidget {
                       "ETB 45,000",
 
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onPrimary,
                         fontWeight:
                             FontWeight.bold,
                         fontSize: 28,
@@ -100,21 +100,21 @@ class AnalyticsScreen extends StatelessWidget {
                 title: "Education",
                 amount: "ETB 20,000",
                 percent: "44%",
-                color: Colors.blue,
+                color: Theme.of(context).colorScheme.primary,
               ),
 
               _categoryCard(
                 title: "Entertainment",
                 amount: "ETB 5,000",
                 percent: "12%",
-                color: Colors.orange,
+                color: Theme.of(context).colorScheme.secondary,
               ),
 
               _categoryCard(
                 title: "Transport",
                 amount: "ETB 3,000",
                 percent: "8%",
-                color: Colors.green,
+                color: Theme.of(context).colorScheme.tertiary,
               ),
 
               const SizedBox(height: 24),

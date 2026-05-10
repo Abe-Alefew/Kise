@@ -16,7 +16,7 @@ class KiseApp extends StatelessWidget {
       title: 'KISE',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.light,
+      themeMode: ThemeMode.dark,
       debugShowCheckedModeBanner: false,
       routerConfig: AppRouter.router,
     );

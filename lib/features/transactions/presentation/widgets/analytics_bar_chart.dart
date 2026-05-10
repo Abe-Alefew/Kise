@@ -19,25 +19,29 @@ class AnalyticsBarChart extends StatelessWidget {
     'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May',
   ];
 
-  // Income source colors
-  static const _incomeColors = {
-    'Salary':     Color(0xFF2BAB68),
-    'Freelance':  Color(0xFF1A7A4A),
-    'Investment': Color(0xFF56C98A),
-    'Bonus':      Color(0xFF0D5C35),
-  };
+  Map<String, Color> _getIncomeColors(BuildContext context) {
+    final baseColor = Theme.of(context).colorScheme.tertiary;
+    return {
+      'Salary':     baseColor,
+      'Freelance':  baseColor.withValues(alpha: 0.8),
+      'Investment': baseColor.withValues(alpha: 0.6),
+      'Bonus':      baseColor.withValues(alpha: 0.4),
+    };
+  }
 
-  // Expense category colors
-  static const _expenseColors = {
-    'Housing':       Color(0xFFDDA22C),
-    'Food':          Color(0xFFE8B84B),
-    'Education':     Color(0xFFAF7E1D),
-    'Shopping':      Color(0xFFF0CC7A),
-    'Transport':     Color(0xFF8A6010),
-    'Entertainment': Color(0xFFCB9020),
-    'Health':        Color(0xFFD4A050),
-    'Travel':        Color(0xFF6B4A0A),
-  };
+  Map<String, Color> _getExpenseColors(BuildContext context) {
+    final baseColor = Theme.of(context).colorScheme.primary;
+    return {
+      'Housing':       baseColor,
+      'Food':          baseColor.withValues(alpha: 0.9),
+      'Education':     baseColor.withValues(alpha: 0.8),
+      'Shopping':      baseColor.withValues(alpha: 0.7),
+      'Transport':     baseColor.withValues(alpha: 0.6),
+      'Entertainment': baseColor.withValues(alpha: 0.5),
+      'Health':        baseColor.withValues(alpha: 0.4),
+      'Travel':        baseColor.withValues(alpha: 0.3),
+    };
+  }
 
   List<String> get _visibleMonths {
     switch (selectedRange) {
@@ -85,17 +89,17 @@ class AnalyticsBarChart extends StatelessWidget {
         // Double bar: total income vs total expense
         final inc = (incomeData[m] ?? {}).values.fold(0.0, (a, b) => a + b);
         final exp = (expenseData[m] ?? {}).values.fold(0.0, (a, b) => a + b);
-        barGroups.add(_doubleBar(i, inc, exp));
+        barGroups.add(_doubleBar(context, i, inc, exp));
 
       } else if (selectedFilter == 'Income') {
         // Stacked bar per income source
         final cats = incomeData[m] ?? {};
-        barGroups.add(_stackedBar(i, cats, _incomeColors));
+        barGroups.add(_stackedBar(context, i, cats, _getIncomeColors(context)));
 
       } else {
         // Stacked bar per expense category
         final cats = expenseData[m] ?? {};
-        barGroups.add(_stackedBar(i, cats, _expenseColors));
+        barGroups.add(_stackedBar(context, i, cats, _getExpenseColors(context)));
       }
     }
 
@@ -103,7 +107,7 @@ class AnalyticsBarChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Legend
-        _buildLegend(),
+        _buildLegend(context),
         const SizedBox(height: 12),
         SizedBox(
           height: 240,
@@ -118,7 +122,7 @@ class AnalyticsBarChart extends StatelessWidget {
                 drawVerticalLine: false,
                 horizontalInterval: maxY / 4,
                 getDrawingHorizontalLine: (_) => FlLine(
-                  color: Colors.grey.withValues(alpha: 0.15),
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.15),
                   strokeWidth: 1,
                 ),
               ),
@@ -137,7 +141,7 @@ class AnalyticsBarChart extends StatelessWidget {
                           : value.toInt().toString();
                       return Text(
                         label,
-                        style: const TextStyle(fontSize: 10, color: Colors.grey),
+                        style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline),
                       );
                     },
                   ),
@@ -153,7 +157,7 @@ class AnalyticsBarChart extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 6),
                         child: Text(
                           months[idx],
-                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outline),
                         ),
                       );
                     },
@@ -168,33 +172,33 @@ class AnalyticsBarChart extends StatelessWidget {
     );
   }
 
-  Widget _buildLegend() {
+  Widget _buildLegend(BuildContext context) {
     if (selectedFilter == 'All') {
       return Row(children: [
-        _legendDot(const Color(0xFF2BAB68), 'Income'),
+        _legendDot(context, Theme.of(context).colorScheme.tertiary, 'Income'),
         const SizedBox(width: 16),
-        _legendDot(const Color(0xFFDDA22C), 'Expense'),
+        _legendDot(context, Theme.of(context).colorScheme.primary, 'Expense'),
       ]);
     }
-    final colorMap = selectedFilter == 'Income' ? _incomeColors : _expenseColors;
+    final colorMap = selectedFilter == 'Income' ? _getIncomeColors(context) : _getExpenseColors(context);
     return Wrap(
       spacing: 12,
       runSpacing: 6,
       children: colorMap.entries
-          .map((e) => _legendDot(e.value, e.key))
+          .map((e) => _legendDot(context, e.value, e.key))
           .toList(),
     );
   }
 
-  Widget _legendDot(Color color, String label) {
+  Widget _legendDot(BuildContext context, Color color, String label) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
       const SizedBox(width: 4),
-      Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+      Text(label, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outline)),
     ]);
   }
 
-  BarChartGroupData _doubleBar(int x, double income, double expense) {
+  BarChartGroupData _doubleBar(BuildContext context, int x, double income, double expense) {
     return BarChartGroupData(
       x: x,
       barsSpace: 4,
@@ -202,13 +206,13 @@ class AnalyticsBarChart extends StatelessWidget {
         BarChartRodData(
           toY: income,
           width: 10,
-          color: const Color(0xFF2BAB68),
+          color: Theme.of(context).colorScheme.tertiary,
           borderRadius: BorderRadius.circular(4),
         ),
         BarChartRodData(
           toY: expense,
           width: 10,
-          color: const Color(0xFFDDA22C),
+          color: Theme.of(context).colorScheme.primary,
           borderRadius: BorderRadius.circular(4),
         ),
       ],
@@ -216,6 +220,7 @@ class AnalyticsBarChart extends StatelessWidget {
   }
 
   BarChartGroupData _stackedBar(
+    BuildContext context,
     int x,
     Map<String, double> categories,
     Map<String, Color> colorMap,
@@ -235,7 +240,7 @@ class AnalyticsBarChart extends StatelessWidget {
       rodStackItems.add(BarChartRodStackItem(
         from,
         to,
-        colorMap[entry.key] ?? Colors.grey,
+        colorMap[entry.key] ?? Theme.of(context).colorScheme.outline,
       ));
       from = to;
     }

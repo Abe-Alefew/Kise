@@ -51,11 +51,9 @@ class _AddTransactionScreenState
 
   @override
   void dispose() {
-
     amountController.dispose();
     titleController.dispose();
     notesController.dispose();
-
     super.dispose();
   }
 
@@ -181,15 +179,15 @@ class _AddTransactionScreenState
                         color:
                             selectedType
                                     == "Income"
-                                ? Colors.green
-                                : Colors.white,
+                                ? Theme.of(context).colorScheme.tertiary
+                                : Theme.of(context).cardColor,
 
                         borderRadius:
                             BorderRadius.circular(
                                 14),
 
                         border: Border.all(
-                          color: Colors.green,
+                          color: Theme.of(context).colorScheme.tertiary,
                         ),
                       ),
 
@@ -204,8 +202,8 @@ class _AddTransactionScreenState
                             color:
                                 selectedType
                                         == "Income"
-                                    ? Colors.white
-                                    : Colors.green,
+                                    ? Theme.of(context).colorScheme.onTertiary
+                                    : Theme.of(context).colorScheme.tertiary,
 
                             fontWeight:
                                 FontWeight.bold,
@@ -246,15 +244,15 @@ class _AddTransactionScreenState
                         color:
                             selectedType
                                     == "Expense"
-                                ? Colors.red
-                                : Colors.white,
+                                ? Theme.of(context).colorScheme.error
+                                : Theme.of(context).cardColor,
 
                         borderRadius:
                             BorderRadius.circular(
                                 14),
 
                         border: Border.all(
-                          color: Colors.red,
+                          color: Theme.of(context).colorScheme.error,
                         ),
                       ),
 
@@ -269,8 +267,8 @@ class _AddTransactionScreenState
                             color:
                                 selectedType
                                         == "Expense"
-                                    ? Colors.white
-                                    : Colors.red,
+                                    ? Theme.of(context).colorScheme.onError
+                                    : Theme.of(context).colorScheme.error,
 
                             fontWeight:
                                 FontWeight.bold,
@@ -287,50 +285,33 @@ class _AddTransactionScreenState
 
             /// CATEGORY DROPDOWN
             DropdownButtonFormField<String>(
-
               value: selectedCategory,
-
+              hint: Text(selectedType == "Income" ? "Select source" : "Select category"),
+              isExpanded: true,
+              isDense: true,
+              dropdownColor: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              elevation: 4,
+              icon: Icon(Icons.keyboard_arrow_down, color: Theme.of(context).colorScheme.outline, size: 20),
               decoration: InputDecoration(
-
-                labelText:
-                    selectedType == "Income"
-                    ? "Income Source"
-                    : "Expense Category",
-
-                border:
-                    OutlineInputBorder(
-
-                  borderRadius:
-                      BorderRadius.circular(
-                          14),
+                labelText: selectedType == "Income" ? "Income Source" : "Expense Category",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
-
-              items:
-                  currentDropdownItems.map((item) {
-
+              items: currentDropdownItems.map((item) {
                 return DropdownMenuItem(
-
                   value: item,
-
                   child: Text(item),
                 );
-
               }).toList(),
-
               onChanged: (value) {
-
                 setState(() {
                   selectedCategory = value;
                 });
               },
-
               validator: (value) {
-
-                if (value == null) {
-                  return "Please select a category";
-                }
-
+                if (value == null) return "Please select a category";
                 return null;
               },
             ),
