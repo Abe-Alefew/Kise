@@ -656,6 +656,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         width: AppDimensions.authButtonWidth,
                         expanded: false,
                         fontSize: 14,
+                        textColor: AppColorsLight.textOnPrimary,
                       ),
                     ),
 

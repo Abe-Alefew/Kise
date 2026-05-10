@@ -199,6 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
 														width: AppDimensions.authButtonWidth,
 														expanded: false,
                             fontSize: 14,
+                            textColor:  AppColorsLight.textOnPrimary,
 													),
 												),
 											],
