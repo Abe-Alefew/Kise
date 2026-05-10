@@ -35,6 +35,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _preferredLanguage = 'English';
   String? _selectedCurrency;
   bool _termsAccepted = false;
+  bool _showTermsError = false;
 
   static const List<String> _stepTitles = [
     'Personal\nInformation',
@@ -44,6 +45,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
   ];
 
   static const List<String> _currencyOptions = ['ETB', 'USD'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTermsAccepted();
+  }
+
+  Future<void> _loadTermsAccepted() async {
+    final prefs = await SharedPreferences.getInstance();
+    final accepted = prefs.getBool(AppStorageKeys.termsAccepted) ?? false;
+    if (!mounted) return;
+    setState(() {
+      _termsAccepted = accepted;
+      _showTermsError = false;
+    });
+  }
+
+  Future<void> _updateTermsAccepted(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppStorageKeys.termsAccepted, value);
+    if (!mounted) return;
+    setState(() {
+      _termsAccepted = value;
+      if (value) _showTermsError = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -90,6 +117,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    if (!_termsAccepted) {
+      setState(() {
+        _showTermsError = true;
+      });
+      return;
+    }
+
+    if (_showTermsError) {
+      setState(() {
+        _showTermsError = false;
+      });
+    }
+
     await _handleRegister();
   }
 
@@ -106,22 +146,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final textTheme = Theme.of(context).textTheme;
     final labelStyle = textTheme.bodyMedium?.copyWith(
       color: AppColorsLight.textHint,
-      fontWeight: FontWeight.w600,
+      fontWeight: FontWeight.w700,
     );
-
-    final displayLabel = sublabel != null
-        ? '$label (${sublabel.toLowerCase()})'
-        : label;
+    final optionalStyle = labelStyle?.copyWith(
+      color: AppColorsLight.textHint.withValues(alpha: 0.6),
+      fontWeight: FontWeight.w500,
+      fontStyle: FontStyle.italic,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          displayLabel,
-          style: labelStyle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        if (sublabel == null)
+          Text(
+            label,
+            style: labelStyle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          )
+        else
+          Text.rich(
+            TextSpan(
+              text: label,
+              children: [
+                TextSpan(
+                  text: ' (${sublabel.toLowerCase()})',
+                  style: optionalStyle,
+                ),
+              ],
+            ),
+            style: labelStyle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         const SizedBox(height: AppDimensions.sm),
         KiseTextField(
           label: '',
@@ -239,7 +296,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       children: [
         // ── Preferred Language ──
         Text('PREFERRED LANGUAGE', style: labelStyle),
-        const SizedBox(height: AppDimensions.xs),
+        const SizedBox(height: AppDimensions.sm),
         Center(
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -250,7 +307,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 colorScheme: colorScheme,
                 textTheme: textTheme,
               ),
-              const SizedBox(width: AppDimensions.lg),
+              const SizedBox(width: AppDimensions.xxxl),
               _buildRadioOption(
                 label: 'AMHARIC',
                 value: 'Amharic',
@@ -265,18 +322,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         // ── Currency Dropdown ──
         Text('CURRENCY', style: labelStyle),
-        const SizedBox(height: AppDimensions.xs),
+          const SizedBox(height: AppDimensions.sm),
         _buildCurrencyDropdown(colorScheme: colorScheme, textTheme: textTheme),
 
         const SizedBox(height: AppDimensions.md),
 
         // ── Terms checkbox ──
         GestureDetector(
-          onTap: () {
-            setState(() {
-              _termsAccepted = !_termsAccepted;
-            });
-          },
+          onTap: () => _updateTermsAccepted(!_termsAccepted),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -285,11 +338,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 height: 24,
                 child: Checkbox(
                   value: _termsAccepted,
-                  onChanged: (value) {
-                    setState(() {
-                      _termsAccepted = value ?? false;
-                    });
-                  },
+                  onChanged: (value) =>
+                      _updateTermsAccepted(value ?? false),
                   activeColor: colorScheme.primary,
                   visualDensity: VisualDensity.compact,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -308,17 +358,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         text: 'I agree to the ',
                         style: textTheme.bodySmall?.copyWith(
                           color: AppColorsLight.textHint,
+                          fontWeight: FontWeight.w500,
                           fontSize: AppDimensions.fontSizeCaption,
                         ),
                       ),
                       WidgetSpan(
                         alignment: PlaceholderAlignment.middle,
                         child: GestureDetector(
-                          onTap: () => context.push(AppRoutes.terms),
+                          onTap: () async {
+                            await context.push(AppRoutes.terms);
+                            await _loadTermsAccepted();
+                          },
                           child: Text(
                             'terms and the conditions of Kise',
                             style: textTheme.bodySmall?.copyWith(
                               color: colorScheme.primary,
+                              fontWeight: FontWeight.w600,
                               fontSize: AppDimensions.fontSizeCaption,
                             ),
                           ),
@@ -331,6 +386,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ],
           ),
         ),
+        if (_showTermsError) ...[
+          const SizedBox(height: AppDimensions.xs),
+          Text(
+            'Please accept the terms to continue.',
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.error,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -364,7 +429,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             label,
             style: textTheme.bodySmall?.copyWith(
               color: isSelected ? colorScheme.primary : AppColorsLight.textHint,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.bold,
               letterSpacing: 0.4,
               fontSize: AppDimensions.fontSizeCaption,
             ),
@@ -380,52 +445,64 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required ColorScheme colorScheme,
     required TextTheme textTheme,
   }) {
-    return DropdownButtonFormField<String>(
-      initialValue: _selectedCurrency,
-      hint: Text(
-        'SELECT CURRENCY',
-        style: textTheme.bodySmall?.copyWith(
-          color: AppColorsLight.textHint,
-          fontWeight: FontWeight.w500,
-          fontSize: AppDimensions.fontSizeCaption,
-          letterSpacing: 0.4,
-        ),
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            offset: Offset(0, 4),
+            blurRadius: 4,
+            spreadRadius: 0,
+          ),
+        ],
       ),
-      items: _currencyOptions
-          .map(
-            (currency) => DropdownMenuItem<String>(
-              value: currency,
-              child: Text(
-                currency,
-                style: textTheme.bodySmall?.copyWith(
-                  color: AppColorsLight.textBody,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.4,
-                ),
-              ),
-            ),
-          )
-          .toList(),
-      onChanged: (value) {
-        setState(() => _selectedCurrency = value);
-        _currencyController.text = value ?? '';
-      },
-      decoration: InputDecoration(
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: AppDimensions.sm),
-        enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(
-            color: AppColorsLight.textHint.withValues(alpha: 0.3),
+      child: DropdownButtonFormField<String>(
+        initialValue: _selectedCurrency,
+        hint: Text(
+          'SELECT CURRENCY',
+          style: textTheme.bodySmall?.copyWith(
+            color: AppColorsLight.textHint,
+            fontWeight: FontWeight.w500,
+            fontSize: AppDimensions.fontSizeCaption,
+            letterSpacing: 0.4,
           ),
         ),
-        focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: colorScheme.primary),
+        items: _currencyOptions
+            .map(
+              (currency) => DropdownMenuItem<String>(
+                value: currency,
+                child: Text(
+                  currency,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColorsLight.textBody,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+            )
+            .toList(),
+        onChanged: (value) {
+          setState(() => _selectedCurrency = value);
+          _currencyController.text = value ?? '';
+        },
+        decoration: const InputDecoration(
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: AppDimensions.md,
+            vertical: AppDimensions.sm,
+          ),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
         ),
-        border: const UnderlineInputBorder(),
+        icon: Icon(Icons.keyboard_arrow_down, color: AppColorsLight.textHint),
+        dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+        isExpanded: true,
       ),
-      icon: Icon(Icons.keyboard_arrow_down, color: AppColorsLight.textHint),
-      dropdownColor: Theme.of(context).scaffoldBackgroundColor,
-      isExpanded: true,
     );
   }
 
@@ -473,31 +550,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // ── Gold header: back arrow + title ──────────────────────────────
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.md,
-              ),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Back arrow
                   IconButton(
                     onPressed: _handleBack,
-                    icon: Icon(
-                      Icons.arrow_back,
-                      color: scaffoldColor,
-                      size: 20,
+                    icon: Icon(Icons.arrow_back, color: scaffoldColor),
+                    constraints: const BoxConstraints.tightFor(
+                      width: 38,
+                      height: 34,
                     ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
                   ),
-                  const SizedBox(height: AppDimensions.sm),
-                  // "Register" title
-                  Text(
-                    'Register',
-                    style: textTheme.displayLarge?.copyWith(
-                      color: scaffoldColor,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.0,
+                  const SizedBox(height: AppDimensions.lg),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      'Register',
+                      style: textTheme.displayLarge?.copyWith(
+                        color: scaffoldColor,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.8,
+                      ),
                     ),
                   ),
                 ],
@@ -537,19 +611,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: [
                     // Step dots
                     _buildStepIndicator(colorScheme),
-                    const SizedBox(height: AppDimensions.md),
+                    const SizedBox(height: AppDimensions.xl),
 
                     // Step title — large, bold, uppercase, two-line
                     Text(
                       _stepTitles[_currentStep].toUpperCase(),
                       style: textTheme.headlineSmall?.copyWith(
-                        color: AppColorsLight.textBody,
-                        fontWeight: FontWeight.w800,
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w900,
                         letterSpacing: 0.6,
                         height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.lg),
+                    const SizedBox(height: AppDimensions.xxl),
 
                     // Step content
                     if (_currentStep == 0)
@@ -564,15 +638,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         textTheme: textTheme,
                       ),
 
-                    const SizedBox(height: AppDimensions.lg),
+                    const SizedBox(height: AppDimensions.xxxl),
 
-                    // ── Primary action button — full width ────────────────
-                    KiseActionButton(
-                      label: isLastStep ? 'CONTINUE' : 'NEXT',
-                      onPressed: _handlePrimaryAction,
-                      height: AppDimensions.authButtonHeight,
-                      width: double.infinity,
-                      expanded: true,
+                    // ── Primary action button — centered, fixed width ─────
+                    Center(
+                      child: KiseActionButton(
+                        label: isLastStep ? 'CONTINUE' : 'NEXT',
+                        onPressed: _handlePrimaryAction,
+                        height: AppDimensions.authButtonHeight,
+                        width: AppDimensions.authButtonWidth,
+                        expanded: false,
+                        fontSize: 14,
+                      ),
                     ),
 
                     const SizedBox(height: AppDimensions.md),
@@ -609,7 +686,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: AppDimensions.xl),
+                    const SizedBox(height: AppDimensions.sm),
 
                     // ── Kise logo ─────────────────────────────────────────
                     Center(
@@ -621,7 +698,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: AppDimensions.md),
+                    const SizedBox(height: AppDimensions.sm),
                   ],
                 ),
               ),
