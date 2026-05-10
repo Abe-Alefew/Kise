@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:kise/core/theme/app_theme_ext.dart';
+import '../theme/colors.dart';
+import '../theme/text_theme.dart';
 
 class KisePillFilter extends StatelessWidget {
   final List<String> options;
   final String selected;
   final Function(String) onSelected;
-
   final double? height;
   final double? width;
+  final Color? selectedColor;
 
   const KisePillFilter({
     super.key,
@@ -16,10 +17,21 @@ class KisePillFilter extends StatelessWidget {
     required this.onSelected,
     this.height,
     this.width,
+    this.selectedColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final onPrimaryColor = Theme.of(context).colorScheme.onPrimary;
+    final unselectedBg = isDark
+        ? AppColorsDark.secondaryBg
+        : AppColorsLight.secondaryBg;
+    final unselectedText = isDark
+        ? AppColorsDark.textBody
+        : AppColorsLight.textBody;
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -30,7 +42,7 @@ class KisePillFilter extends StatelessWidget {
             key: ValueKey(option),
             margin: const EdgeInsets.only(right: 8),
             child: Material(
-              color: isSelected ? context.kisePrimary : context.kiseSecondaryBg,
+              color: isSelected ? (selectedColor ?? primaryColor) : unselectedBg,
               borderRadius: BorderRadius.circular(20),
               child: InkWell(
                 borderRadius: BorderRadius.circular(20),
@@ -46,9 +58,13 @@ class KisePillFilter extends StatelessWidget {
                     child: Center(
                       child: Text(
                         option,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : context.kiseTextBody,
-                          fontWeight: FontWeight.w500,
+                        style: AppTextStyles.label.copyWith(
+                          color: isSelected
+                              ? (selectedColor != null
+                                  ? Theme.of(context).colorScheme.onSurface
+                                  : onPrimaryColor)
+                              : unselectedText,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                         ),
                       ),
                     ),

@@ -15,6 +15,7 @@ class BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -24,7 +25,7 @@ class BalanceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             "TOTAL BALANCE",
             style: TextStyle(
               color: AppColorsLight.textOnPrimary,
@@ -43,8 +44,8 @@ class BalanceCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStat(Icons.trending_up, "Income", income),
-              _buildStat(Icons.trending_down, "Expenses", expenses),
+              _buildStat(context, Icons.trending_up, "Income", income),
+              _buildStat(context, Icons.trending_down, "Expenses", expenses),
             ],
           ),
         ],
@@ -52,7 +53,14 @@ class BalanceCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStat(IconData icon, String title, double amount) {
+  Widget _buildStat(
+    BuildContext context,
+    IconData icon,
+    String title,
+    double amount,
+  ) {
+    
+
     return Row(
       children: [
         CircleAvatar(

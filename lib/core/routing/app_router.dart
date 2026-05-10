@@ -13,9 +13,9 @@ import 'package:kise/features/transactions/presentation/screens/transactions_scr
 import 'package:kise/features/goals/presentation/screens/goals_screen.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
 import 'package:kise/features/debt/presentation/screens/debt_screen.dart';
-import 'package:kise/features/debt/presentation/screens/add_edit_debt_screen.dart';
 import 'package:kise/features/debt/presentation/screens/debt_detail_screen.dart';
-import 'package:kise/features/settings/presentation/screens/settings.dart';
+import 'package:kise/features/debt/presentation/screens/add_edit_debt_screen.dart';
+import 'package:kise/features/settings/presentation/screens/settings_screen.dart';
 
 abstract class AppRoutes {
   static const String splash       = '/';
