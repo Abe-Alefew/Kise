@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kise/core/theme/colors.dart';
 
 class KisePillFilter extends StatelessWidget {
   final List<String> options;
@@ -19,17 +20,27 @@ class KisePillFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: options.map((option) {
-          final isSelected = option == selected;
+          final bool isSelected = option == selected;
+
+          Color pillColor;
+
+          if (!isSelected) {
+            pillColor = isDark ? AppColorsDark.secondaryBg : AppColorsLight.secondaryBg;
+          } else {
+            pillColor = isDark ? AppColorsDark.primary : AppColorsLight.primary;
+          }
 
           return Container(
             key: ValueKey(option),
             margin: const EdgeInsets.only(right: 8),
             child: Material(
-              color: isSelected ? const Color(0xFFDDA22C) : Color(0XFFF2F4F0),
+              color: pillColor,
               borderRadius: BorderRadius.circular(20),
               child: InkWell(
                 borderRadius: BorderRadius.circular(20),
