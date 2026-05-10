@@ -438,46 +438,63 @@ class _AnalyticsAccordion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return KiseCardHolder(
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          InkWell(
+    final cs = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── Header card — fixed height, never changes ──
+        KiseCardHolder(
+          padding: EdgeInsets.zero,
+          child: InkWell(
             onTap: onToggle,
-            borderRadius:
-                BorderRadius.circular(AppDimensions.radiusLg),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppDimensions.md,
                 vertical: AppDimensions.sm + 4,
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Analytics', style: AppTextStyles.h3),
+                  Icon(
+                    LucideIcons.barChart2,
+                    size: 18,
+                    color: cs.onSurface,
+                  ),
+                  const SizedBox(width: AppDimensions.sm),
+                  Expanded(
+                    child: Text(
+                      'Analytics',
+                      style: AppTextStyles.h3
+                          .copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
                   AnimatedRotation(
                     turns: expanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 250),
-                    child: const Icon(
+                    child: Icon(
                       LucideIcons.chevronDown,
                       size: 20,
-                      color: AppColorsLight.textBody,
+                      color: cs.onSurface.withValues(alpha: 0.55),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          AnimatedCrossFade(
-            crossFadeState: expanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 280),
-            firstChild: const SizedBox(width: double.infinity),
-            secondChild: _AnalyticsBody(debts: debts),
+        ),
+
+        // ── Detached content — slides in below the header card ──
+        ClipRect(
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: expanded
+                ? _AnalyticsBody(debts: debts)
+                : const SizedBox.shrink(),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -521,80 +538,102 @@ class _AnalyticsBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final maxAmount = max(_totalLent, _totalBorrowed);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.md,
-        0,
-        AppDimensions.md,
-        AppDimensions.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Divider(height: 1),
-          const SizedBox(height: AppDimensions.md),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: AppDimensions.sm),
 
-          // ── Status stats row ──
-          _StatusStatsRow(
-              pending: _pending,
-              partial: _partial,
-              settled: _settled),
-          const SizedBox(height: AppDimensions.md),
+        // ── Status stat chips — directly on scaffold, no card bg ──
+        _StatusStatsRow(
+          pending: _pending,
+          partial: _partial,
+          settled: _settled,
+        ),
+        const SizedBox(height: AppDimensions.sm),
 
-          // ── Donut + legend ──
-          Text('Status Breakdown', style: AppTextStyles.bodySm),
-          const SizedBox(height: AppDimensions.sm),
-          _DonutSection(
-              pending: _pending,
-              partial: _partial,
-              settled: _settled),
-          const SizedBox(height: AppDimensions.md),
+        // ── Status Breakdown card ──
+        KiseCardHolder(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Status Breakdown',
+                style: AppTextStyles.bodySm
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: AppDimensions.sm),
+              _DonutSection(
+                pending: _pending,
+                partial: _partial,
+                settled: _settled,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppDimensions.sm),
 
-          // ── Lent vs Borrowed table ──
-          Text('Lent vs Borrowed Overview',
-              style: AppTextStyles.bodySm
-                  .copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: AppDimensions.sm),
-          _TableRow(
-            label: 'Total Lent',
-            amount: _totalLent,
-            progress:
-                maxAmount > 0 ? _totalLent / maxAmount : 0,
+        // ── Lent vs Borrowed Overview card ──
+        KiseCardHolder(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Lent vs Borrowed Overview',
+                style: AppTextStyles.bodySm
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: AppDimensions.sm),
+              _TableRow(
+                label: 'Total Lent',
+                amount: _totalLent,
+                progress: maxAmount > 0 ? _totalLent / maxAmount : 0,
+              ),
+              const SizedBox(height: AppDimensions.xs),
+              _TableRow(
+                label: 'Total Borrowed',
+                amount: _totalBorrowed,
+                progress:
+                    maxAmount > 0 ? _totalBorrowed / maxAmount : 0,
+              ),
+              const SizedBox(height: AppDimensions.xs),
+              _TableRow(
+                label: 'Outstanding (Owed to me)',
+                amount: _owedToMe,
+                progress:
+                    _totalLent > 0 ? _owedToMe / _totalLent : 0,
+                isOutstanding: true,
+              ),
+              const SizedBox(height: AppDimensions.xs),
+              _TableRow(
+                label: 'Outstanding (I owe)',
+                amount: _iOwe,
+                progress:
+                    _totalBorrowed > 0 ? _iOwe / _totalBorrowed : 0,
+                isOutstanding: true,
+              ),
+            ],
           ),
-          const SizedBox(height: AppDimensions.xs),
-          _TableRow(
-            label: 'Total Borrowed',
-            amount: _totalBorrowed,
-            progress:
-                maxAmount > 0 ? _totalBorrowed / maxAmount : 0,
-          ),
-          const SizedBox(height: AppDimensions.xs),
-          _TableRow(
-            label: 'Outstanding (Owed to me)',
-            amount: _owedToMe,
-            progress: _totalLent > 0 ? _owedToMe / _totalLent : 0,
-            isOutstanding: true,
-          ),
-          const SizedBox(height: AppDimensions.xs),
-          _TableRow(
-            label: 'Outstanding (I owe)',
-            amount: _iOwe,
-            progress:
-                _totalBorrowed > 0 ? _iOwe / _totalBorrowed : 0,
-            isOutstanding: true,
-          ),
-          const SizedBox(height: AppDimensions.md),
+        ),
+        const SizedBox(height: AppDimensions.sm),
 
-          // ── Active Balances ──
-          Text('Active Balances by Person',
-              style: AppTextStyles.bodySm
-                  .copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: AppDimensions.sm),
-          ...debts
-              .where((d) => d.status != DebtStatus.settled)
-              .map((d) => _PersonBalanceRow(debt: d)),
-        ],
-      ),
+        // ── Active Balances by Person card ──
+        KiseCardHolder(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Active Balances by Person',
+                style: AppTextStyles.bodySm
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: AppDimensions.sm),
+              ...debts
+                  .where((d) => d.status != DebtStatus.settled)
+                  .map((d) => _PersonBalanceRow(debt: d)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
