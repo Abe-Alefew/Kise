@@ -5,8 +5,6 @@ import 'package:uuid/uuid.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/colors.dart';
 import 'package:kise/core/theme/text_theme.dart';
-import 'package:kise/core/widgets/kise_action_button.dart';
-import 'package:kise/core/widgets/kise_form_system/kise_text_field.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
 
 class AddEditDebtModal extends StatefulWidget {
@@ -19,28 +17,36 @@ class AddEditDebtModal extends StatefulWidget {
 }
 
 class _AddEditDebtModalState extends State<AddEditDebtModal> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameCtrl = TextEditingController();
+  final _formKey    = GlobalKey<FormState>();
+  final _nameCtrl   = TextEditingController();
   final _amountCtrl = TextEditingController();
-  final _dateCtrl = TextEditingController();
-  final _notesCtrl = TextEditingController();
+  final _remainCtrl = TextEditingController();
+  final _dateCtrl   = TextEditingController();
+  final _notesCtrl  = TextEditingController();
 
   DebtType _type = DebtType.lent;
   DateTime _selectedDate = DateTime.now();
-  bool _showDetails = false;
 
   static final _dateFmt = DateFormat('MM/dd/yyyy');
+  static final _numFmt  = NumberFormat('#,##0.00');
 
   @override
   void initState() {
     super.initState();
     _dateCtrl.text = _dateFmt.format(_selectedDate);
+    _amountCtrl.addListener(_syncRemaining);
+  }
+
+  void _syncRemaining() {
+    final val = double.tryParse(_amountCtrl.text.replaceAll(',', ''));
+    _remainCtrl.text = val != null ? _numFmt.format(val) : '';
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _amountCtrl.dispose();
+    _remainCtrl.dispose();
     _dateCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
@@ -83,7 +89,7 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
     return Container(
       padding: EdgeInsets.fromLTRB(
         AppDimensions.md,
-        AppDimensions.sm,
+        AppDimensions.md,
         AppDimensions.md,
         AppDimensions.md + bottomPadding,
       ),
@@ -100,72 +106,123 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _ModalHandle(),
-              const SizedBox(height: AppDimensions.sm),
-              Text('New Debt Record', style: AppTextStyles.h3),
+              // ── Title row ──────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('New Debt Record', style: AppTextStyles.h3),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: AppColorsLight.secondaryBg,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        LucideIcons.x,
+                        size: 15,
+                        color: AppColorsLight.textBody,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: AppDimensions.md),
+
+              // ── Type selector ───────────────────────────────
               _TypeSelector(
                 selected: _type,
                 onChanged: (t) => setState(() => _type = t),
               ),
               const SizedBox(height: AppDimensions.md),
-              KiseTextField(
-                label: 'Person Name',
-                hint: 'Enter name',
-                controller: _nameCtrl,
-                validator: (v) =>
-                    (v?.isEmpty ?? true) ? 'Required' : null,
+
+              // ── Row 1: Person's Name ────────────────────────
+              _LabeledField(
+                label: "Person's Name",
+                child: _ModalInput(
+                  controller: _nameCtrl,
+                  hint: 'Who?',
+                  validator: (v) =>
+                      (v?.isEmpty ?? true) ? 'Required' : null,
+                ),
               ),
-              KiseTextField(
-                label: 'Total Amount',
-                hint: '0.00',
-                controller: _amountCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                icon: LucideIcons.banknote,
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Required';
-                  if (double.tryParse(v.replaceAll(',', '')) == null) {
-                    return 'Invalid amount';
-                  }
-                  return null;
-                },
+              const SizedBox(height: AppDimensions.sm),
+
+              // ── Row 2: Total Amount + Remaining ────────────
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _LabeledField(
+                      label: 'Total Amount',
+                      child: _ModalInput(
+                        controller: _amountCtrl,
+                        hint: '0.00',
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Required';
+                          if (double.tryParse(v.replaceAll(',', '')) ==
+                              null) {
+                            return 'Invalid';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.sm),
+                  Expanded(
+                    child: _LabeledField(
+                      label: 'Remaining',
+                      child: _ModalInput(
+                        controller: _remainCtrl,
+                        hint: '',
+                        readOnly: true,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              _DateField(controller: _dateCtrl, onTap: _pickDate),
-              const SizedBox(height: AppDimensions.xs),
-              _AddDetailsToggle(
-                value: _showDetails,
-                onChanged: (v) => setState(() => _showDetails = v),
+              const SizedBox(height: AppDimensions.sm),
+
+              // ── Row 3: Date ─────────────────────────────────
+              _LabeledField(
+                label: 'Date',
+                child: _ModalInput(
+                  controller: _dateCtrl,
+                  hint: _dateFmt.format(DateTime.now()),
+                  readOnly: true,
+                  onTap: _pickDate,
+                  suffixIcon: LucideIcons.calendar,
+                ),
               ),
-              AnimatedSize(
-                duration: const Duration(milliseconds: 200),
-                child: _showDetails
-                    ? Padding(
-                        padding: const EdgeInsets.only(top: AppDimensions.sm),
-                        child: KiseTextField(
-                          label: 'Notes (optional)',
-                          hint: 'Add any notes...',
-                          controller: _notesCtrl,
-                        ),
-                      )
-                    : const SizedBox.shrink(),
+              const SizedBox(height: AppDimensions.sm),
+
+              // ── Row 4: Notes (always visible) ───────────────
+              _LabeledField(
+                label: 'Notes (optional)',
+                child: _ModalInput(
+                  controller: _notesCtrl,
+                  hint: 'Any details...',
+                  maxLines: 3,
+                ),
               ),
               const SizedBox(height: AppDimensions.md),
+
+              // ── Action buttons ──────────────────────────────
               Row(
                 children: [
                   Expanded(
-                    child: KiseActionButton(
-                      label: 'Cancel',
-                      variant: KiseButtonVariant.ghost,
+                    child: _CancelButton(
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
                   const SizedBox(width: AppDimensions.sm),
                   Expanded(
-                    child: KiseActionButton(
-                      label: 'Add Record',
-                      onPressed: _submit,
-                    ),
+                    child: _AddButton(onPressed: _submit),
                   ),
                 ],
               ),
@@ -177,23 +234,9 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
   }
 }
 
-class _ModalHandle extends StatelessWidget {
-  const _ModalHandle();
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 40,
-        height: 4,
-        decoration: BoxDecoration(
-          color: AppColorsLight.textHint.withValues(alpha:0.4),
-          borderRadius: BorderRadius.circular(2),
-        ),
-      ),
-    );
-  }
-}
+// Type Selector
+
 
 class _TypeSelector extends StatelessWidget {
   final DebtType selected;
@@ -204,63 +247,61 @@ class _TypeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: DebtType.values.map((type) {
-        final isSelected = type == selected;
-        final label = type == DebtType.lent ? 'Lent' : 'Borrowed';
-        final isFirst = type == DebtType.lent;
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => onChanged(type),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              margin: EdgeInsets.only(right: isFirst ? 6 : 0),
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColorsLight.primary
-                    : AppColorsLight.secondaryBg,
-                borderRadius:
-                    BorderRadius.circular(AppDimensions.radiusSm),
-              ),
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isSelected
-                      ? AppColorsLight.textOnPrimary
-                      : AppColorsLight.textBody,
-                ),
-              ),
-            ),
+      children: [
+        Expanded(
+          child: _TypeButton(
+            label: 'I Lent',
+            isSelected: selected == DebtType.lent,
+            selectedColor: AppColorsLight.lentCardIcon,
+            onTap: () => onChanged(DebtType.lent),
           ),
-        );
-      }).toList(),
+        ),
+        const SizedBox(width: AppDimensions.sm),
+        Expanded(
+          child: _TypeButton(
+            label: 'I Borrowed',
+            isSelected: selected == DebtType.borrowed,
+            selectedColor: AppColorsLight.borrowedCardIcon,
+            onTap: () => onChanged(DebtType.borrowed),
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _DateField extends StatelessWidget {
-  final TextEditingController controller;
+class _TypeButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final Color selectedColor;
   final VoidCallback onTap;
 
-  const _DateField({required this.controller, required this.onTap});
+  const _TypeButton({
+    required this.label,
+    required this.isSelected,
+    required this.selectedColor,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
-        readOnly: true,
-        onTap: onTap,
-        decoration: InputDecoration(
-          labelText: 'Date',
-          prefixIcon: const Icon(LucideIcons.calendar),
-          border: OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(AppDimensions.radiusMd),
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        decoration: BoxDecoration(
+          color: isSelected ? selectedColor : AppColorsLight.secondaryBg,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color:
+                isSelected ? Colors.white : AppColorsLight.textBody,
           ),
         ),
       ),
@@ -268,26 +309,187 @@ class _DateField extends StatelessWidget {
   }
 }
 
-class _AddDetailsToggle extends StatelessWidget {
-  final bool value;
-  final ValueChanged<bool> onChanged;
 
-  const _AddDetailsToggle(
-      {required this.value, required this.onChanged});
+// Label-above-field wrapper
+
+
+class _LabeledField extends StatelessWidget {
+  final String label;
+  final Widget child;
+
+  const _LabeledField({required this.label, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Add Details', style: AppTextStyles.bodySm),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: AppColorsLight.primary,
-          activeTrackColor: AppColorsLight.primaryLight,
+        Text(
+          label,
+          style: AppTextStyles.label.copyWith(
+            color: AppColorsLight.textHeading,
+            fontWeight: FontWeight.w500,
+          ),
         ),
+        const SizedBox(height: AppDimensions.xs),
+        child,
       ],
+    );
+  }
+}
+
+
+// Input field — white bg, subtle border
+
+
+class _ModalInput extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final bool readOnly;
+  final TextInputType keyboardType;
+  final IconData? suffixIcon;
+  final VoidCallback? onTap;
+  final int maxLines;
+  final String? Function(String?)? validator;
+
+  const _ModalInput({
+    required this.controller,
+    required this.hint,
+    this.readOnly = false,
+    this.keyboardType = TextInputType.text,
+    this.suffixIcon,
+    this.onTap,
+    this.maxLines = 1,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final _borderColor =
+        AppColorsLight.textHeading.withValues(alpha: 0.18);
+    final _radius = BorderRadius.circular(AppDimensions.radiusSm);
+
+    final defaultBorder = OutlineInputBorder(
+      borderRadius: _radius,
+      borderSide: BorderSide(color: _borderColor, width: 1.0),
+    );
+    final focusedBorder = OutlineInputBorder(
+      borderRadius: _radius,
+      borderSide:
+          BorderSide(color: AppColorsLight.lentCardIcon, width: 1.5),
+    );
+    final errorBorder = OutlineInputBorder(
+      borderRadius: _radius,
+      borderSide: BorderSide(color: AppColorsLight.error, width: 1.0),
+    );
+
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      keyboardType:
+          maxLines > 1 ? TextInputType.multiline : keyboardType,
+      maxLines: maxLines,
+      onTap: onTap,
+      validator: validator,
+      style: AppTextStyles.bodySm.copyWith(
+        color: AppColorsLight.textHeading,
+      ),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: AppTextStyles.bodySm.copyWith(
+          color: AppColorsLight.textHint,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        suffixIcon: suffixIcon != null
+            ? Icon(suffixIcon, size: 18, color: AppColorsLight.textBody)
+            : null,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.sm + 4,
+          vertical: AppDimensions.sm + 2,
+        ),
+        border: defaultBorder,
+        enabledBorder: defaultBorder,
+        focusedBorder: focusedBorder,
+        errorBorder: errorBorder,
+        focusedErrorBorder: errorBorder.copyWith(
+          borderSide: BorderSide(
+              color: AppColorsLight.error, width: 1.5),
+        ),
+      ),
+    );
+  }
+}
+
+
+// Cancel button — outlined, black text, normal weight
+
+
+class _CancelButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  const _CancelButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: AppDimensions.authButtonHeight + 6,
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(
+            color: AppColorsLight.textHeading.withValues(alpha: 0.2),
+            width: 1,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(AppDimensions.radiusSm),
+          ),
+        ),
+        child: Text(
+          'Cancel',
+          style: AppTextStyles.bodySm.copyWith(
+            color: AppColorsLight.textHeading,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+// Add Record button — gold fill, white text, normal weight
+
+
+class _AddButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  const _AddButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: AppDimensions.authButtonHeight + 6,
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColorsLight.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(AppDimensions.radiusSm),
+          ),
+        ),
+        child: Text(
+          'Add Record',
+          style: AppTextStyles.bodySm.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ),
     );
   }
 }

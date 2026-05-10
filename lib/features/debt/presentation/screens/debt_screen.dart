@@ -111,6 +111,7 @@ class _DebtScreenState extends State<DebtScreen> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (_) => AddEditDebtModal(
         onAdd: (debt) => setState(() => _debts = [..._debts, debt]),
@@ -122,6 +123,7 @@ class _DebtScreenState extends State<DebtScreen> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (_) => DebtDetailModal(
         debt: debt,
