@@ -232,10 +232,9 @@ class _Header extends StatelessWidget {
           label: '+ Add',
           onPressed: onAdd,
           expanded: false,
-          borderRadius: 14,
-          expanded: false,
-          // width: 100,
+          width: 88,
           height: AppDimensions.authButtonHeight,
+          borderRadius: 14,
         ),
       ],
     );
@@ -260,7 +259,9 @@ class _SummaryCards extends StatelessWidget {
           child: _SummaryCard(
             label: 'Owed to me',
             amount: owedToMe,
-            color: AppColorsLight.success,
+            bgColor: AppColorsLight.lentCardBg,
+            icon: LucideIcons.arrowUpRight,
+            iconColor: AppColorsLight.lentCardIcon,
           ),
         ),
         const SizedBox(width: AppDimensions.sm),
@@ -268,7 +269,9 @@ class _SummaryCards extends StatelessWidget {
           child: _SummaryCard(
             label: 'I owe',
             amount: iOwe,
-            color: AppColorsLight.error,
+            bgColor: AppColorsLight.borrowedCardBg,
+            icon: LucideIcons.arrowDownLeft,
+            iconColor: AppColorsLight.borrowedCardIcon,
           ),
         ),
       ],
@@ -279,12 +282,16 @@ class _SummaryCards extends StatelessWidget {
 class _SummaryCard extends StatelessWidget {
   final String label;
   final double amount;
-  final Color color;
+  final Color bgColor;
+  final IconData icon;
+  final Color iconColor;
 
   const _SummaryCard({
     required this.label,
     required this.amount,
-    required this.color,
+    required this.bgColor,
+    required this.icon,
+    required this.iconColor,
   });
 
   static final _fmt = NumberFormat('#,##0.00');
@@ -292,15 +299,32 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return KiseCardHolder(
+      backgroundColor: bgColor,
+      borderColor: bgColor,
+      showShadow: false,
       padding: const EdgeInsets.all(AppDimensions.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTextStyles.label),
+          Row(
+            children: [
+              Icon(icon, size: 14, color: iconColor),
+              const SizedBox(width: AppDimensions.xs),
+              Text(label, style: AppTextStyles.label),
+            ],
+          ),
           const SizedBox(height: AppDimensions.xs),
           Text(
-            '${_fmt.format(amount)} ETB',
-            style: AppTextStyles.h3.copyWith(color: color),
+            _fmt.format(amount),
+            style: AppTextStyles.h3.copyWith(
+              color: AppColorsLight.textHeading,
+            ),
+          ),
+          Text(
+            'ETB',
+            style: AppTextStyles.h3.copyWith(
+              color: AppColorsLight.textHeading,
+            ),
           ),
         ],
       ),

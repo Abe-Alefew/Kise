@@ -113,12 +113,15 @@ class _PrimaryButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          // CORRECTION 2: Adjusted rounding to be less "pill-like"
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius ?? 12), 
+            borderRadius: BorderRadius.circular(borderRadius ?? 12),
           ),
-          // Ensure enough horizontal padding so text isn't cut off
           padding: const EdgeInsets.symmetric(horizontal: 16),
+          // Allow compact use — parent SizedBox (width:/height:) controls the size.
+          // Without this, the global theme's minimumSize: Size(∞, 52) fights
+          // any fixed-width wrapper and causes layout overflow on small buttons.
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
         child: _ButtonContent(
           label: label,
