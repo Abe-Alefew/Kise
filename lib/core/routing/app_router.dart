@@ -5,6 +5,7 @@ import 'package:kise/features/auth/presentation/screens/splash_screen.dart';
 import 'package:kise/features/auth/presentation/screens/onboarding_screen.dart';
 import 'package:kise/features/auth/presentation/screens/login_screen.dart';
 import 'package:kise/features/auth/presentation/screens/register_screen.dart';
+import 'package:kise/features/auth/presentation/screens/terms_and_conditions.dart';
 import 'package:kise/features/home/presentation/screens/home_dashboard.dart';
 import 'package:kise/features/transactions/presentation/screens/transactions_screen.dart';
 import 'package:kise/features/goals/presentation/screens/goals_screen.dart';
@@ -19,6 +20,7 @@ abstract class AppRoutes {
   static const String onboarding   = '/onboarding';
   static const String login        = '/login';
   static const String register     = '/register';
+  static const String terms = '/terms';
 
   // Main tabs
   static const String home         = '/home';
@@ -98,6 +100,10 @@ abstract class AppRouter {
       GoRoute(
         path: AppRoutes.register,
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.terms,
+        builder: (context, state) => const TermsAndConditionsScreen(),
       ),
 
       // ── Debt modal routes — ROOT LEVEL ──────────────────────────────────

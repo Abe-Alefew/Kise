@@ -21,6 +21,8 @@ class KiseActionButton extends StatelessWidget {
     this.isLoading = false,
     this.variant = KiseButtonVariant.primary,
     this.leadingIcon,
+    this.textColor,
+    this.fontSize,
     this.width,
     this.height = AppDimensions.buttonHeight,
     this.expanded = true, // full-width by default
@@ -32,6 +34,8 @@ class KiseActionButton extends StatelessWidget {
   final bool isLoading;
   final KiseButtonVariant variant;
   final IconData? leadingIcon;
+  final Color? textColor;
+  final double? fontSize;
   final double? width;
   final double height;
   final bool expanded;
@@ -50,6 +54,8 @@ class KiseActionButton extends StatelessWidget {
           onPressed: _effectiveOnPressed,
           isLoading: isLoading,
           leadingIcon: leadingIcon,
+          textColor: textColor,
+          fontSize: fontSize,
           height: height,
           borderRadius: borderRadius,
         ),
@@ -58,6 +64,8 @@ class KiseActionButton extends StatelessWidget {
           onPressed: _effectiveOnPressed,
           isLoading: isLoading,
           leadingIcon: leadingIcon,
+          textColor: textColor,
+          fontSize: fontSize,
           height: height,
           borderRadius: borderRadius,
         ),
@@ -65,6 +73,8 @@ class KiseActionButton extends StatelessWidget {
           label: label,
           onPressed: _effectiveOnPressed,
           isLoading: isLoading,
+          textColor: textColor,
+          fontSize: fontSize,
           height: height,
           borderRadius: borderRadius,
         ),
@@ -95,12 +105,16 @@ class _PrimaryButton extends StatelessWidget {
     required this.height,
     this.leadingIcon,
     this.borderRadius, 
+    this.textColor,
+    this.fontSize,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
   final IconData? leadingIcon;
+  final Color? textColor;
+  final double? fontSize;
   final double height;
   final double? borderRadius;
   
@@ -127,6 +141,8 @@ class _PrimaryButton extends StatelessWidget {
           label: label,
           leadingIcon: leadingIcon,
           isLoading: isLoading,
+          textColor: textColor,
+          fontSize: fontSize,
           // spinner color — white on gold
           spinnerColor: Theme.of(context).colorScheme.onPrimary,
         ),
@@ -146,12 +162,16 @@ class _OutlineButton extends StatelessWidget {
     required this.height,
     this.leadingIcon,
     this.borderRadius, 
+    this.textColor,
+    this.fontSize,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
   final IconData? leadingIcon;
+  final Color? textColor;
+  final double? fontSize;
   final double height;
   final double? borderRadius;
   
@@ -166,6 +186,8 @@ class _OutlineButton extends StatelessWidget {
           label: label,
           leadingIcon: leadingIcon,
           isLoading: isLoading,
+          textColor: textColor,
+          fontSize: fontSize,
           // spinner color — gold on transparent
           spinnerColor: Theme.of(context).colorScheme.primary,
         ),
@@ -184,6 +206,8 @@ class _GhostButton extends StatelessWidget {
     required this.isLoading,
     required this.height,
     this.borderRadius, 
+    this.textColor,
+    this.fontSize,
   });
 
   final String label;
@@ -191,6 +215,8 @@ class _GhostButton extends StatelessWidget {
   final bool isLoading;
   final double height;
   final double? borderRadius;
+  final Color? textColor;
+  final double? fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -202,6 +228,8 @@ class _GhostButton extends StatelessWidget {
         child: _ButtonContent(
           label: label,
           isLoading: isLoading,
+          textColor: textColor,
+          fontSize: fontSize,
           spinnerColor: Theme.of(context).colorScheme.primary,
         ),
       ),
@@ -218,12 +246,16 @@ class _ButtonContent extends StatelessWidget {
     required this.isLoading,
     required this.spinnerColor,
     this.leadingIcon,
+    this.textColor,
+    this.fontSize,
   });
 
   final String label;
   final bool isLoading;
   final Color spinnerColor;
   final IconData? leadingIcon;
+  final Color? textColor;
+  final double? fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -243,13 +275,19 @@ class _ButtonContent extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(leadingIcon, size: 18),
+          Icon(leadingIcon, size: 18, color: textColor),
           const SizedBox(width: AppDimensions.sm),
-          Text(label),
+          Text(
+            label,
+            style: TextStyle(color: textColor, fontSize: fontSize),
+          ),
         ],
       );
     }
 
-    return Text(label);
+    return Text(
+      label,
+      style: TextStyle(color: textColor, fontSize: fontSize),
+    );
   }
 }

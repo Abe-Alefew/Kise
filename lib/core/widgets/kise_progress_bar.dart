@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kise/core/theme/colors.dart';
 
 // @ USAGE: KiseProgressBar(0.5, 15 (optional: have default), Duration(milliseconds: 200) (optional: have default))
 
@@ -12,7 +13,7 @@ class KiseProgressBar extends StatelessWidget {
     const KiseProgressBar({
         super.key,
         required this.progress,
-        this.height = 20,
+        this.height = 8,
         this.duration = const Duration(milliseconds: 400),
         this.fillColor,
         this.trackColor,
@@ -20,6 +21,8 @@ class KiseProgressBar extends StatelessWidget {
 
     @override
     Widget build(BuildContext context) {
+        bool isDark = Theme.of(context).brightness == Brightness.dark;
+
         return ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LayoutBuilder(
@@ -27,7 +30,7 @@ class KiseProgressBar extends StatelessWidget {
                     return Container(
                         width: double.infinity,
                         height: height,
-                        color: trackColor ?? const Color(0xFFF2EAD9),
+                        color: trackColor ?? const isDark ? AppColorsDark.secondaryBg : AppColorsLight.secondaryBg,
                         child: Stack(
                             children: [
                                 AnimatedContainer(
@@ -36,7 +39,7 @@ class KiseProgressBar extends StatelessWidget {
                                     width: constraints.maxWidth * progress.clamp(0.0, 1.0),
                                     height: height,
                                     decoration: BoxDecoration(
-                                        color: fillColor ?? const Color(0xffDDA22C),
+                                        color: fillColor ?? const isDark ? AppColorsDark.primary : AppColorsLight.primary,
                                         borderRadius: BorderRadius.circular(height / 2),
                                     ),
                                 )

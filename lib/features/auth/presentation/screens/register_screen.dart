@@ -311,11 +311,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           fontSize: AppDimensions.fontSizeCaption,
                         ),
                       ),
-                      TextSpan(
-                        text: 'terms and the conditions of Kise',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.primary,
-                          fontSize: AppDimensions.fontSizeCaption,
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: GestureDetector(
+                          onTap: () => context.push(AppRoutes.terms),
+                          child: Text(
+                            'terms and the conditions of Kise',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.primary,
+                              fontSize: AppDimensions.fontSizeCaption,
+                            ),
+                          ),
                         ),
                       ),
                     ],
