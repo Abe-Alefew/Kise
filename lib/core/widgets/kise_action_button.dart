@@ -26,6 +26,7 @@ class KiseActionButton extends StatelessWidget {
     this.width,
     this.height = AppDimensions.buttonHeight,
     this.expanded = true, // full-width by default
+    this.borderRadius,
   });
 
   final String label;
@@ -38,6 +39,7 @@ class KiseActionButton extends StatelessWidget {
   final double? width;
   final double height;
   final bool expanded;
+  final double? borderRadius;
 
   // ── Resolve effective callback ──────────────
   // Blocks tap during loading without extra flags
@@ -55,6 +57,7 @@ class KiseActionButton extends StatelessWidget {
           textColor: textColor,
           fontSize: fontSize,
           height: height,
+          borderRadius: borderRadius,
         ),
       KiseButtonVariant.outline => _OutlineButton(
           label: label,
@@ -64,6 +67,7 @@ class KiseActionButton extends StatelessWidget {
           textColor: textColor,
           fontSize: fontSize,
           height: height,
+          borderRadius: borderRadius,
         ),
       KiseButtonVariant.ghost => _GhostButton(
           label: label,
@@ -71,7 +75,9 @@ class KiseActionButton extends StatelessWidget {
           isLoading: isLoading,
           textColor: textColor,
           fontSize: fontSize,
+         
           height: height,
+          borderRadius: borderRadius,
         ),
     };
 
@@ -99,6 +105,7 @@ class _PrimaryButton extends StatelessWidget {
     required this.isLoading,
     required this.height,
     this.leadingIcon,
+    this.borderRadius, 
     this.textColor,
     this.fontSize,
   });
@@ -110,6 +117,8 @@ class _PrimaryButton extends StatelessWidget {
   final Color? textColor;
   final double? fontSize;
   final double height;
+  final double? borderRadius;
+  
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +127,17 @@ class _PrimaryButton extends StatelessWidget {
       height: height,
       child: ElevatedButton(
         onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius ?? 12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          // Allow compact use — parent SizedBox (width:/height:) controls the size.
+          // Without this, the global theme's minimumSize: Size(∞, 52) fights
+          // any fixed-width wrapper and causes layout overflow on small buttons.
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
         child: _ButtonContent(
           label: label,
           leadingIcon: leadingIcon,
@@ -142,6 +162,7 @@ class _OutlineButton extends StatelessWidget {
     required this.isLoading,
     required this.height,
     this.leadingIcon,
+    this.borderRadius, 
     this.textColor,
     this.fontSize,
   });
@@ -153,7 +174,8 @@ class _OutlineButton extends StatelessWidget {
   final Color? textColor;
   final double? fontSize;
   final double height;
-
+  final double? borderRadius;
+  
   @override
   Widget build(BuildContext context) {
     // OutlinedButtonTheme from app_theme.dart is inherited automatically
@@ -184,6 +206,7 @@ class _GhostButton extends StatelessWidget {
     required this.onPressed,
     required this.isLoading,
     required this.height,
+    this.borderRadius, 
     this.textColor,
     this.fontSize,
   });
@@ -192,6 +215,7 @@ class _GhostButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final double height;
+  final double? borderRadius;
   final Color? textColor;
   final double? fontSize;
 

@@ -20,6 +20,14 @@ abstract class _KisePalette {
   // Semantic
   static const Color error   = Color(0xFFDF3A3A); // Destructive
   static const Color success = Color(0xFF2BAB68); // Success
+
+  // Debt feature card tints
+  static const Color skyBlue50  = Color(0xFFEFF6FD); // lent card bg
+  static const Color blue600    = Color(0xFF1976D2); // lent card icon
+  static const Color peach50    = Color(0xFFFFF6EE); // borrowed card bg
+  static const Color orange600  = Color(0xFFE65100); // borrowed card icon
+  static const Color green50    = Color(0xFFEAF7F0); // settled card bg
+
 }
 
 // Private palette for Dark Mode values 
@@ -60,6 +68,19 @@ abstract class AppColorsDark {
   static const Color error        = _KiseDarkPalette.errorRed;
   static const Color success      = _KiseDarkPalette.successGreen;
   static const Color border       = _KiseDarkPalette.charcoal700;
+
+  // Debt feature card tints (dark variants)
+  static const Color lentCardBg      = Color(0xFF152233);
+  static const Color lentCardIcon    = Color(0xFF64B5F6);
+  static const Color borrowedCardBg  = Color(0xFF2A1A08);
+  static const Color borrowedCardIcon = Color(0xFFFFB74D);
+  static const Color settledCardBg   = Color(0xFF0D2B1A);
+  static const Color settledCardIcon = Color(0xFF81C784);
+
+  // Analytics chart segment colors (dark mode)
+  static const Color pendingChart    = Color(0xFFFF8A65);
+  static const Color partialChart    = Color(0xFF90CAF9);
+  static const Color settledChart    = Color(0xFFA5D6A7);
 }
 
 // Semantic layer — what widgets actually import
@@ -84,4 +105,17 @@ abstract class AppColorsLight {
   // Semantic
   static const Color error        = _KisePalette.error;
   static const Color success      = _KisePalette.success;
+
+  // Debt feature card tints
+  static const Color lentCardBg      = _KisePalette.skyBlue50;
+  static const Color lentCardIcon    = _KisePalette.blue600;
+  static const Color borrowedCardBg  = _KisePalette.peach50;
+  static const Color borrowedCardIcon = _KisePalette.orange600;
+  static const Color settledCardBg   = _KisePalette.green50;
+  static const Color settledCardIcon = _KisePalette.success;
+
+  // Analytics chart segment colors (full-saturation, 100% opacity)
+  static const Color pendingChart  = _KisePalette.orange600;
+  static const Color partialChart  = _KisePalette.blue600;
+  static const Color settledChart  = _KisePalette.success;
 }
