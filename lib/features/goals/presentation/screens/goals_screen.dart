@@ -4,7 +4,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:kise/core/theme/colors.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
-import 'package:kise/core/widgets/kise_pill_filter.dart';
 import 'package:kise/features/goals/presentation/widgets/goal_card.dart';
 import 'package:kise/features/goals/presentation/widgets/new_goal_bottom_sheet.dart';
 
@@ -162,7 +161,15 @@ class _GoalsScreenState extends State<GoalsScreen> {
               ),
               const SizedBox(height: AppDimensions.lg),
               // Goal Cards List
-              Expanded(
+              _filteredGoals.isEmpty
+                  ? const Expanded(
+                      child: KiseEmptyIndicator(
+                        title: 'No goals found',
+                        subtitle: 'Try adjusting your filters or add a new goal.',
+                        icon: LucideIcons.target,
+                      ),
+                    )
+                  : Expanded(
                 child: ListView.builder(
                   itemCount: _filteredGoals.length,
                   // padding: const EdgeInsets.only(bottom: AppDimensions.lg),
