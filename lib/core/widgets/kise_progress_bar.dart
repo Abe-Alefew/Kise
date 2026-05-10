@@ -30,7 +30,7 @@ class KiseProgressBar extends StatelessWidget {
                     return Container(
                         width: double.infinity,
                         height: height,
-                        color: trackColor ?? const isDark ? AppColorsDark.secondaryBg : AppColorsLight.secondaryBg,
+                        color: trackColor ?? (isDark ? AppColorsDark.secondaryBg : AppColorsLight.secondaryBg),
                         child: Stack(
                             children: [
                                 AnimatedContainer(
@@ -39,7 +39,7 @@ class KiseProgressBar extends StatelessWidget {
                                     width: constraints.maxWidth * progress.clamp(0.0, 1.0),
                                     height: height,
                                     decoration: BoxDecoration(
-                                        color: fillColor ?? const isDark ? AppColorsDark.primary : AppColorsLight.primary,
+                                        color: fillColor ?? (isDark ? AppColorsDark.primary : AppColorsLight.primary),
                                         borderRadius: BorderRadius.circular(height / 2),
                                     ),
                                 )
