@@ -15,26 +15,28 @@ class BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColorsLight.primary,
+        color: isDark ? AppColorsDark.primary : AppColorsLight.primary,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             "TOTAL BALANCE",
             style: TextStyle(
-              color: AppColorsLight.textOnPrimary,
+              color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
           ),
           Text(
             "${totalBalance.toStringAsFixed(2)} ETB",
-            style: const TextStyle(
-              color: AppColorsLight.textOnPrimary,
+            style: TextStyle(
+              color: Colors.white,
               fontSize: 32,
               fontWeight: FontWeight.bold,
             ),
@@ -43,8 +45,8 @@ class BalanceCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStat(Icons.trending_up, "Income", income),
-              _buildStat(Icons.trending_down, "Expenses", expenses),
+              _buildStat(context, Icons.trending_up, "Income", income),
+              _buildStat(context, Icons.trending_down, "Expenses", expenses),
             ],
           ),
         ],
@@ -52,13 +54,15 @@ class BalanceCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStat(IconData icon, String title, double amount) {
+  Widget _buildStat(BuildContext context, IconData icon, String title, double amount) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Row(
       children: [
         CircleAvatar(
           radius: 14,
-          backgroundColor: AppColorsLight.textOnPrimary.withOpacity(0.2),
-          child: Icon(icon, color: AppColorsLight.textOnPrimary, size: 16),
+          backgroundColor: Colors.white.withOpacity(0.2),
+          child: Icon(icon, color: Colors.white, size: 16),
         ),
         const SizedBox(width: 8),
         Column(
@@ -66,12 +70,12 @@ class BalanceCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(color: AppColorsLight.textOnPrimary, fontSize: 12),
+              style: TextStyle(color: Colors.white, fontSize: 12),
             ),
             Text(
               "${amount.toStringAsFixed(2)} ETB",
-              style: const TextStyle(
-                color: AppColorsLight.textOnPrimary,
+              style: TextStyle(
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),

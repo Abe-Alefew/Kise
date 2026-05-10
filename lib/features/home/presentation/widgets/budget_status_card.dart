@@ -9,6 +9,8 @@ class BudgetStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return KiseCardHolder(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -20,12 +22,12 @@ class BudgetStatusCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColorsLight.primary.withOpacity(0.1),
+                    color: (isDark ? AppColorsDark.primary : AppColorsLight.primary).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.balance,
-                    color: AppColorsLight.primary,
+                    color: isDark ? AppColorsDark.primary : AppColorsLight.primary,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -38,12 +40,13 @@ class BudgetStatusCard extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          color: isDark ? AppColorsDark.textHeading : AppColorsLight.textHeading,
                         ),
                       ),
                       Text(
                         "Good Balance between spending and saving",
                         style: TextStyle(
-                          color: AppColorsLight.textHint,
+                          color: isDark ? AppColorsDark.textHint : AppColorsLight.textHint,
                           fontSize: 12,
                         ),
                       ),
@@ -56,18 +59,19 @@ class BudgetStatusCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   "Spend ration",
                   style: TextStyle(
-                    color: AppColorsLight.textHint,
+                    color: isDark ? AppColorsDark.textHint : AppColorsLight.textHint,
                     fontSize: 12,
                   ),
                 ),
                 Text(
                   "${(spendRatio * 100).toInt()}%",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
+                    color: isDark ? AppColorsDark.textHeading : AppColorsLight.textHeading,
                   ),
                 ),
               ],
@@ -75,18 +79,18 @@ class BudgetStatusCard extends StatelessWidget {
             const SizedBox(height: 8),
             KiseProgressBar(progress: spendRatio), // Zeamanuel's core widget
             const SizedBox(height: 12),
-            const Row(
+            Row(
               children: [
                 Icon(
                   Icons.lightbulb_outline,
                   size: 16,
-                  color: AppColorsLight.primary,
+                  color: isDark ? AppColorsDark.primary : AppColorsLight.primary,
                 ),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     "Try to push your savings a bit higher.",
-                    style: TextStyle(fontSize: 12),
+                    style: TextStyle(fontSize: 12, color: isDark ? AppColorsDark.textBody : AppColorsLight.textBody),
                   ),
                 ),
               ],
