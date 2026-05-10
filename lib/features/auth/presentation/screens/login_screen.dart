@@ -7,6 +7,7 @@ import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/widgets.dart';
+import 'success_screen.dart';
 
 class LoginScreen extends StatefulWidget {
 	const LoginScreen({super.key});
@@ -30,10 +31,16 @@ class _LoginScreenState extends State<LoginScreen> {
 	Future<void> _handleLogin() async {
 		if (!(_formKey.currentState?.validate() ?? false)) return;
 
+		final router = GoRouter.of(context);
+		router.push(AppRoutes.loading);
+
 		final prefs = await SharedPreferences.getInstance();
 		await prefs.setBool(AppStorageKeys.authLoggedIn, true);
 		if (!mounted) return;
-		context.go(AppRoutes.home);
+		if (router.canPop()) {
+			router.pop();
+		}
+		router.go(AppRoutes.success, extra: SuccessType.signIn);
 	}
 
 	@override

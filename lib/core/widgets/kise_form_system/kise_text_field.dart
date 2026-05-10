@@ -26,7 +26,7 @@ class KiseTextField extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Container(
-        height: 40,
+        constraints: const BoxConstraints(minHeight: 40),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           boxShadow: const [
@@ -43,6 +43,11 @@ class KiseTextField extends StatelessWidget {
           obscureText: isPassword,
           keyboardType: keyboardType,
           decoration: InputDecoration(
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
             labelText: label,
             hintText: hint,
             prefixIcon: icon != null ? Icon(icon) : null,
