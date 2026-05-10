@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:uuid/uuid.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
-import 'package:kise/core/theme/colors.dart';
+import 'package:kise/core/theme/app_theme_ext.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/core/widgets/kise_card_holder.dart';
 import 'package:kise/core/widgets/kise_progress_bar.dart';
@@ -33,11 +33,11 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
   bool _paymentFormVisible = false;
 
   final _amountCtrl = TextEditingController(text: '0.00');
-  final _dateCtrl   = TextEditingController();
-  final _notesCtrl  = TextEditingController();
+  final _dateCtrl = TextEditingController();
+  final _notesCtrl = TextEditingController();
   DateTime _paymentDate = DateTime.now();
 
-  static final _amtFmt  = NumberFormat('#,##0.00');
+  static final _amtFmt = NumberFormat('#,##0.00');
   static final _dateFmt = DateFormat('MM/dd/yyyy');
 
   @override
@@ -70,16 +70,13 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
   }
 
   void _confirmPayment() {
-    final amount =
-        double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
+    final amount = double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
     if (amount <= 0) return;
     final record = PaymentRecord(
       id: const Uuid().v4(),
       amount: amount,
       date: _paymentDate,
-      notes: _notesCtrl.text.trim().isEmpty
-          ? null
-          : _notesCtrl.text.trim(),
+      notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
     );
     Navigator.pop(context);
     widget.onPayment(record);
@@ -108,8 +105,8 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
 
   @override
   Widget build(BuildContext context) {
-    final debt    = widget.debt;
-    final isLent  = debt.type == DebtType.lent;
+    final debt = widget.debt;
+    final isLent = debt.type == DebtType.lent;
     final progress = debt.totalAmount > 0
         ? (debt.paidAmount / debt.totalAmount).clamp(0.0, 1.0)
         : 0.0;
@@ -123,9 +120,9 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
         AppDimensions.md,
         AppDimensions.md + bottomInset,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(
+      decoration: BoxDecoration(
+        color: context.kiseCard,
+        borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppDimensions.radiusLg),
         ),
       ),
@@ -146,14 +143,19 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
                     children: [
                       Row(
                         children: [
-                          Text(debt.personName, style: AppTextStyles.h3),
+                          Text(
+                            debt.personName,
+                            style: AppTextStyles.h3.copyWith(
+                              color: context.kiseTextHeading,
+                            ),
+                          ),
                           const SizedBox(width: AppDimensions.xs + 2),
                           GestureDetector(
                             onTap: _openEditModal,
-                            child: const Icon(
+                            child: Icon(
                               LucideIcons.pencil,
                               size: 15,
-                              color: AppColorsLight.textBody,
+                              color: context.kiseTextBody,
                             ),
                           ),
                         ],
@@ -164,8 +166,7 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
                         '${DateFormat('MMM d, yyyy').format(debt.date)}',
                         style: AppTextStyles.micro.copyWith(
                           fontWeight: FontWeight.w500,
-                          color: AppColorsLight.textHeading
-                              .withValues(alpha: 0.50),
+                          color: context.kiseTextHeading.withValues(alpha: 0.50),
                         ),
                       ),
                     ],
@@ -177,13 +178,13 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: AppColorsLight.secondaryBg,
+                      color: context.kiseSecondaryBg,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       LucideIcons.x,
                       size: 15,
-                      color: AppColorsLight.textBody,
+                      color: context.kiseTextBody,
                     ),
                   ),
                 ),
@@ -202,15 +203,14 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
                       Text(
                         '${_amtFmt.format(debt.remaining)} ETB',
                         style: AppTextStyles.amountLg.copyWith(
-                          color: AppColorsLight.textHeading,
+                          color: context.kiseTextHeading,
                         ),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         'remaining of ${_amtFmt.format(debt.totalAmount)} ETB',
                         style: AppTextStyles.bodySm.copyWith(
-                          color: AppColorsLight.textHeading
-                              .withValues(alpha: 0.55),
+                          color: context.kiseTextHeading.withValues(alpha: 0.55),
                         ),
                       ),
                     ],
@@ -229,15 +229,13 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
                 Text(
                   'Paid so far',
                   style: AppTextStyles.bodySm.copyWith(
-                    color: AppColorsLight.textHeading
-                        .withValues(alpha: 0.55),
+                    color: context.kiseTextHeading.withValues(alpha: 0.55),
                   ),
                 ),
                 Text(
-                  '${_amtFmt.format(debt.paidAmount)} ETB ($pct%)',
+                  '$pct% (${_amtFmt.format(debt.paidAmount)} ETB)',
                   style: AppTextStyles.bodySm.copyWith(
-                    color: AppColorsLight.textHeading
-                        .withValues(alpha: 0.55),
+                    color: context.kiseTextHeading.withValues(alpha: 0.55),
                   ),
                 ),
               ],
@@ -246,8 +244,8 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
             KiseProgressBar(
               progress: progress,
               height: 6,
-              fillColor: AppColorsLight.primary,
-              trackColor: AppColorsLight.secondaryBg,
+              fillColor: context.kiseSuccess,
+              trackColor: context.kiseSuccess.withValues(alpha: 0.12),
             ),
             const SizedBox(height: AppDimensions.md),
 
@@ -273,12 +271,13 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
                           onPressed: () =>
                               setState(() => _paymentFormVisible = true),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColorsLight.primary,
+                            backgroundColor: context.kisePrimary,
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
-                                  AppDimensions.radiusSm),
+                                AppDimensions.radiusSm,
+                              ),
                             ),
                           ),
                           child: Text(
@@ -299,9 +298,7 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
   }
 }
 
-
 // Type icon — matches DebtCard
-
 
 class _TypeIcon extends StatelessWidget {
   final bool isLent;
@@ -309,31 +306,23 @@ class _TypeIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isLent
-        ? AppColorsLight.lentCardBg
-        : AppColorsLight.borrowedCardBg;
-    final iconColor = isLent
-        ? AppColorsLight.lentCardIcon
-        : AppColorsLight.borrowedCardIcon;
-    final icon =
-        isLent ? LucideIcons.arrowUpRight : LucideIcons.arrowDownLeft;
+    final bg = isLent ? context.kiseLentCardBg : context.kiseBorrowedCardBg;
+    final iconColor = isLent ? context.kiseLentCardIcon : context.kiseBorrowedCardIcon;
+    final icon = isLent ? LucideIcons.arrowUpRight : LucideIcons.arrowDownLeft;
 
     return Container(
       width: 42,
       height: 42,
       decoration: BoxDecoration(
         color: bg,
-        borderRadius:
-            BorderRadius.circular(AppDimensions.radiusSm + 2),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSm + 2),
       ),
       child: Icon(icon, color: iconColor, size: 20),
     );
   }
 }
 
-
 // Payment Form Card
-
 
 class _PaymentFormCard extends StatelessWidget {
   final TextEditingController amountCtrl;
@@ -360,7 +349,7 @@ class _PaymentFormCard extends StatelessWidget {
         children: [
           Text(
             'Record Payment Received',
-            style: AppTextStyles.h3,
+            style: AppTextStyles.h3.copyWith(color: context.kiseTextHeading),
           ),
           const SizedBox(height: AppDimensions.md),
 
@@ -416,9 +405,7 @@ class _PaymentFormCard extends StatelessWidget {
   }
 }
 
-
 // Label above field
-
 
 class _FormLabel extends StatelessWidget {
   final String label;
@@ -434,7 +421,7 @@ class _FormLabel extends StatelessWidget {
         Text(
           label,
           style: AppTextStyles.label.copyWith(
-            color: AppColorsLight.textHeading,
+            color: context.kiseTextHeading,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -445,58 +432,45 @@ class _FormLabel extends StatelessWidget {
   }
 }
 
-
 // Shared input border helper
 
-
-OutlineInputBorder _inputBorder({double width = 1.0, Color? color}) =>
+OutlineInputBorder _inputBorder({double width = 1.0, required Color color}) =>
     OutlineInputBorder(
-      borderRadius:
-          BorderRadius.circular(AppDimensions.radiusSm),
-      borderSide: BorderSide(
-        color: color ??
-            AppColorsLight.textHeading.withValues(alpha: 0.18),
-        width: width,
-      ),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+      borderSide: BorderSide(color: color, width: width),
     );
 
-
 // Spinner input (amount with up/down chevrons)
-
 
 class _SpinnerInput extends StatelessWidget {
   final TextEditingController controller;
   const _SpinnerInput({required this.controller});
 
   void _adjust(double delta) {
-    final val =
-        double.tryParse(controller.text.replaceAll(',', '')) ?? 0;
+    final val = double.tryParse(controller.text.replaceAll(',', '')) ?? 0;
     final next = (val + delta).clamp(0.0, double.infinity);
     controller.text = next.toStringAsFixed(2);
-    controller.selection =
-        TextSelection.collapsed(offset: controller.text.length);
+    controller.selection = TextSelection.collapsed(
+      offset: controller.text.length,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final borderColor = context.kiseTextHeading.withValues(alpha: 0.18);
     return TextFormField(
       controller: controller,
-      keyboardType:
-          const TextInputType.numberWithOptions(decimal: true),
-      style: AppTextStyles.bodySm
-          .copyWith(color: AppColorsLight.textHeading),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: AppTextStyles.bodySm.copyWith(color: context.kiseTextHeading),
       decoration: InputDecoration(
         hintText: '0.00',
-        hintStyle: AppTextStyles.bodySm
-            .copyWith(color: AppColorsLight.textHint),
+        hintStyle: AppTextStyles.bodySm.copyWith(color: context.kiseTextHint),
         filled: true,
-        fillColor: Colors.white,
-        border: _inputBorder(),
-        enabledBorder: _inputBorder(),
-        focusedBorder: _inputBorder(
-            width: 1.5, color: AppColorsLight.lentCardIcon),
-        errorBorder:
-            _inputBorder(width: 1.0, color: AppColorsLight.error),
+        fillColor: context.kiseCard,
+        border: _inputBorder(color: borderColor),
+        enabledBorder: _inputBorder(color: borderColor),
+        focusedBorder: _inputBorder(width: 1.5, color: context.kiseLentCardIcon),
+        errorBorder: _inputBorder(color: context.kiseError),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.sm + 4,
           vertical: AppDimensions.sm + 2,
@@ -507,13 +481,19 @@ class _SpinnerInput extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () => _adjust(1),
-              child: const Icon(LucideIcons.chevronUp,
-                  size: 13, color: AppColorsLight.textBody),
+              child: Icon(
+                LucideIcons.chevronUp,
+                size: 13,
+                color: context.kiseTextBody,
+              ),
             ),
             GestureDetector(
               onTap: () => _adjust(-1),
-              child: const Icon(LucideIcons.chevronDown,
-                  size: 13, color: AppColorsLight.textBody),
+              child: Icon(
+                LucideIcons.chevronDown,
+                size: 13,
+                color: context.kiseTextBody,
+              ),
             ),
           ],
         ),
@@ -522,9 +502,7 @@ class _SpinnerInput extends StatelessWidget {
   }
 }
 
-
 // Plain input (date / notes)
-
 
 class _PaymentInput extends StatelessWidget {
   final TextEditingController controller;
@@ -545,42 +523,35 @@ class _PaymentInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final borderColor = context.kiseTextHeading.withValues(alpha: 0.18);
     return TextFormField(
       controller: controller,
       readOnly: readOnly,
-      keyboardType: maxLines > 1
-          ? TextInputType.multiline
-          : TextInputType.text,
+      keyboardType: maxLines > 1 ? TextInputType.multiline : TextInputType.text,
       maxLines: maxLines,
       onTap: onTap,
-      style: AppTextStyles.bodySm
-          .copyWith(color: AppColorsLight.textHeading),
+      style: AppTextStyles.bodySm.copyWith(color: context.kiseTextHeading),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: AppTextStyles.bodySm
-            .copyWith(color: AppColorsLight.textHint),
+        hintStyle: AppTextStyles.bodySm.copyWith(color: context.kiseTextHint),
         filled: true,
-        fillColor: Colors.white,
-        border: _inputBorder(),
-        enabledBorder: _inputBorder(),
-        focusedBorder: _inputBorder(
-            width: 1.5, color: AppColorsLight.lentCardIcon),
+        fillColor: context.kiseCard,
+        border: _inputBorder(color: borderColor),
+        enabledBorder: _inputBorder(color: borderColor),
+        focusedBorder: _inputBorder(width: 1.5, color: context.kiseLentCardIcon),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.sm + 4,
           vertical: AppDimensions.sm + 2,
         ),
         suffixIcon: suffixIcon != null
-            ? Icon(suffixIcon, size: 18,
-                color: AppColorsLight.textBody)
+            ? Icon(suffixIcon, size: 18, color: context.kiseTextBody)
             : null,
       ),
     );
   }
 }
 
-
 // Cancel button
-
 
 class _FormCancelBtn extends StatelessWidget {
   final VoidCallback onPressed;
@@ -595,18 +566,17 @@ class _FormCancelBtn extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           side: BorderSide(
-            color: AppColorsLight.textHeading.withValues(alpha: 0.2),
+            color: context.kiseTextHeading.withValues(alpha: 0.2),
             width: 1,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(AppDimensions.radiusSm),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
           ),
         ),
         child: Text(
           'Cancel',
           style: AppTextStyles.bodySm.copyWith(
-            color: AppColorsLight.textHeading,
+            color: context.kiseTextHeading,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -615,9 +585,7 @@ class _FormCancelBtn extends StatelessWidget {
   }
 }
 
-
 // Confirm Payment button
-
 
 class _FormConfirmBtn extends StatelessWidget {
   final VoidCallback onPressed;
@@ -631,12 +599,11 @@ class _FormConfirmBtn extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColorsLight.primary,
+          backgroundColor: context.kisePrimary,
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(AppDimensions.radiusSm),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
           ),
         ),
         child: Text(

@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:uuid/uuid.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
-import 'package:kise/core/theme/colors.dart';
+import 'package:kise/core/theme/app_theme_ext.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
 
@@ -121,9 +121,9 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
         AppDimensions.md,
         AppDimensions.md + bottomPadding,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(
+      decoration: BoxDecoration(
+        color: context.kiseCard,
+        borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppDimensions.radiusLg),
         ),
       ),
@@ -142,7 +142,9 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
                     widget.existingDebt != null
                         ? 'Edit Record'
                         : 'New Debt Record',
-                    style: AppTextStyles.h3,
+                    style: AppTextStyles.h3.copyWith(
+                      color: context.kiseTextHeading,
+                    ),
                   ),
                   Row(
                     children: [
@@ -153,14 +155,13 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
                             width: 28,
                             height: 28,
                             decoration: BoxDecoration(
-                              color: AppColorsLight.error
-                                  .withValues(alpha: 0.10),
+                              color: context.kiseError.withValues(alpha: 0.10),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               LucideIcons.trash2,
                               size: 14,
-                              color: AppColorsLight.error,
+                              color: context.kiseError,
                             ),
                           ),
                         ),
@@ -172,13 +173,13 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
                           width: 28,
                           height: 28,
                           decoration: BoxDecoration(
-                            color: AppColorsLight.secondaryBg,
+                            color: context.kiseSecondaryBg,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             LucideIcons.x,
                             size: 15,
-                            color: AppColorsLight.textBody,
+                            color: context.kiseTextBody,
                           ),
                         ),
                       ),
@@ -314,7 +315,7 @@ class _TypeSelector extends StatelessWidget {
           child: _TypeButton(
             label: 'I Lent',
             isSelected: selected == DebtType.lent,
-            selectedColor: AppColorsLight.lentCardIcon,
+            selectedColor: context.kiseLentCardIcon,
             onTap: () => onChanged(DebtType.lent),
           ),
         ),
@@ -323,7 +324,7 @@ class _TypeSelector extends StatelessWidget {
           child: _TypeButton(
             label: 'I Borrowed',
             isSelected: selected == DebtType.borrowed,
-            selectedColor: AppColorsLight.borrowedCardIcon,
+            selectedColor: context.kiseBorrowedCardIcon,
             onTap: () => onChanged(DebtType.borrowed),
           ),
         ),
@@ -353,7 +354,7 @@ class _TypeButton extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(vertical: 11),
         decoration: BoxDecoration(
-          color: isSelected ? selectedColor : AppColorsLight.secondaryBg,
+          color: isSelected ? selectedColor : context.kiseSecondaryBg,
           borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
         ),
         child: Text(
@@ -362,8 +363,7 @@ class _TypeButton extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color:
-                isSelected ? Colors.white : AppColorsLight.textBody,
+            color: isSelected ? Colors.white : context.kiseTextBody,
           ),
         ),
       ),
@@ -389,7 +389,7 @@ class _LabeledField extends StatelessWidget {
         Text(
           label,
           style: AppTextStyles.label.copyWith(
-            color: AppColorsLight.textHeading,
+            color: context.kiseTextHeading,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -401,7 +401,7 @@ class _LabeledField extends StatelessWidget {
 }
 
 
-// Input field — white bg, subtle border
+// Input field
 
 
 class _ModalInput extends StatelessWidget {
@@ -427,22 +427,20 @@ class _ModalInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _borderColor =
-        AppColorsLight.textHeading.withValues(alpha: 0.18);
-    final _radius = BorderRadius.circular(AppDimensions.radiusSm);
+    final borderColor = context.kiseTextHeading.withValues(alpha: 0.18);
+    final radius = BorderRadius.circular(AppDimensions.radiusSm);
 
     final defaultBorder = OutlineInputBorder(
-      borderRadius: _radius,
-      borderSide: BorderSide(color: _borderColor, width: 1.0),
+      borderRadius: radius,
+      borderSide: BorderSide(color: borderColor, width: 1.0),
     );
     final focusedBorder = OutlineInputBorder(
-      borderRadius: _radius,
-      borderSide:
-          BorderSide(color: AppColorsLight.lentCardIcon, width: 1.5),
+      borderRadius: radius,
+      borderSide: BorderSide(color: context.kiseLentCardIcon, width: 1.5),
     );
     final errorBorder = OutlineInputBorder(
-      borderRadius: _radius,
-      borderSide: BorderSide(color: AppColorsLight.error, width: 1.0),
+      borderRadius: radius,
+      borderSide: BorderSide(color: context.kiseError, width: 1.0),
     );
 
     return TextFormField(
@@ -454,17 +452,17 @@ class _ModalInput extends StatelessWidget {
       onTap: onTap,
       validator: validator,
       style: AppTextStyles.bodySm.copyWith(
-        color: AppColorsLight.textHeading,
+        color: context.kiseTextHeading,
       ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: AppTextStyles.bodySm.copyWith(
-          color: AppColorsLight.textHint,
+          color: context.kiseTextHint,
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: context.kiseCard,
         suffixIcon: suffixIcon != null
-            ? Icon(suffixIcon, size: 18, color: AppColorsLight.textBody)
+            ? Icon(suffixIcon, size: 18, color: context.kiseTextBody)
             : null,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.sm + 4,
@@ -475,8 +473,7 @@ class _ModalInput extends StatelessWidget {
         focusedBorder: focusedBorder,
         errorBorder: errorBorder,
         focusedErrorBorder: errorBorder.copyWith(
-          borderSide: BorderSide(
-              color: AppColorsLight.error, width: 1.5),
+          borderSide: BorderSide(color: context.kiseError, width: 1.5),
         ),
       ),
     );
@@ -484,7 +481,7 @@ class _ModalInput extends StatelessWidget {
 }
 
 
-// Cancel button — outlined, black text, normal weight
+// Cancel button
 
 
 class _CancelButton extends StatelessWidget {
@@ -500,7 +497,7 @@ class _CancelButton extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           side: BorderSide(
-            color: AppColorsLight.textHeading.withValues(alpha: 0.2),
+            color: context.kiseTextHeading.withValues(alpha: 0.2),
             width: 1,
           ),
           shape: RoundedRectangleBorder(
@@ -511,7 +508,7 @@ class _CancelButton extends StatelessWidget {
         child: Text(
           'Cancel',
           style: AppTextStyles.bodySm.copyWith(
-            color: AppColorsLight.textHeading,
+            color: context.kiseTextHeading,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -521,7 +518,7 @@ class _CancelButton extends StatelessWidget {
 }
 
 
-// Add Record button — gold fill, white text, normal weight
+// Add Record button
 
 
 class _AddButton extends StatelessWidget {
@@ -537,7 +534,7 @@ class _AddButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColorsLight.primary,
+          backgroundColor: context.kisePrimary,
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
-import 'package:kise/core/theme/colors.dart';
+import 'package:kise/core/theme/app_theme_ext.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/core/widgets/kise_action_button.dart';
 import 'package:kise/core/widgets/kise_card_holder.dart';
@@ -68,7 +68,7 @@ class _DebtScreenState extends State<DebtScreen> {
     ),
   ];
 
-  // Computed helpers 
+  // Computed helpers
 
   double get _owedToMe => _debts
       .where((d) =>
@@ -105,7 +105,7 @@ class _DebtScreenState extends State<DebtScreen> {
         _ => List.of(_debts),
       };
 
-  // Modal launchers 
+  // Modal launchers
 
   void _openAddModal() {
     showModalBottomSheet<void>(
@@ -153,7 +153,7 @@ class _DebtScreenState extends State<DebtScreen> {
     );
   }
 
-  // Build 
+  // Build
 
   @override
   Widget build(BuildContext context) {
@@ -230,14 +230,17 @@ class _Header extends StatelessWidget {
               Text(
                 'Debts & Lending',
                 style: AppTextStyles.h2.copyWith(
-                  fontWeight: FontWeight.w900, 
+                  fontWeight: FontWeight.w900,
                   height: 1.2,
+                  color: context.kiseTextHeading,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 'Track lending & borrowing',
-                style: AppTextStyles.bodySm,
+                style: AppTextStyles.bodySm.copyWith(
+                  color: context.kiseTextBody,
+                ),
               ),
             ],
           ),
@@ -273,9 +276,9 @@ class _SummaryCards extends StatelessWidget {
           child: _SummaryCard(
             label: 'Owed to me',
             amount: owedToMe,
-            bgColor: AppColorsLight.lentCardBg,
+            bgColor: context.kiseLentCardBg,
             icon: LucideIcons.arrowUpRight,
-            iconColor: AppColorsLight.lentCardIcon,
+            iconColor: context.kiseLentCardIcon,
           ),
         ),
         const SizedBox(width: AppDimensions.sm),
@@ -283,9 +286,9 @@ class _SummaryCards extends StatelessWidget {
           child: _SummaryCard(
             label: 'I owe',
             amount: iOwe,
-            bgColor: AppColorsLight.borrowedCardBg,
+            bgColor: context.kiseBorrowedCardBg,
             icon: LucideIcons.arrowDownLeft,
-            iconColor: AppColorsLight.borrowedCardIcon,
+            iconColor: context.kiseBorrowedCardIcon,
           ),
         ),
       ],
@@ -324,20 +327,25 @@ class _SummaryCard extends StatelessWidget {
             children: [
               Icon(icon, size: 14, color: iconColor),
               const SizedBox(width: AppDimensions.xs),
-              Text(label, style: AppTextStyles.label),
+              Text(
+                label,
+                style: AppTextStyles.label.copyWith(
+                  color: context.kiseTextBody,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppDimensions.xs),
           Text(
             _fmt.format(amount),
             style: AppTextStyles.h3.copyWith(
-              color: AppColorsLight.textHeading,
+              color: context.kiseTextHeading,
             ),
           ),
           Text(
             'ETB',
             style: AppTextStyles.h3.copyWith(
-              color: AppColorsLight.textHeading,
+              color: context.kiseTextHeading,
             ),
           ),
         ],
@@ -348,7 +356,6 @@ class _SummaryCard extends StatelessWidget {
 
 
 // Net Position Card
-
 
 
 class _NetPositionCard extends StatelessWidget {
@@ -372,7 +379,7 @@ class _NetPositionCard extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     final isPositive = netAmount >= 0;
-    final netColor = isPositive ? AppColorsLight.success : AppColorsLight.error;
+    final netColor = isPositive ? context.kiseSuccess : context.kiseError;
 
     return KiseCardHolder(
       padding: const EdgeInsets.all(AppDimensions.md),
@@ -387,17 +394,15 @@ class _NetPositionCard extends StatelessWidget {
               children: [
                 Text(
                   'Net Position',
-                  style: tt.bodyMedium?.copyWith( // Increased size
-                    // fontWeight: FontWeight.w600,
+                  style: tt.bodyMedium?.copyWith(
                     color: cs.onSurface.withValues(alpha: 0.9),
                   ),
                 ),
-                const SizedBox(height: 4), // Tighter gap
+                const SizedBox(height: 4),
                 Text(
                   _amtFmt.format(netAmount),
                   style: AppTextStyles.h2.copyWith(color: netColor, height: 1.1),
                 ),
-                // 1. ETB moved below the amount
                 Text(
                   'ETB',
                   style: AppTextStyles.h2.copyWith(color: netColor, height: 1.1),
@@ -405,9 +410,7 @@ class _NetPositionCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Recovery rate: ${_pctFmt.format(recoveryRate * 100)}%',
-                  style: tt.bodyMedium?.copyWith( // Increased size
-                    // fontWeight: FontWeight.w500,
-                  ),
+                  style: tt.bodyMedium?.copyWith(),
                 ),
               ],
             ),
@@ -419,8 +422,7 @@ class _NetPositionCard extends StatelessWidget {
             children: [
               Text(
                 'Balance view',
-                style: tt.bodyMedium?.copyWith( // Increased size
-                  // fontWeight: FontWeight.w500,
+                style: tt.bodyMedium?.copyWith(
                   color: cs.onSurface.withValues(alpha: 0.9),
                 ),
               ),
@@ -479,8 +481,10 @@ class _AnalyticsAccordion extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'Analytics',
-                      style: AppTextStyles.h3
-                          .copyWith(fontWeight: FontWeight.w700),
+                      style: AppTextStyles.h3.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: context.kiseTextHeading,
+                      ),
                     ),
                   ),
                   AnimatedRotation(
@@ -557,7 +561,7 @@ class _AnalyticsBody extends StatelessWidget {
       children: [
         const SizedBox(height: AppDimensions.sm),
 
-        // ── Status stat chips — directly on scaffold, no card bg ──
+        // ── Status stat chips ──
         _StatusStatsRow(
           pending: _pending,
           partial: _partial,
@@ -574,7 +578,7 @@ class _AnalyticsBody extends StatelessWidget {
                 'Status Breakdown',
                 style: AppTextStyles.bodySm.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColorsLight.textHeading,
+                  color: context.kiseTextHeading,
                 ),
               ),
               const SizedBox(height: AppDimensions.sm),
@@ -597,7 +601,7 @@ class _AnalyticsBody extends StatelessWidget {
                 'Lent vs Borrowed Overview',
                 style: AppTextStyles.bodySm.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColorsLight.textHeading,
+                  color: context.kiseTextHeading,
                 ),
               ),
               const SizedBox(height: AppDimensions.sm),
@@ -605,7 +609,7 @@ class _AnalyticsBody extends StatelessWidget {
                 label: 'Total Lent',
                 amount: _totalLent,
                 progress: maxAmount > 0 ? _totalLent / maxAmount : 0,
-                barColor: AppColorsLight.lentCardIcon,
+                barColor: context.kiseLentCardIcon,
               ),
               const SizedBox(height: AppDimensions.xs),
               _TableRow(
@@ -613,7 +617,7 @@ class _AnalyticsBody extends StatelessWidget {
                 amount: _totalBorrowed,
                 progress:
                     maxAmount > 0 ? _totalBorrowed / maxAmount : 0,
-                barColor: AppColorsLight.borrowedCardIcon,
+                barColor: context.kiseBorrowedCardIcon,
               ),
               const SizedBox(height: AppDimensions.xs),
               _TableRow(
@@ -621,7 +625,7 @@ class _AnalyticsBody extends StatelessWidget {
                 amount: _owedToMe,
                 progress:
                     _totalLent > 0 ? _owedToMe / _totalLent : 0,
-                barColor: AppColorsLight.lentCardIcon,
+                barColor: context.kiseLentCardIcon,
               ),
               const SizedBox(height: AppDimensions.xs),
               _TableRow(
@@ -629,7 +633,7 @@ class _AnalyticsBody extends StatelessWidget {
                 amount: _iOwe,
                 progress:
                     _totalBorrowed > 0 ? _iOwe / _totalBorrowed : 0,
-                barColor: AppColorsLight.borrowedCardIcon,
+                barColor: context.kiseBorrowedCardIcon,
               ),
             ],
           ),
@@ -645,7 +649,7 @@ class _AnalyticsBody extends StatelessWidget {
                 'Active Balances by Person',
                 style: AppTextStyles.bodySm.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColorsLight.textHeading,
+                  color: context.kiseTextHeading,
                 ),
               ),
               const SizedBox(height: AppDimensions.sm),
@@ -683,24 +687,24 @@ class _StatusStatsRow extends StatelessWidget {
           count: pending,
           label: 'Pending',
           icon: LucideIcons.clock,
-          iconColor: AppColorsLight.borrowedCardIcon,
-          bg: AppColorsLight.borrowedCardBg,
+          iconColor: context.kiseBorrowedCardIcon,
+          bg: context.kiseBorrowedCardBg,
         ),
         const SizedBox(width: AppDimensions.sm),
         _StatBox(
           count: partial,
           label: 'Partial',
           icon: LucideIcons.gitBranch,
-          iconColor: AppColorsLight.lentCardIcon,
-          bg: AppColorsLight.lentCardBg,
+          iconColor: context.kiseLentCardIcon,
+          bg: context.kiseLentCardBg,
         ),
         const SizedBox(width: AppDimensions.sm),
         _StatBox(
           count: settled,
           label: 'Settled',
           icon: LucideIcons.checkCircle,
-          iconColor: AppColorsLight.settledCardIcon,
-          bg: AppColorsLight.settledCardBg,
+          iconColor: context.kiseSettledCardIcon,
+          bg: context.kiseSettledCardBg,
         ),
       ],
     );
@@ -746,7 +750,7 @@ class _StatBox extends StatelessWidget {
             Text(
               label,
               style: AppTextStyles.micro.copyWith(
-                color: AppColorsLight.textHeading,
+                color: context.kiseTextHeading,
                 fontSize: 11,
               ),
             ),
@@ -785,9 +789,9 @@ class _DonutSection extends StatelessWidget {
               pending: pending,
               partial: partial,
               settled: settled,
-              pendingColor: AppColorsLight.pendingChart,
-              partialColor: AppColorsLight.partialChart,
-              settledColor: AppColorsLight.settledChart,
+              pendingColor: context.kisePendingChart,
+              partialColor: context.kisePartialChart,
+              settledColor: context.kiseSettledChart,
             ),
           ),
         ),
@@ -797,19 +801,19 @@ class _DonutSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _LegendItem(
-                color: AppColorsLight.pendingChart,
+                color: context.kisePendingChart,
                 label: 'Pending',
                 count: pending,
               ),
               const SizedBox(height: AppDimensions.xs),
               _LegendItem(
-                color: AppColorsLight.partialChart,
+                color: context.kisePartialChart,
                 label: 'Partial',
                 count: partial,
               ),
               const SizedBox(height: AppDimensions.xs),
               _LegendItem(
-                color: AppColorsLight.settledChart,
+                color: context.kiseSettledChart,
                 label: 'Settled',
                 count: settled,
               ),
@@ -843,13 +847,18 @@ class _LegendItem extends StatelessWidget {
         ),
         const SizedBox(width: AppDimensions.xs),
         Expanded(
-          child: Text(label, style: AppTextStyles.bodySm),
+          child: Text(
+            label,
+            style: AppTextStyles.bodySm.copyWith(
+              color: context.kiseTextBody,
+            ),
+          ),
         ),
         Text(
           '$count',
           style: AppTextStyles.bodySm.copyWith(
             fontWeight: FontWeight.w600,
-            color: AppColorsLight.textHeading,
+            color: context.kiseTextHeading,
           ),
         ),
       ],
@@ -882,7 +891,7 @@ class _DonutChartPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = min(size.width, size.height) / 2;
     const strokeWidth = 18.0;
-    const gapAngle = 0.07; // small gap matching Figma
+    const gapAngle = 0.07;
     final rect = Rect.fromCircle(
         center: center, radius: radius - strokeWidth / 2);
 
@@ -951,14 +960,14 @@ class _TableRow extends StatelessWidget {
             Text(
               label,
               style: AppTextStyles.bodySm.copyWith(
-                color: AppColorsLight.textBody,
+                color: context.kiseTextBody,
               ),
             ),
             Text(
               '${_fmt.format(amount)} ETB',
               style: AppTextStyles.bodySm.copyWith(
                 fontWeight: FontWeight.w600,
-                color: AppColorsLight.textHeading,
+                color: context.kiseTextHeading,
               ),
             ),
           ],
@@ -991,9 +1000,9 @@ class _PersonBalanceRow extends StatelessWidget {
     final isLent = debt.type == DebtType.lent;
     final balance = isLent ? debt.remaining : -debt.remaining;
     final amtColor =
-        isLent ? AppColorsLight.lentCardIcon : AppColorsLight.error;
+        isLent ? context.kiseLentCardIcon : context.kiseError;
     final avatarBg =
-        isLent ? AppColorsLight.lentCardBg : AppColorsLight.borrowedCardBg;
+        isLent ? context.kiseLentCardBg : context.kiseBorrowedCardBg;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppDimensions.sm),
@@ -1026,12 +1035,14 @@ class _PersonBalanceRow extends StatelessWidget {
                   debt.personName,
                   style: AppTextStyles.bodySm.copyWith(
                     fontWeight: FontWeight.w500,
-                    color: AppColorsLight.textHeading,
+                    color: context.kiseTextHeading,
                   ),
                 ),
                 Text(
                   isLent ? 'Lent' : 'Borrowed',
-                  style: AppTextStyles.micro,
+                  style: AppTextStyles.micro.copyWith(
+                    color: context.kiseTextHint,
+                  ),
                 ),
               ],
             ),

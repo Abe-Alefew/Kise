@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
-import 'package:kise/core/theme/colors.dart';
+import 'package:kise/core/theme/app_theme_ext.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/core/widgets/kise_card_holder.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
@@ -59,7 +59,7 @@ class DebtCard extends StatelessWidget {
                             debt.personName,
                             style: AppTextStyles.bodySm.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppColorsLight.textHeading,
+                              color: context.kiseTextHeading,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -74,8 +74,7 @@ class DebtCard extends StatelessWidget {
                       subLabel,
                       style: AppTextStyles.micro.copyWith(
                         fontWeight: FontWeight.w500,
-                        color: AppColorsLight.textHeading
-                            .withValues(alpha: 0.62),
+                        color: context.kiseTextHeading.withValues(alpha: 0.62),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -90,14 +89,14 @@ class DebtCard extends StatelessWidget {
                           style: AppTextStyles.h3.copyWith(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
+                            color: context.kiseTextHeading,
                           ),
                         ),
                         const Spacer(),
                         Text(
                           'of ${_amtFmt.format(debt.totalAmount)} ETB',
                           style: AppTextStyles.label.copyWith(
-                            color: AppColorsLight.textHeading
-                                .withValues(alpha: 0.55),
+                            color: context.kiseTextHeading.withValues(alpha: 0.55),
                           ),
                         ),
                       ],
@@ -120,11 +119,11 @@ class _TypeIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = isLent
-        ? AppColorsLight.lentCardBg
-        : AppColorsLight.borrowedCardBg;
+        ? context.kiseLentCardBg
+        : context.kiseBorrowedCardBg;
     final iconColor = isLent
-        ? AppColorsLight.lentCardIcon
-        : AppColorsLight.borrowedCardIcon;
+        ? context.kiseLentCardIcon
+        : context.kiseBorrowedCardIcon;
     final icon =
         isLent ? LucideIcons.arrowUpRight : LucideIcons.arrowDownLeft;
 

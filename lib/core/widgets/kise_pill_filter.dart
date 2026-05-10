@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kise/core/theme/app_theme_ext.dart';
 
 class KisePillFilter extends StatelessWidget {
   final List<String> options;
@@ -29,7 +30,7 @@ class KisePillFilter extends StatelessWidget {
             key: ValueKey(option),
             margin: const EdgeInsets.only(right: 8),
             child: Material(
-              color: isSelected ? const Color(0xFFDDA22C) : Color(0XFFF2F4F0),
+              color: isSelected ? context.kisePrimary : context.kiseSecondaryBg,
               borderRadius: BorderRadius.circular(20),
               child: InkWell(
                 borderRadius: BorderRadius.circular(20),
@@ -46,7 +47,7 @@ class KisePillFilter extends StatelessWidget {
                       child: Text(
                         option,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Color(0xFF8D888A),
+                          color: isSelected ? Colors.white : context.kiseTextBody,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kise/core/theme/colors.dart';
+import 'package:kise/core/theme/app_theme_ext.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
 
 class StatusBadge extends StatelessWidget {
@@ -12,18 +12,18 @@ class StatusBadge extends StatelessWidget {
     final (label, bg, fg) = switch (status) {
       DebtStatus.pending => (
           'pending',
-          AppColorsLight.borrowedCardBg,
-          AppColorsLight.borrowedCardIcon,
+          context.kiseBorrowedCardBg,
+          context.kiseBorrowedCardIcon,
         ),
       DebtStatus.partial => (
           'partial',
-          AppColorsLight.lentCardBg,
-          AppColorsLight.lentCardIcon,
+          context.kiseLentCardBg,
+          context.kiseLentCardIcon,
         ),
       DebtStatus.settled => (
           'settled',
-          AppColorsLight.settledCardBg,
-          AppColorsLight.settledCardIcon,
+          context.kiseSettledCardBg,
+          context.kiseSettledCardIcon,
         ),
     };
 
@@ -46,8 +46,8 @@ class StatusBadge extends StatelessWidget {
   }
 }
 
-Color statusFgColor(DebtStatus s) => switch (s) {
-      DebtStatus.pending => AppColorsLight.borrowedCardIcon,
-      DebtStatus.partial => AppColorsLight.lentCardIcon,
-      DebtStatus.settled => AppColorsLight.settledCardIcon,
+Color statusFgColor(BuildContext context, DebtStatus s) => switch (s) {
+      DebtStatus.pending => context.kiseBorrowedCardIcon,
+      DebtStatus.partial => context.kiseLentCardIcon,
+      DebtStatus.settled => context.kiseSettledCardIcon,
     };
