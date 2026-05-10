@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/colors.dart';
 import 'package:kise/core/theme/text_theme.dart';
-import 'package:kise/core/widgets/kise_action_button.dart';
 import 'package:kise/features/settings/presentation/widgets/settings_widgets.dart';
 import 'package:kise/core/providers/theme_provider.dart';
+import 'package:kise/core/routing/app_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -75,7 +76,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              // TODO: trigger logout logic
+              context.go(AppRoutes.splash);
             },
             child: Text(
               'Log Out',
@@ -96,21 +97,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           'This action is permanent and cannot be undone. '
           'All your data will be erased.',
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(AppDimensions.md, 0, AppDimensions.md, AppDimensions.md),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              // TODO: trigger delete account logic
-            },
-            child: const Text('Delete'),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: AppDimensions.sm),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                  ),
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    context.go(AppRoutes.splash);
+                  },
+                  child: const Text('Delete'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -344,22 +356,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: AppDimensions.xl),
 
                   // ── Log Out ──────────────────────────────
-                  KiseActionButton(
+                  WarningActionButton(
                     label: 'Log Out',
                     leadingIcon: LucideIcons.logOut,
-                    variant: KiseButtonVariant.outline,
-                    textColor: Theme.of(context).colorScheme.error,
                     onPressed: _showLogoutDialog,
                   ),
 
                   const SizedBox(height: AppDimensions.md),
 
                   // ── Delete Account ───────────────────────
-                  KiseActionButton(
+                  WarningActionButton(
                     label: 'Delete Account',
                     leadingIcon: LucideIcons.trash2,
-                    variant: KiseButtonVariant.ghost,
-                    textColor: Theme.of(context).colorScheme.error,
                     onPressed: _showDeleteAccountDialog,
                   ),
 
