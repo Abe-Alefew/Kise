@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:go_router/go_router.dart';
+import 'package:kise/core/routing/app_router.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/app_theme_ext.dart';
 import 'package:kise/core/theme/text_theme.dart';
@@ -11,8 +13,6 @@ import 'package:kise/core/widgets/kise_card_holder.dart';
 import 'package:kise/core/widgets/kise_pill_filter.dart';
 import 'package:kise/core/widgets/kise_progress_bar.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
-import 'package:kise/features/debt/presentation/screens/add_edit_debt_screen.dart';
-import 'package:kise/features/debt/presentation/screens/debt_detail_screen.dart';
 import 'package:kise/features/debt/presentation/widgets/debt_cart.dart';
 import 'package:kise/features/debt/presentation/widgets/status_badge.dart';
 import 'package:kise/features/debt/presentation/widgets/toggle_actual_adjusted.dart';
@@ -105,52 +105,30 @@ class _DebtScreenState extends State<DebtScreen> {
         _ => List.of(_debts),
       };
 
-  // Modal launchers
+  // Navigation launchers
 
-  void _openAddModal() {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => AddEditDebtModal(
-        onAdd: (debt) => setState(() => _debts = [..._debts, debt]),
-      ),
-    );
+  Future<void> _openAddModal() async {
+    final result = await context.push<dynamic>(AppRoutes.debtNew);
+    if (!mounted) return;
+    if (result is DebtEntity) {
+      setState(() => _debts = [..._debts, result]);
+    }
   }
 
-  void _openDetailModal(DebtEntity debt) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => DebtDetailModal(
-        debt: debt,
-        onPayment: (payment) {
-          setState(() {
-            final idx = _debts.indexWhere((d) => d.id == debt.id);
-            if (idx >= 0) {
-              _debts = List.of(_debts)
-                ..[idx] = debt.copyWith(
-                  paidAmount: debt.paidAmount + payment.amount,
-                  payments: [...debt.payments, payment],
-                );
-            }
-          });
-        },
-        onEdit: (updated) {
-          setState(() {
-            final idx = _debts.indexWhere((d) => d.id == debt.id);
-            if (idx >= 0) _debts = List.of(_debts)..[idx] = updated;
-          });
-        },
-        onDelete: () {
-          setState(() =>
-              _debts = _debts.where((d) => d.id != debt.id).toList());
-        },
-      ),
+  Future<void> _openDetailModal(DebtEntity debt) async {
+    final result = await context.push<dynamic>(
+      '${AppRoutes.debtDetail}/${debt.id}',
+      extra: debt,
     );
+    if (!mounted) return;
+    if (result is DebtEntity) {
+      setState(() {
+        final idx = _debts.indexWhere((d) => d.id == result.id);
+        if (idx >= 0) _debts = List.of(_debts)..[idx] = result;
+      });
+    } else if (result == 'deleted') {
+      setState(() => _debts = _debts.where((d) => d.id != debt.id).toList());
+    }
   }
 
   // Build

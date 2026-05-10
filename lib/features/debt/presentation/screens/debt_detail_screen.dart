@@ -1,48 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:uuid/uuid.dart';
+import 'package:kise/core/routing/app_router.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/app_theme_ext.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/core/widgets/kise_card_holder.dart';
 import 'package:kise/core/widgets/kise_progress_bar.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
-import 'package:kise/features/debt/presentation/screens/add_edit_debt_screen.dart';
 import 'package:kise/features/debt/presentation/widgets/status_badge.dart';
+
+// Pop results from this modal:
+//   DebtEntity  → close with current (possibly updated) debt state
+//   'deleted'   → debt was deleted inside the edit flow
 
 class DebtDetailModal extends StatefulWidget {
   final DebtEntity debt;
-  final void Function(PaymentRecord) onPayment;
-  final void Function(DebtEntity) onEdit;
-  final VoidCallback onDelete;
 
-  const DebtDetailModal({
-    super.key,
-    required this.debt,
-    required this.onPayment,
-    required this.onEdit,
-    required this.onDelete,
-  });
+  const DebtDetailModal({super.key, required this.debt});
 
   @override
   State<DebtDetailModal> createState() => _DebtDetailModalState();
 }
 
 class _DebtDetailModalState extends State<DebtDetailModal> {
+  late DebtEntity _debt; // mutable local copy — updated by payments & edits
+
   bool _paymentFormVisible = false;
 
   final _amountCtrl = TextEditingController(text: '0.00');
-  final _dateCtrl = TextEditingController();
-  final _notesCtrl = TextEditingController();
+  final _dateCtrl   = TextEditingController();
+  final _notesCtrl  = TextEditingController();
   DateTime _paymentDate = DateTime.now();
 
-  static final _amtFmt = NumberFormat('#,##0.00');
+  static final _amtFmt  = NumberFormat('#,##0.00');
   static final _dateFmt = DateFormat('MM/dd/yyyy');
 
   @override
   void initState() {
     super.initState();
+    _debt = widget.debt;
     _dateCtrl.text = _dateFmt.format(_paymentDate);
   }
 
@@ -69,236 +68,253 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
     }
   }
 
+  // Records a payment locally — does NOT close the modal.
   void _confirmPayment() {
-    final amount = double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
+    final amount =
+        double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
     if (amount <= 0) return;
     final record = PaymentRecord(
       id: const Uuid().v4(),
       amount: amount,
       date: _paymentDate,
-      notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+      notes: _notesCtrl.text.trim().isEmpty
+          ? null
+          : _notesCtrl.text.trim(),
     );
-    Navigator.pop(context);
-    widget.onPayment(record);
+    setState(() {
+      _debt = _debt.copyWith(
+        paidAmount: _debt.paidAmount + amount,
+        payments: [..._debt.payments, record],
+      );
+      _paymentFormVisible = false;
+      // Reset payment form
+      _amountCtrl.text = '0.00';
+      _notesCtrl.text = '';
+      _paymentDate = DateTime.now();
+      _dateCtrl.text = _dateFmt.format(_paymentDate);
+    });
   }
 
-  void _openEditModal() {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => AddEditDebtModal(
-        existingDebt: widget.debt,
-        onAdd: (_) {},
-        onEdit: (updated) {
-          Navigator.pop(context);
-          widget.onEdit(updated);
-        },
-        onDelete: () {
-          Navigator.pop(context);
-          widget.onDelete();
-        },
-      ),
+  // Navigates to edit route; handles result on return.
+  Future<void> _openEditModal() async {
+    final result = await context.push<dynamic>(
+      '${AppRoutes.debtEdit}/${_debt.id}',
+      extra: _debt,
     );
+    if (!mounted) return;
+    if (result is DebtEntity) {
+      setState(() => _debt = result);
+    } else if (result == 'deleted') {
+      context.pop('deleted'); // bubble deletion up to DebtScreen
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final debt = widget.debt;
-    final isLent = debt.type == DebtType.lent;
-    final progress = debt.totalAmount > 0
-        ? (debt.paidAmount / debt.totalAmount).clamp(0.0, 1.0)
+    final isLent  = _debt.type == DebtType.lent;
+    final progress = _debt.totalAmount > 0
+        ? (_debt.paidAmount / _debt.totalAmount).clamp(0.0, 1.0)
         : 0.0;
     final pct = (progress * 100).round();
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        AppDimensions.md,
-        AppDimensions.md,
-        AppDimensions.md,
-        AppDimensions.md + bottomInset,
-      ),
-      decoration: BoxDecoration(
-        color: context.kiseCard,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppDimensions.radiusLg),
+    // PopScope ensures the Android back button also returns _debt state.
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.pop(_debt);
+      },
+      child: Container(
+        padding: EdgeInsets.fromLTRB(
+          AppDimensions.md,
+          AppDimensions.md,
+          AppDimensions.md,
+          AppDimensions.md + bottomInset,
         ),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Header: icon · name + pencil · close ──────────
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _TypeIcon(isLent: isLent),
-                const SizedBox(width: AppDimensions.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            debt.personName,
-                            style: AppTextStyles.h3.copyWith(
-                              color: context.kiseTextHeading,
+        decoration: BoxDecoration(
+          color: context.kiseCard,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.radiusLg),
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header: icon · name + pencil · close ──────────
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _TypeIcon(isLent: isLent),
+                  const SizedBox(width: AppDimensions.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              _debt.personName,
+                              style: AppTextStyles.h3.copyWith(
+                                color: context.kiseTextHeading,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: AppDimensions.xs + 2),
-                          GestureDetector(
-                            onTap: _openEditModal,
-                            child: Icon(
-                              LucideIcons.pencil,
-                              size: 15,
-                              color: context.kiseTextBody,
+                            const SizedBox(width: AppDimensions.xs + 2),
+                            GestureDetector(
+                              onTap: _openEditModal,
+                              child: Icon(
+                                LucideIcons.pencil,
+                                size: 15,
+                                color: context.kiseTextBody,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        '${isLent ? 'You lent' : 'You borrowed'}  ·  '
-                        '${DateFormat('MMM d, yyyy').format(debt.date)}',
-                        style: AppTextStyles.micro.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: context.kiseTextHeading.withValues(alpha: 0.50),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: context.kiseSecondaryBg,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      LucideIcons.x,
-                      size: 15,
-                      color: context.kiseTextBody,
+                        const SizedBox(height: 3),
+                        Text(
+                          '${isLent ? 'You lent' : 'You borrowed'}  ·  '
+                          '${DateFormat('MMM d, yyyy').format(_debt.date)}',
+                          style: AppTextStyles.micro.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: context.kiseTextHeading
+                                .withValues(alpha: 0.50),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.md),
-
-            // ── Financial status: amount · badge ───────────────
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${_amtFmt.format(debt.remaining)} ETB',
-                        style: AppTextStyles.amountLg.copyWith(
-                          color: context.kiseTextHeading,
-                        ),
+                  GestureDetector(
+                    onTap: () => context.pop(_debt),
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: context.kiseSecondaryBg,
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'remaining of ${_amtFmt.format(debt.totalAmount)} ETB',
-                        style: AppTextStyles.bodySm.copyWith(
-                          color: context.kiseTextHeading.withValues(alpha: 0.55),
-                        ),
+                      child: Icon(
+                        LucideIcons.x,
+                        size: 15,
+                        color: context.kiseTextBody,
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppDimensions.sm),
-                StatusBadge(status: debt.status),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.sm),
+                ],
+              ),
+              const SizedBox(height: AppDimensions.md),
 
-            // ── Progress ───────────────────────────────────────
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Paid so far',
-                  style: AppTextStyles.bodySm.copyWith(
-                    color: context.kiseTextHeading.withValues(alpha: 0.55),
+              // ── Financial status: amount · badge ───────────────
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${_amtFmt.format(_debt.remaining)} ETB',
+                          style: AppTextStyles.amountLg.copyWith(
+                            color: context.kiseTextHeading,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'remaining of ${_amtFmt.format(_debt.totalAmount)} ETB',
+                          style: AppTextStyles.bodySm.copyWith(
+                            color: context.kiseTextHeading
+                                .withValues(alpha: 0.55),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Text(
-                  '$pct% (${_amtFmt.format(debt.paidAmount)} ETB)',
-                  style: AppTextStyles.bodySm.copyWith(
-                    color: context.kiseTextHeading.withValues(alpha: 0.55),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.xs),
-            KiseProgressBar(
-              progress: progress,
-              height: 6,
-              fillColor: context.kiseSuccess,
-              trackColor: context.kiseSuccess.withValues(alpha: 0.12),
-            ),
-            const SizedBox(height: AppDimensions.md),
+                  const SizedBox(width: AppDimensions.sm),
+                  StatusBadge(status: _debt.status),
+                ],
+              ),
+              const SizedBox(height: AppDimensions.sm),
 
-            // ── Payment button / expandable form ───────────────
-            ClipRect(
-              child: AnimatedSize(
-                duration: const Duration(milliseconds: 350),
-                curve: Curves.easeInOut,
-                child: _paymentFormVisible
-                    ? _PaymentFormCard(
-                        amountCtrl: _amountCtrl,
-                        dateCtrl: _dateCtrl,
-                        notesCtrl: _notesCtrl,
-                        onDateTap: _pickDate,
-                        onCancel: () =>
-                            setState(() => _paymentFormVisible = false),
-                        onConfirm: _confirmPayment,
-                      )
-                    : SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton(
-                          onPressed: () =>
-                              setState(() => _paymentFormVisible = true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: context.kisePrimary,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.radiusSm,
+              // ── Progress ───────────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Paid so far',
+                    style: AppTextStyles.bodySm.copyWith(
+                      color: context.kiseTextHeading.withValues(alpha: 0.55),
+                    ),
+                  ),
+                  Text(
+                    '$pct% (${_amtFmt.format(_debt.paidAmount)} ETB)',
+                    style: AppTextStyles.bodySm.copyWith(
+                      color: context.kiseTextHeading.withValues(alpha: 0.55),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimensions.xs),
+              KiseProgressBar(
+                progress: progress,
+                height: 6,
+                fillColor: context.kiseSuccess,
+                trackColor: context.kiseSuccess.withValues(alpha: 0.12),
+              ),
+              const SizedBox(height: AppDimensions.md),
+
+              // ── Payment button / expandable form ───────────────
+              ClipRect(
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeInOut,
+                  child: _paymentFormVisible
+                      ? _PaymentFormCard(
+                          amountCtrl: _amountCtrl,
+                          dateCtrl: _dateCtrl,
+                          notesCtrl: _notesCtrl,
+                          onDateTap: _pickDate,
+                          onCancel: () =>
+                              setState(() => _paymentFormVisible = false),
+                          onConfirm: _confirmPayment,
+                        )
+                      : SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: () =>
+                                setState(() => _paymentFormVisible = true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: context.kisePrimary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppDimensions.radiusSm,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              '+ Record Payment Received',
+                              style: AppTextStyles.bodySm.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
                           ),
-                          child: Text(
-                            '+ Record Payment Received',
-                            style: AppTextStyles.bodySm.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
                         ),
-                      ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// Type icon — matches DebtCard
+
+// ── Type icon ─────────────────────────────────────────────────────────────────
+
 
 class _TypeIcon extends StatelessWidget {
   final bool isLent;
@@ -306,9 +322,9 @@ class _TypeIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isLent ? context.kiseLentCardBg : context.kiseBorrowedCardBg;
-    final iconColor = isLent ? context.kiseLentCardIcon : context.kiseBorrowedCardIcon;
-    final icon = isLent ? LucideIcons.arrowUpRight : LucideIcons.arrowDownLeft;
+    final bg        = isLent ? context.kiseLentCardBg       : context.kiseBorrowedCardBg;
+    final iconColor = isLent ? context.kiseLentCardIcon     : context.kiseBorrowedCardIcon;
+    final icon      = isLent ? LucideIcons.arrowUpRight     : LucideIcons.arrowDownLeft;
 
     return Container(
       width: 42,
@@ -322,7 +338,9 @@ class _TypeIcon extends StatelessWidget {
   }
 }
 
-// Payment Form Card
+
+// ── Payment Form Card ─────────────────────────────────────────────────────────
+
 
 class _PaymentFormCard extends StatelessWidget {
   final TextEditingController amountCtrl;
@@ -352,8 +370,6 @@ class _PaymentFormCard extends StatelessWidget {
             style: AppTextStyles.h3.copyWith(color: context.kiseTextHeading),
           ),
           const SizedBox(height: AppDimensions.md),
-
-          // Amount (ETB) + Date row
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -379,8 +395,6 @@ class _PaymentFormCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppDimensions.sm),
-
-          // Note (optional)
           _FormLabel(
             label: 'Note (optional)',
             child: _PaymentInput(
@@ -390,8 +404,6 @@ class _PaymentFormCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppDimensions.md),
-
-          // Cancel + Confirm
           Row(
             children: [
               Expanded(child: _FormCancelBtn(onPressed: onCancel)),
@@ -405,7 +417,9 @@ class _PaymentFormCard extends StatelessWidget {
   }
 }
 
-// Label above field
+
+// ── Form helpers ──────────────────────────────────────────────────────────────
+
 
 class _FormLabel extends StatelessWidget {
   final String label;
@@ -432,15 +446,11 @@ class _FormLabel extends StatelessWidget {
   }
 }
 
-// Shared input border helper
-
 OutlineInputBorder _inputBorder({double width = 1.0, required Color color}) =>
     OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
       borderSide: BorderSide(color: color, width: width),
     );
-
-// Spinner input (amount with up/down chevrons)
 
 class _SpinnerInput extends StatelessWidget {
   final TextEditingController controller;
@@ -450,9 +460,8 @@ class _SpinnerInput extends StatelessWidget {
     final val = double.tryParse(controller.text.replaceAll(',', '')) ?? 0;
     final next = (val + delta).clamp(0.0, double.infinity);
     controller.text = next.toStringAsFixed(2);
-    controller.selection = TextSelection.collapsed(
-      offset: controller.text.length,
-    );
+    controller.selection =
+        TextSelection.collapsed(offset: controller.text.length);
   }
 
   @override
@@ -469,7 +478,8 @@ class _SpinnerInput extends StatelessWidget {
         fillColor: context.kiseCard,
         border: _inputBorder(color: borderColor),
         enabledBorder: _inputBorder(color: borderColor),
-        focusedBorder: _inputBorder(width: 1.5, color: context.kiseLentCardIcon),
+        focusedBorder:
+            _inputBorder(width: 1.5, color: context.kiseLentCardIcon),
         errorBorder: _inputBorder(color: context.kiseError),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.sm + 4,
@@ -481,19 +491,13 @@ class _SpinnerInput extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () => _adjust(1),
-              child: Icon(
-                LucideIcons.chevronUp,
-                size: 13,
-                color: context.kiseTextBody,
-              ),
+              child: Icon(LucideIcons.chevronUp,
+                  size: 13, color: context.kiseTextBody),
             ),
             GestureDetector(
               onTap: () => _adjust(-1),
-              child: Icon(
-                LucideIcons.chevronDown,
-                size: 13,
-                color: context.kiseTextBody,
-              ),
+              child: Icon(LucideIcons.chevronDown,
+                  size: 13, color: context.kiseTextBody),
             ),
           ],
         ),
@@ -501,8 +505,6 @@ class _SpinnerInput extends StatelessWidget {
     );
   }
 }
-
-// Plain input (date / notes)
 
 class _PaymentInput extends StatelessWidget {
   final TextEditingController controller;
@@ -527,18 +529,21 @@ class _PaymentInput extends StatelessWidget {
     return TextFormField(
       controller: controller,
       readOnly: readOnly,
-      keyboardType: maxLines > 1 ? TextInputType.multiline : TextInputType.text,
+      keyboardType:
+          maxLines > 1 ? TextInputType.multiline : TextInputType.text,
       maxLines: maxLines,
       onTap: onTap,
       style: AppTextStyles.bodySm.copyWith(color: context.kiseTextHeading),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: AppTextStyles.bodySm.copyWith(color: context.kiseTextHint),
+        hintStyle:
+            AppTextStyles.bodySm.copyWith(color: context.kiseTextHint),
         filled: true,
         fillColor: context.kiseCard,
         border: _inputBorder(color: borderColor),
         enabledBorder: _inputBorder(color: borderColor),
-        focusedBorder: _inputBorder(width: 1.5, color: context.kiseLentCardIcon),
+        focusedBorder:
+            _inputBorder(width: 1.5, color: context.kiseLentCardIcon),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.sm + 4,
           vertical: AppDimensions.sm + 2,
@@ -550,8 +555,6 @@ class _PaymentInput extends StatelessWidget {
     );
   }
 }
-
-// Cancel button
 
 class _FormCancelBtn extends StatelessWidget {
   final VoidCallback onPressed;
@@ -584,8 +587,6 @@ class _FormCancelBtn extends StatelessWidget {
     );
   }
 }
-
-// Confirm Payment button
 
 class _FormConfirmBtn extends StatelessWidget {
   final VoidCallback onPressed;

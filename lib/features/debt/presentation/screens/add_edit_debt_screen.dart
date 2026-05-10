@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:uuid/uuid.dart';
@@ -7,19 +8,15 @@ import 'package:kise/core/theme/app_theme_ext.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
 
-class AddEditDebtModal extends StatefulWidget {
-  final void Function(DebtEntity) onAdd;
-  final DebtEntity? existingDebt;           // non-null → edit mode
-  final void Function(DebtEntity)? onEdit;
-  final VoidCallback? onDelete;
+// Result values popped by this modal:
+//   DebtEntity  → saved (add or edit)
+//   'deleted'   → debt was deleted
+//   null        → cancelled
 
-  const AddEditDebtModal({
-    super.key,
-    required this.onAdd,
-    this.existingDebt,
-    this.onEdit,
-    this.onDelete,
-  });
+class AddEditDebtModal extends StatefulWidget {
+  final DebtEntity? existingDebt; // non-null → edit mode
+
+  const AddEditDebtModal({super.key, this.existingDebt});
 
   @override
   State<AddEditDebtModal> createState() => _AddEditDebtModalState();
@@ -97,18 +94,10 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
       date: _selectedDate,
       payments: existing?.payments ?? const [],
     );
-    Navigator.pop(context);
-    if (existing != null) {
-      widget.onEdit?.call(debt);
-    } else {
-      widget.onAdd(debt);
-    }
+    context.pop(debt); // return the saved debt to the caller
   }
 
-  void _delete() {
-    Navigator.pop(context);
-    widget.onDelete?.call();
-  }
+  void _delete() => context.pop('deleted');
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +157,7 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
                       if (widget.existingDebt != null)
                         const SizedBox(width: AppDimensions.xs),
                       GestureDetector(
-                        onTap: () => Navigator.pop(context),
+                        onTap: () => context.pop(null),
                         child: Container(
                           width: 28,
                           height: 28,
@@ -196,7 +185,7 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
               ),
               const SizedBox(height: AppDimensions.md),
 
-              // ── Row 1: Person's Name ────────────────────────
+              // ── Person's Name ───────────────────────────────
               _LabeledField(
                 label: "Person's Name",
                 child: _ModalInput(
@@ -208,7 +197,7 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
               ),
               const SizedBox(height: AppDimensions.sm),
 
-              // ── Row 2: Total Amount + Remaining ────────────
+              // ── Total Amount + Remaining ────────────────────
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -222,8 +211,7 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
                             decimal: true),
                         validator: (v) {
                           if (v == null || v.isEmpty) return 'Required';
-                          if (double.tryParse(v.replaceAll(',', '')) ==
-                              null) {
+                          if (double.tryParse(v.replaceAll(',', '')) == null) {
                             return 'Invalid';
                           }
                           return null;
@@ -246,7 +234,7 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
               ),
               const SizedBox(height: AppDimensions.sm),
 
-              // ── Row 3: Date ─────────────────────────────────
+              // ── Date ────────────────────────────────────────
               _LabeledField(
                 label: 'Date',
                 child: _ModalInput(
@@ -259,7 +247,7 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
               ),
               const SizedBox(height: AppDimensions.sm),
 
-              // ── Row 4: Notes (always visible) ───────────────
+              // ── Notes ───────────────────────────────────────
               _LabeledField(
                 label: 'Notes (optional)',
                 child: _ModalInput(
@@ -275,7 +263,7 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
                 children: [
                   Expanded(
                     child: _CancelButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => context.pop(null),
                     ),
                   ),
                   const SizedBox(width: AppDimensions.sm),
@@ -298,7 +286,7 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
 }
 
 
-// Type Selector
+// ── Type Selector ─────────────────────────────────────────────────────────────
 
 
 class _TypeSelector extends StatelessWidget {
@@ -372,7 +360,7 @@ class _TypeButton extends StatelessWidget {
 }
 
 
-// Label-above-field wrapper
+// ── Label-above-field wrapper ─────────────────────────────────────────────────
 
 
 class _LabeledField extends StatelessWidget {
@@ -401,7 +389,7 @@ class _LabeledField extends StatelessWidget {
 }
 
 
-// Input field
+// ── Input field ───────────────────────────────────────────────────────────────
 
 
 class _ModalInput extends StatelessWidget {
@@ -451,14 +439,10 @@ class _ModalInput extends StatelessWidget {
       maxLines: maxLines,
       onTap: onTap,
       validator: validator,
-      style: AppTextStyles.bodySm.copyWith(
-        color: context.kiseTextHeading,
-      ),
+      style: AppTextStyles.bodySm.copyWith(color: context.kiseTextHeading),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: AppTextStyles.bodySm.copyWith(
-          color: context.kiseTextHint,
-        ),
+        hintStyle: AppTextStyles.bodySm.copyWith(color: context.kiseTextHint),
         filled: true,
         fillColor: context.kiseCard,
         suffixIcon: suffixIcon != null
@@ -481,7 +465,7 @@ class _ModalInput extends StatelessWidget {
 }
 
 
-// Cancel button
+// ── Cancel button ─────────────────────────────────────────────────────────────
 
 
 class _CancelButton extends StatelessWidget {
@@ -501,8 +485,7 @@ class _CancelButton extends StatelessWidget {
             width: 1,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(AppDimensions.radiusSm),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
           ),
         ),
         child: Text(
@@ -518,7 +501,7 @@ class _CancelButton extends StatelessWidget {
 }
 
 
-// Add Record button
+// ── Add / Save button ─────────────────────────────────────────────────────────
 
 
 class _AddButton extends StatelessWidget {
@@ -538,8 +521,7 @@ class _AddButton extends StatelessWidget {
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(AppDimensions.radiusSm),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
           ),
         ),
         child: Text(
