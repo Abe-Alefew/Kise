@@ -11,31 +11,22 @@ import '../widgets/add_transaction_modal.dart';
 import '../widgets/transaction_tile.dart';
 
 class TransactionsScreen extends StatefulWidget {
-
-  const TransactionsScreen({
-    super.key,
-  });
+  const TransactionsScreen({super.key});
 
   @override
-  State<TransactionsScreen> createState() =>
-      _TransactionsScreenState();
+  State<TransactionsScreen> createState() => _TransactionsScreenState();
 }
 
-class _TransactionsScreenState
-    extends State<TransactionsScreen> {
-
+class _TransactionsScreenState extends State<TransactionsScreen> {
   String selectedFilter = "All";
   String selectedAnalyticsRange = "1 Month";
   int _visibleCount = 3;
 
   @override
   Widget build(BuildContext context) {
-
-    final transactions =
-        TransactionDatasource.transactions;
+    final transactions = TransactionDatasource.transactions;
 
     return Scaffold(
-
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       // floatingActionButton:
@@ -65,45 +56,35 @@ class _TransactionsScreenState
       // ),
 
       body: SafeArea(
-
         child: Padding(
-
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(12, 40, 12, 12),
 
           child: SingleChildScrollView(
-
             child: Column(
-
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
-
                 /// HEADER
                 Row(
-
-                  mainAxisAlignment:
-                      MainAxisAlignment
-                          .spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
                   children: [
-
                     Column(
-
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
 
                       children: [
-
                         Text(
                           "Transactions",
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 20),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.displaySmall?.copyWith(fontSize: 24),
                         ),
 
                         Text(
                           "${transactions.length} records",
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.copyWith(fontSize: 14),
                         ),
                       ],
                     ),
@@ -134,7 +115,9 @@ class _TransactionsScreenState
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Theme.of(context).shadowColor.withValues(alpha: 0.06),
+                        color: Theme.of(
+                          context,
+                        ).shadowColor.withValues(alpha: 0.06),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -151,14 +134,18 @@ class _TransactionsScreenState
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outline.withValues(alpha: 0.2),
                           width: 1,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outline.withValues(alpha: 0.4),
                           width: 1,
                         ),
                       ),
@@ -174,15 +161,9 @@ class _TransactionsScreenState
 
                 /// FILTERS
                 KisePillFilter(
+                  options: const ["All", "Income", "Expense"],
 
-                  options: const [
-                    "All",
-                    "Income",
-                    "Expense",
-                  ],
-
-                  selected:
-                      selectedFilter,
+                  selected: selectedFilter,
 
                   onSelected: (value) {
                     setState(() {
@@ -196,14 +177,9 @@ class _TransactionsScreenState
 
                 /// SUMMARY CARDS
                 Row(
-
                   children: [
-
                     Expanded(
-
-                      child:
-                          _summaryCard(
-
+                      child: _summaryCard(
                         amount: "30.0k",
                         label: "Total Income",
                         color: Theme.of(context).colorScheme.tertiary,
@@ -237,7 +213,9 @@ class _TransactionsScreenState
                 /// ANALYTICS TITLE
                 Text(
                   "Income vs Expense Analytics",
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 15),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.displaySmall?.copyWith(fontSize: 15),
                 ),
 
                 const SizedBox(height: 16),
@@ -246,8 +224,9 @@ class _TransactionsScreenState
                 KisePillFilter(
                   options: const ["1 Month", "3 Months", "6 Months", "1 Year"],
                   selected: selectedAnalyticsRange,
-                  selectedColor: Theme.of(context).colorScheme.secondary,
-                  onSelected: (value) => setState(() => selectedAnalyticsRange = value),
+                  selectedColor: Theme.of(context).colorScheme.primaryContainer,
+                  onSelected: (value) =>
+                      setState(() => selectedAnalyticsRange = value),
                 ),
 
                 const SizedBox(height: 20),
@@ -263,54 +242,64 @@ class _TransactionsScreenState
                 const SizedBox(height: 28),
 
                 /// TRANSACTIONS CARD
-                Builder(builder: (context) {
-                  final filtered = selectedFilter == 'All'
-                      ? transactions
-                      : transactions.where((t) => t.type == selectedFilter).toList();
-                  final visible = filtered.take(_visibleCount).toList();
-                  final hasMore = _visibleCount < filtered.length;
+                Builder(
+                  builder: (context) {
+                    final filtered = selectedFilter == 'All'
+                        ? transactions
+                        : transactions
+                              .where((t) => t.type == selectedFilter)
+                              .toList();
+                    final visible = filtered.take(_visibleCount).toList();
+                    final hasMore = _visibleCount < filtered.length;
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      KiseCardHolder(
-                        child: Column(
-                          children: visible
-                              .map((t) => TransactionTile(transaction: t))
-                              .toList(),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        KiseCardHolder(
+                          child: Column(
+                            children: visible
+                                .map((t) => TransactionTile(transaction: t))
+                                .toList(),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          if (_visibleCount > 3)
-                            TextButton(
-                              onPressed: () => setState(() => _visibleCount = 3),
-                              child: Text(
-                                'Show Less',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.outline,
-                                  fontWeight: FontWeight.bold,
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (_visibleCount > 3)
+                              TextButton(
+                                onPressed: () =>
+                                    setState(() => _visibleCount = 3),
+                                child: Text(
+                                  'Show Less',
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                          if (hasMore)
-                            TextButton(
-                              onPressed: () => setState(() => _visibleCount += 3),
-                              child: Text(
-                                'Load More',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
+                            if (hasMore)
+                              TextButton(
+                                onPressed: () =>
+                                    setState(() => _visibleCount += 3),
+                                child: Text(
+                                  'Load More',
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  );
-                }),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
 
                 const SizedBox(height: 100),
               ],
@@ -339,13 +328,9 @@ class _TransactionsScreenState
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
     );
   }
-
 }
