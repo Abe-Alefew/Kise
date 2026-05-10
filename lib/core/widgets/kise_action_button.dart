@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_dimensions.dart';
 
-
 // Variant Enum
 
 enum KiseButtonVariant {
@@ -9,7 +8,6 @@ enum KiseButtonVariant {
   outline,   // gold border  — secondary actions
   ghost,     // text only    — Skip, Cancel
 }
-
 
 // KiseActionButton
 
@@ -21,12 +19,13 @@ class KiseActionButton extends StatelessWidget {
     this.isLoading = false,
     this.variant = KiseButtonVariant.primary,
     this.leadingIcon,
+    this.textColor,
+    this.fontSize,
     this.width,
     this.height = AppDimensions.buttonHeight,
-    this.expanded = true,
+    this.expanded = true, // full-width by default
     this.borderRadius,
     this.textStyle,
-    this.textColor,
     this.outlineBorderSide,
   });
 
@@ -35,12 +34,13 @@ class KiseActionButton extends StatelessWidget {
   final bool isLoading;
   final KiseButtonVariant variant;
   final IconData? leadingIcon;
+  final Color? textColor;
+  final double? fontSize;
   final double? width;
   final double height;
   final bool expanded;
   final double? borderRadius;
   final TextStyle? textStyle;
-  final Color? textColor;
   final BorderSide? outlineBorderSide;
 
   // ── Resolve effective callback ──────────────
@@ -56,30 +56,34 @@ class KiseActionButton extends StatelessWidget {
           onPressed: _effectiveOnPressed,
           isLoading: isLoading,
           leadingIcon: leadingIcon,
+          textColor: textColor,
+          fontSize: fontSize,
           height: height,
           shrink: !expanded && width == null,
           borderRadius: borderRadius,
           textStyle: textStyle,
-          textColor: textColor,
         ),
       KiseButtonVariant.outline => _OutlineButton(
           label: label,
           onPressed: _effectiveOnPressed,
           isLoading: isLoading,
           leadingIcon: leadingIcon,
+          textColor: textColor,
+          fontSize: fontSize,
           height: height,
           shrink: !expanded && width == null,
           borderRadius: borderRadius,
           textStyle: textStyle,
-          textColor: textColor,
           outlineBorderSide: outlineBorderSide,
         ),
       KiseButtonVariant.ghost => _GhostButton(
           label: label,
           onPressed: _effectiveOnPressed,
           isLoading: isLoading,
-          height: height,
           textColor: textColor,
+          fontSize: fontSize,
+          height: height,
+          borderRadius: borderRadius,
         ),
     };
 
@@ -111,17 +115,19 @@ class _PrimaryButton extends StatelessWidget {
     this.borderRadius,
     this.textStyle,
     this.textColor,
+    this.fontSize,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
   final IconData? leadingIcon;
+  final Color? textColor;
+  final double? fontSize;
   final double height;
   final bool shrink;
   final double? borderRadius;
   final TextStyle? textStyle;
-  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -132,19 +138,22 @@ class _PrimaryButton extends StatelessWidget {
       height: height,
       child: ElevatedButton(
         onPressed: onPressed,
-        style: shrink || shape != null || textStyle != null
-            ? ElevatedButton.styleFrom(
-                minimumSize: shrink ? Size.zero : null,
-                padding: shrink ? const EdgeInsets.symmetric(horizontal: 16) : null,
-                shape: shape,
-                textStyle: textStyle,
-                foregroundColor: textColor,
-              )
-            : (textColor != null ? ElevatedButton.styleFrom(foregroundColor: textColor) : null),
+        style: ElevatedButton.styleFrom(
+          shape: shape ?? RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius ?? 12),
+          ),
+          padding: shrink ? const EdgeInsets.symmetric(horizontal: 16) : const EdgeInsets.symmetric(horizontal: 16),
+          minimumSize: shrink ? Size.zero : Size.zero,
+          tapTargetSize: shrink ? MaterialTapTargetSize.shrinkWrap : MaterialTapTargetSize.shrinkWrap,
+          textStyle: textStyle,
+          foregroundColor: textColor,
+        ),
         child: _ButtonContent(
           label: label,
           leadingIcon: leadingIcon,
           isLoading: isLoading,
+          textColor: textColor,
+          fontSize: fontSize,
           spinnerColor: Theme.of(context).colorScheme.onPrimary,
         ),
       ),
@@ -166,6 +175,7 @@ class _OutlineButton extends StatelessWidget {
     this.borderRadius,
     this.textStyle,
     this.textColor,
+    this.fontSize,
     this.outlineBorderSide,
   });
 
@@ -173,11 +183,12 @@ class _OutlineButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final IconData? leadingIcon;
+  final Color? textColor;
+  final double? fontSize;
   final double height;
   final bool shrink;
   final double? borderRadius;
   final TextStyle? textStyle;
-  final Color? textColor;
   final BorderSide? outlineBorderSide;
 
   @override
@@ -189,20 +200,23 @@ class _OutlineButton extends StatelessWidget {
       height: height,
       child: OutlinedButton(
         onPressed: onPressed,
-        style: shrink || shape != null || outlineBorderSide != null
-            ? OutlinedButton.styleFrom(
-                minimumSize: shrink ? Size.zero : null,
-                padding: shrink ? const EdgeInsets.symmetric(horizontal: 16) : null,
-                shape: shape,
-                side: outlineBorderSide,
-                textStyle: textStyle,
-                foregroundColor: textColor,
-              )
-            : (textColor != null || outlineBorderSide != null ? OutlinedButton.styleFrom(foregroundColor: textColor, side: outlineBorderSide) : null),
+        style: OutlinedButton.styleFrom(
+          shape: shape ?? RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius ?? 12),
+          ),
+          padding: shrink ? const EdgeInsets.symmetric(horizontal: 16) : const EdgeInsets.symmetric(horizontal: 16),
+          minimumSize: shrink ? Size.zero : Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          textStyle: textStyle,
+          foregroundColor: textColor,
+          side: outlineBorderSide,
+        ),
         child: _ButtonContent(
           label: label,
           leadingIcon: leadingIcon,
           isLoading: isLoading,
+          textColor: textColor,
+          fontSize: fontSize,
           spinnerColor: Theme.of(context).colorScheme.primary,
         ),
       ),
@@ -219,26 +233,38 @@ class _GhostButton extends StatelessWidget {
     required this.onPressed,
     required this.isLoading,
     required this.height,
+    this.borderRadius,
     this.textColor,
+    this.fontSize,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
   final double height;
+  final double? borderRadius;
   final Color? textColor;
+  final double? fontSize;
 
   @override
   Widget build(BuildContext context) {
+    final shape = borderRadius != null
+        ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius!))
+        : null;
     // TextButtonTheme from app_theme.dart is inherited automatically
     return SizedBox(
       height: height,
       child: TextButton(
         onPressed: onPressed,
-        style: textColor != null ? TextButton.styleFrom(foregroundColor: textColor) : null,
+        style: TextButton.styleFrom(
+          foregroundColor: textColor,
+          shape: shape,
+        ),
         child: _ButtonContent(
           label: label,
           isLoading: isLoading,
+          textColor: textColor,
+          fontSize: fontSize,
           spinnerColor: Theme.of(context).colorScheme.primary,
         ),
       ),
@@ -255,12 +281,16 @@ class _ButtonContent extends StatelessWidget {
     required this.isLoading,
     required this.spinnerColor,
     this.leadingIcon,
+    this.textColor,
+    this.fontSize,
   });
 
   final String label;
   final bool isLoading;
   final Color spinnerColor;
   final IconData? leadingIcon;
+  final Color? textColor;
+  final double? fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -280,13 +310,19 @@ class _ButtonContent extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(leadingIcon, size: 18),
+          Icon(leadingIcon, size: 18, color: textColor),
           const SizedBox(width: AppDimensions.sm),
-          Text(label),
+          Text(
+            label,
+            style: TextStyle(color: textColor, fontSize: fontSize),
+          ),
         ],
       );
     }
 
-    return Text(label);
+    return Text(
+      label,
+      style: TextStyle(color: textColor, fontSize: fontSize),
+    );
   }
 }

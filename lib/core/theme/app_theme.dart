@@ -103,7 +103,7 @@ abstract class AppTheme {
           ),
         ),
 
-        // ── InputDecoration ───────────────────────
+        //InputDecoration 
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: AppColorsLight.inputFill,

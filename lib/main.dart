@@ -11,9 +11,8 @@ class KiseApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     return MaterialApp.router(
-      title: 'KISE',
+      title: 'KISE App',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,
