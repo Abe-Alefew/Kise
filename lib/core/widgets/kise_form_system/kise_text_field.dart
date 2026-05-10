@@ -25,19 +25,33 @@ class KiseTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
-        obscureText: isPassword,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          prefixIcon: icon != null ? Icon(icon) : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          ),
+      child: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              offset: Offset(0, 4),
+              blurRadius: 4,
+              spreadRadius: 0,
+            ),
+          ],
         ),
-        validator: validator,
+        child: TextFormField(
+          controller: controller,
+          obscureText: isPassword,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: hint,
+            prefixIcon: icon != null ? Icon(icon) : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            ),
+          ),
+          validator: validator,
+        ),
       ),
     );
   }
