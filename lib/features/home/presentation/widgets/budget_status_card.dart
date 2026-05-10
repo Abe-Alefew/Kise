@@ -9,6 +9,8 @@ class BudgetStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return KiseCardHolder(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -56,7 +58,7 @@ class BudgetStatusCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   "Spend ration",
                   style: TextStyle(
                     color: AppColorsLight.textHint,
@@ -65,9 +67,10 @@ class BudgetStatusCard extends StatelessWidget {
                 ),
                 Text(
                   "${(spendRatio * 100).toInt()}%",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
+                    color: isDark ? AppColorsDark.textHeading : AppColorsLight.textHeading,
                   ),
                 ),
               ],
@@ -75,7 +78,7 @@ class BudgetStatusCard extends StatelessWidget {
             const SizedBox(height: 8),
             KiseProgressBar(progress: spendRatio), // Zeamanuel's core widget
             const SizedBox(height: 12),
-            const Row(
+            Row(
               children: [
                 Icon(
                   Icons.lightbulb_outline,

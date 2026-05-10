@@ -7,24 +7,26 @@ class AllowanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return KiseCardHolder(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: ListTile(
-          leading: const Icon(
+          leading: Icon(
             Icons.lightbulb_outline,
             color: AppColorsLight.primary,
           ),
-          title: const Text(
+          title: Text(
             "Set your allowance",
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: AppColorsLight.primary,
             ),
           ),
-          subtitle: const Text(
+          subtitle: Text(
             "Go to Settings to set your monthly budget and unlock spending alerts.",
-            style: TextStyle(fontSize: 13),
+            style: TextStyle(fontSize: 13, color: isDark ? AppColorsDark.textBody : AppColorsLight.textBody),
           ),
         ),
       ),
