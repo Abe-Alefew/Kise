@@ -7,8 +7,6 @@ class TrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return LineChart(
       LineChartData(
         gridData: const FlGridData(show: false),
@@ -25,13 +23,13 @@ class TrendChart extends StatelessWidget {
                   'Mar',
                   'Apr',
                 ]; // 6-month history
-                final textColor = isDark
-                    ? AppColorsDark.textHint
-                    : AppColorsLight.textHint;
                 if (value.toInt() >= 0 && value.toInt() < months.length) {
                   return Text(
                     months[value.toInt()],
-                    style: TextStyle(color: textColor, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppColorsLight.textHint,
+                      fontSize: 12,
+                    ),
                   );
                 }
                 return const Text('');
@@ -51,23 +49,26 @@ class TrendChart extends StatelessWidget {
         borderData: FlBorderData(show: false),
         lineBarsData: [
           LineChartBarData(
-            spots: const [FlSpot(0, 500), FlSpot(5, 30000)], // Expenses
+            spots: const [
+              FlSpot(0, 500),
+              FlSpot(5, 30000),
+            ], // Expenses - Yellow
             isCurved: true,
-            color: AppColorsLight.error,
+            color: Color(0xFFEAB308),
             barWidth: 3,
             belowBarData: BarAreaData(
               show: true,
-              color: AppColorsLight.error.withOpacity(0.1),
+              color: Color(0xFFEAB308).withOpacity(0.1),
             ),
           ),
           LineChartBarData(
-            spots: const [FlSpot(0, 200), FlSpot(5, 20000)], // Income
+            spots: const [FlSpot(0, 200), FlSpot(5, 20000)], // Income - Green
             isCurved: true,
-            color: AppColorsLight.primary,
+            color: Color(0xFF22C55E),
             barWidth: 3,
             belowBarData: BarAreaData(
               show: true,
-              color: AppColorsLight.primary.withOpacity(0.1),
+              color: Color(0xFF22C55E).withOpacity(0.1),
             ),
           ),
         ],

@@ -8,7 +8,7 @@ class RecentTransactionsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Column(
       children: [
         Row(
@@ -19,14 +19,20 @@ class RecentTransactionsList extends StatelessWidget {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: isDark ? AppColorsDark.textHeading : AppColorsLight.textHeading,
+                color: isDark
+                    ? AppColorsDark.textHeading
+                    : AppColorsLight.textHeading,
               ),
             ),
             TextButton(
               onPressed: () {},
               child: Text(
                 "View all",
-                style: TextStyle(color: isDark ? AppColorsDark.primary : AppColorsLight.primary),
+                style: TextStyle(
+                  color: isDark
+                      ? AppColorsDark.primary
+                      : AppColorsLight.primary,
+                ),
               ),
             ),
           ],
@@ -41,25 +47,41 @@ class RecentTransactionsList extends StatelessWidget {
             leading: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: (isDark ? AppColorsDark.primary : AppColorsLight.primary).withOpacity(0.1),
+                color: const Color(0xFFA855F7).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.school_outlined,
-                color: isDark ? AppColorsDark.primary : AppColorsLight.primary,
+                color: Color(0xFFA855F7),
               ),
             ),
-            title: const Text(
+            title: Text(
               "Education",
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isDark
+                    ? AppColorsDark.textHeading
+                    : AppColorsLight.textHeading,
+              ),
             ),
             subtitle: Text(
               "something. April 15",
-              style: TextStyle(color: isDark ? AppColorsDark.textHint : AppColorsLight.textHint, fontSize: 12),
+              style: TextStyle(
+                color: isDark
+                    ? AppColorsDark.textHint
+                    : AppColorsLight.textHint,
+                fontSize: 12,
+              ),
             ),
-            trailing: const Text(
+            trailing: Text(
               "-20,000.00 ETB",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isDark
+                    ? AppColorsDark.textHeading
+                    : AppColorsLight.textHeading,
+              ),
             ),
           ),
         ),

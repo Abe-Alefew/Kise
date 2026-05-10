@@ -15,13 +15,13 @@ class AllowanceCard extends StatelessWidget {
         child: ListTile(
           leading: Icon(
             Icons.lightbulb_outline,
-            color: isDark ? AppColorsDark.primary : AppColorsLight.primary,
+            color: AppColorsLight.primary,
           ),
           title: Text(
             "Set your allowance",
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: isDark ? AppColorsDark.primary : AppColorsLight.primary,
+              color: AppColorsLight.primary,
             ),
           ),
           subtitle: Text(

@@ -15,12 +15,11 @@ class BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+    
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? AppColorsDark.primary : AppColorsLight.primary,
+        color: AppColorsLight.primary,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -28,12 +27,15 @@ class BalanceCard extends StatelessWidget {
         children: [
           Text(
             "TOTAL BALANCE",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: AppColorsLight.textOnPrimary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           Text(
             "${totalBalance.toStringAsFixed(2)} ETB",
-            style: TextStyle(
-              color: Colors.white,
+            style: const TextStyle(
+              color: AppColorsLight.textOnPrimary,
               fontSize: 32,
               fontWeight: FontWeight.bold,
             ),
@@ -63,18 +65,21 @@ class BalanceCard extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 14,
-          backgroundColor: Colors.white.withOpacity(0.2),
-          child: Icon(icon, color: Colors.white, size: 16),
+          backgroundColor: AppColorsLight.textOnPrimary.withOpacity(0.2),
+          child: Icon(icon, color: AppColorsLight.textOnPrimary, size: 16),
         ),
         const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: TextStyle(color: Colors.white, fontSize: 12)),
+            Text(
+              title,
+              style: const TextStyle(color: AppColorsLight.textOnPrimary, fontSize: 12),
+            ),
             Text(
               "${amount.toStringAsFixed(2)} ETB",
-              style: TextStyle(
-                color: Colors.white,
+              style: const TextStyle(
+                color: AppColorsLight.textOnPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),

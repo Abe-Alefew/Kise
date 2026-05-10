@@ -8,7 +8,7 @@ class CategorySpendingChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -17,7 +17,9 @@ class CategorySpendingChart extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: isDark ? AppColorsDark.textHeading : AppColorsLight.textHeading,
+            color: isDark
+                ? AppColorsDark.textHeading
+                : AppColorsLight.textHeading,
           ),
         ),
         const SizedBox(height: 16),
@@ -27,7 +29,11 @@ class CategorySpendingChart extends StatelessWidget {
           decoration: BoxDecoration(
             color: isDark ? AppColorsDark.card : AppColorsLight.card,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: isDark ? AppColorsDark.secondaryBg : AppColorsLight.secondaryBg),
+            border: Border.all(
+              color: isDark
+                  ? AppColorsDark.secondaryBg
+                  : AppColorsLight.secondaryBg,
+            ),
           ),
           child: Column(
             children: [
@@ -38,7 +44,7 @@ class CategorySpendingChart extends StatelessWidget {
                     centerSpaceRadius: 50,
                     sections: [
                       PieChartSectionData(
-                        color: isDark ? AppColorsDark.primary : AppColorsLight.primary,
+                        color: Color(0xFFA855F7),
                         value: 20000,
                         title: '',
                         radius: 20,
@@ -46,16 +52,30 @@ class CategorySpendingChart extends StatelessWidget {
                     ],
                   ),
                 ),
-                
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Icon(Icons.circle, size: 12, color: isDark ? AppColorsDark.primary : AppColorsLight.primary),
+                  Icon(Icons.circle, size: 12, color: Color(0xFFA855F7)),
                   const SizedBox(width: 8),
-                  Text("Education", style: TextStyle(color: isDark ? AppColorsDark.textBody : AppColorsLight.textBody)),
+                  Text(
+                    "Education",
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColorsDark.textBody
+                          : AppColorsLight.textBody,
+                    ),
+                  ),
                   const Spacer(),
-                  Text("20,000", style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? AppColorsDark.textHeading : AppColorsLight.textHeading)),
+                  Text(
+                    "20,000",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark
+                          ? AppColorsDark.textHeading
+                          : AppColorsLight.textHeading,
+                    ),
+                  ),
                 ],
               ),
             ],

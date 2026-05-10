@@ -22,12 +22,12 @@ class BudgetStatusCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: (isDark ? AppColorsDark.primary : AppColorsLight.primary).withOpacity(0.1),
+                    color: AppColorsLight.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.balance,
-                    color: isDark ? AppColorsDark.primary : AppColorsLight.primary,
+                    color: AppColorsLight.primary,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -40,13 +40,12 @@ class BudgetStatusCard extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: isDark ? AppColorsDark.textHeading : AppColorsLight.textHeading,
                         ),
                       ),
                       Text(
                         "Good Balance between spending and saving",
                         style: TextStyle(
-                          color: isDark ? AppColorsDark.textHint : AppColorsLight.textHint,
+                          color: AppColorsLight.textHint,
                           fontSize: 12,
                         ),
                       ),
@@ -62,7 +61,7 @@ class BudgetStatusCard extends StatelessWidget {
                 Text(
                   "Spend ration",
                   style: TextStyle(
-                    color: isDark ? AppColorsDark.textHint : AppColorsLight.textHint,
+                    color: AppColorsLight.textHint,
                     fontSize: 12,
                   ),
                 ),
@@ -84,13 +83,13 @@ class BudgetStatusCard extends StatelessWidget {
                 Icon(
                   Icons.lightbulb_outline,
                   size: 16,
-                  color: isDark ? AppColorsDark.primary : AppColorsLight.primary,
+                  color: AppColorsLight.primary,
                 ),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     "Try to push your savings a bit higher.",
-                    style: TextStyle(fontSize: 12, color: isDark ? AppColorsDark.textBody : AppColorsLight.textBody),
+                    style: TextStyle(fontSize: 12),
                   ),
                 ),
               ],
