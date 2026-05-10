@@ -9,5 +9,6 @@ class TransactionModel extends TransactionEntity {
     required super.type,
     required super.date,
     required super.icon,
+    required super.month,
   });
 }

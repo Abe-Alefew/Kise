@@ -78,7 +78,7 @@ class AnalyticsScreen extends StatelessWidget {
 
               /// BAR CHART
               const KiseCardHolder(
-                child: AnalyticsBarChart(),
+                child: AnalyticsBarChart(selectedFilter: "All"),
               ),
 
               const SizedBox(height: 24),

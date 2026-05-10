@@ -6,6 +6,7 @@ class TransactionEntity {
   final String type;
   final String date;
   final String icon;
+  final String month;
 
   const TransactionEntity({
     required this.title,
@@ -14,5 +15,6 @@ class TransactionEntity {
     required this.type,
     required this.date,
     required this.icon,
+    required this.month,
   });
 }

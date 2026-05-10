@@ -4,58 +4,66 @@ class TransactionDatasource {
 
   static List<TransactionModel> transactions = [
 
+    /// INCOME
     TransactionModel(
-      title: "Education",
-      category: "Learning",
-      amount: 20000,
-      type: "Expense",
+      title: "Salary",
+      category: "Salary",
+      amount: 30000,
+      type: "Income",
       date: "Apr 15",
-      icon: "📚",
+      icon: "💼",
+      month: "Apr",
+    ),
+
+    TransactionModel(
+      title: "Freelance",
+      category: "Freelance",
+      amount: 12000,
+      type: "Income",
+      date: "Apr 10",
+      icon: "💻",
+      month: "Apr",
     ),
 
     TransactionModel(
       title: "Investment",
-      category: "Stocks",
-      amount: 1300,
+      category: "Investment",
+      amount: 8000,
       type: "Income",
-      date: "Apr 14",
-      icon: "📈",
-    ),
-
-    TransactionModel(
-      title: "Salary",
-      category: "Work",
-      amount: 15000,
-      type: "Income",
-      date: "Apr 10",
-      icon: "💼",
-    ),
-
-    TransactionModel(
-      title: "Transport",
-      category: "Travel",
-      amount: 300,
-      type: "Expense",
       date: "Apr 08",
-      icon: "🚌",
+      icon: "📈",
+      month: "Apr",
+    ),
+
+    /// EXPENSE
+    TransactionModel(
+      title: "Education",
+      category: "Education",
+      amount: 20000,
+      type: "Expense",
+      date: "Apr 15",
+      icon: "🎓",
+      month: "Apr",
     ),
 
     TransactionModel(
       title: "Netflix",
       category: "Entertainment",
-      amount: 500,
+      amount: 1000,
       type: "Expense",
-      date: "Apr 05",
+      date: "Apr 14",
       icon: "🎬",
+      month: "Apr",
     ),
 
     TransactionModel(
-      title: "Freelance",
-      category: "Work",
-      amount: 4000,
-      type: "Income",
-      date: "Apr 01",
-      icon: "💻",
+      title: "Transport",
+      category: "Transport",
+      amount: 3000,
+      type: "Expense",
+      date: "Apr 12",
+      icon: "🚌",
+      month: "Apr",
     ),
   ];
 }
