@@ -6,14 +6,16 @@ import 'package:kise/features/auth/presentation/screens/onboarding_screen.dart';
 import 'package:kise/features/auth/presentation/screens/login_screen.dart';
 import 'package:kise/features/auth/presentation/screens/register_screen.dart';
 import 'package:kise/features/auth/presentation/screens/terms_and_conditions.dart';
+import 'package:kise/features/auth/presentation/screens/success_screen.dart';
+import 'package:kise/features/auth/presentation/screens/loading_screen.dart';
 import 'package:kise/features/home/presentation/screens/home_dashboard.dart';
 import 'package:kise/features/transactions/presentation/screens/transactions_screen.dart';
 import 'package:kise/features/goals/presentation/screens/goals_screen.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
 import 'package:kise/features/debt/presentation/screens/debt_screen.dart';
-import 'package:kise/features/debt/presentation/screens/add_edit_debt_screen.dart';
 import 'package:kise/features/debt/presentation/screens/debt_detail_screen.dart';
-import 'package:kise/features/settings/presentation/screens/settings.dart';
+import 'package:kise/features/debt/presentation/screens/add_edit_debt_screen.dart';
+import 'package:kise/features/settings/presentation/screens/settings_screen.dart';
 
 abstract class AppRoutes {
   static const String splash       = '/';
@@ -21,6 +23,8 @@ abstract class AppRoutes {
   static const String login        = '/login';
   static const String register     = '/register';
   static const String terms = '/terms';
+  static const String success = '/success';
+  static const String loading = '/loading';
 
   // Main tabs
   static const String home         = '/home';
@@ -104,6 +108,19 @@ abstract class AppRouter {
       GoRoute(
         path: AppRoutes.terms,
         builder: (context, state) => const TermsAndConditionsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.success,
+        builder: (context, state) {
+          final type = state.extra is SuccessType
+              ? state.extra as SuccessType
+              : SuccessType.registration;
+          return SuccessScreen(type: type);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.loading,
+        builder: (context, state) => const LoadingScreen(),
       ),
 
       // ── Debt modal routes — ROOT LEVEL ──────────────────────────────────
