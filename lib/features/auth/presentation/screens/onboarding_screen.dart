@@ -65,116 +65,119 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 		final isLastSlide = _currentIndex == _slides.length - 1;
 
 		return Scaffold(
+			resizeToAvoidBottomInset: true,
 			body: SafeArea(
 				child: Padding(
 					padding: AppDimensions.pagePadding,
 					child: LayoutBuilder(
 						builder: (context, constraints) {
+							// imageHeight is derived from the viewport height (outside the
+							// scroll view) so it remains stable regardless of content size.
 							final imageHeight = constraints.maxHeight * 0.44;
-							return Column(
-								crossAxisAlignment: CrossAxisAlignment.center,
-								children: [
-                  Padding(padding: const EdgeInsets.only(top:25)),
-									Text(
-                    
-										'KISE',
-										style: textTheme.labelMedium?.copyWith(
-											color: colorScheme.primary,
-											fontWeight: FontWeight.w700,
-                      fontSize: 39,
-										),
-										textAlign: TextAlign.center,
-                    
-									),
-									const SizedBox(height: AppDimensions.xxl),
-									SizedBox(
-										height: imageHeight,
-										child: PageView.builder(
-											controller: _controller,
-											itemCount: _slides.length,
-											onPageChanged: (index) {
-												setState(() {
-													_currentIndex = index;
-												});
-											},
-											itemBuilder: (context, index) {
-												final slide = _slides[index];
-												return Center(
-													child: Image.asset(
-														slide.imagePath,
-														fit: BoxFit.contain,
-													),
-												);
-											},
-										),
-									),
-									const SizedBox(height: AppDimensions.lg),
-									_DotIndicators(
-										count: _slides.length,
-										activeIndex: _currentIndex,
-									),
-									const SizedBox(height: AppDimensions.lg),
-									Text(
-										slide.title,
-										style: textTheme.displayMedium?.copyWith(
-											color: colorScheme.onSecondary,
-											fontWeight: FontWeight.w900,
-                      fontSize: 29,
-										),
-										textAlign: TextAlign.center,
-                    
-									),
-									const SizedBox(height: AppDimensions.lg),
-									Text(
-										slide.body,
-										style: textTheme.bodyMedium?.copyWith(
-											color: colorScheme.onSurface.withValues(alpha: 0.7),
-                      fontSize: 16,
-										),
-										textAlign: TextAlign.center,
-									),
-									const Spacer(),
-									if (isLastSlide)
-										Align(
-											alignment: Alignment.center,
-											child: KiseActionButton(
-												label: 'GET STARTED',
-												leadingIcon: LucideIcons.checkCircle,
-												onPressed: _nextPage,
-												expanded: false,
-												width: 181,
-												height: 37,
-												textColor: AppColorsLight.textOnPrimary,
-                        fontSize: 14,
+							return SingleChildScrollView(
+								physics: const ClampingScrollPhysics(),
+								child: Column(
+									crossAxisAlignment: CrossAxisAlignment.center,
+									children: [
+										const SizedBox(height: 25),
+										Text(
+											'KISE',
+											style: textTheme.labelMedium?.copyWith(
+												color: colorScheme.primary,
+												fontWeight: FontWeight.w700,
+												fontSize: 39,
 											),
-										)
-									else
-										Row(
-											mainAxisAlignment: MainAxisAlignment.spaceBetween,
-											children: [
-												KiseActionButton(
-													label: 'SKIP',
-													variant: KiseButtonVariant.ghost,
-													expanded: false,
-													textColor: colorScheme.onSecondary.withValues(alpha: 0.7),
-                          fontSize: 14,
-													onPressed: () {
-														// TODO: restore production navigation logic
-														context.go(AppRoutes.login);
-													},
-												),
-												KiseActionButton(
-													label: 'NEXT',
+											textAlign: TextAlign.center,
+										),
+										const SizedBox(height: AppDimensions.xxl),
+										SizedBox(
+											height: imageHeight,
+											child: PageView.builder(
+												controller: _controller,
+												itemCount: _slides.length,
+												onPageChanged: (index) {
+													setState(() => _currentIndex = index);
+												},
+												itemBuilder: (context, index) {
+													final s = _slides[index];
+													return Center(
+														child: Image.asset(
+															s.imagePath,
+															fit: BoxFit.contain,
+														),
+													);
+												},
+											),
+										),
+										const SizedBox(height: AppDimensions.lg),
+										_DotIndicators(
+											count: _slides.length,
+											activeIndex: _currentIndex,
+										),
+										const SizedBox(height: AppDimensions.lg),
+										Text(
+											slide.title,
+											style: textTheme.displayMedium?.copyWith(
+												color: colorScheme.onSecondary,
+												fontWeight: FontWeight.w900,
+												fontSize: 29,
+											),
+											textAlign: TextAlign.center,
+										),
+										const SizedBox(height: AppDimensions.lg),
+										Text(
+											slide.body,
+											style: textTheme.bodyMedium?.copyWith(
+												color: colorScheme.onSurface.withValues(alpha: 0.7),
+												fontSize: 16,
+											),
+											textAlign: TextAlign.center,
+										),
+										// Fixed gap replaces Spacer — Spacer requires a bounded
+										// parent height which SingleChildScrollView cannot provide.
+										const SizedBox(height: AppDimensions.xxl),
+										if (isLastSlide)
+											Align(
+												alignment: Alignment.center,
+												child: KiseActionButton(
+													label: 'GET STARTED',
+													leadingIcon: LucideIcons.checkCircle,
 													onPressed: _nextPage,
 													expanded: false,
-													width: 85,
+													width: 181,
 													height: 37,
 													textColor: AppColorsLight.textOnPrimary,
-                          fontSize: 14,
+													fontSize: 14,
 												),
-											],
-										),
-								],
+											)
+										else
+											Row(
+												mainAxisAlignment: MainAxisAlignment.spaceBetween,
+												children: [
+													KiseActionButton(
+														label: 'SKIP',
+														variant: KiseButtonVariant.ghost,
+														expanded: false,
+														textColor: colorScheme.onSecondary.withValues(alpha: 0.7),
+														fontSize: 14,
+														onPressed: () {
+															context.go(AppRoutes.login);
+														},
+													),
+													KiseActionButton(
+														label: 'NEXT',
+														onPressed: _nextPage,
+														expanded: false,
+														width: 85,
+														height: 37,
+														textColor: AppColorsLight.textOnPrimary,
+														fontSize: 14,
+													),
+												],
+											),
+										const SizedBox(height: AppDimensions.md),
+									],
+								),
 							);
 						},
 					),
