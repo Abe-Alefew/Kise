@@ -26,9 +26,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
-  final TextEditingController _schoolController = TextEditingController();
+  final TextEditingController _universityController = TextEditingController();
   final TextEditingController _departmentController = TextEditingController();
-  final TextEditingController _yearController = TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
   final TextEditingController _currencyController = TextEditingController();
 
@@ -81,9 +80,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
-    _schoolController.dispose();
+    _universityController.dispose();
     _departmentController.dispose();
-    _yearController.dispose();
     _budgetController.dispose();
     _currencyController.dispose();
     super.dispose();
@@ -268,19 +266,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildInputField(
-          controller: _schoolController,
+          controller: _universityController,
           label: 'UNIVERSITY NAME',
           validator: Validators.requiredField,
         ),
         _buildInputField(
           controller: _departmentController,
           label: 'DEPARTMENT',
-          validator: Validators.requiredField,
-        ),
-        _buildInputField(
-          controller: _yearController,
-          label: 'YEAR OF STUDY',
-          keyboardType: TextInputType.number,
           validator: Validators.requiredField,
         ),
       ],
