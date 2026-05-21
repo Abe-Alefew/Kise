@@ -103,7 +103,6 @@ class UserModel {
           username,
           university,
           department,
-          year_of_study,
           currency,
           terms_accepted_at,
           created_at,
