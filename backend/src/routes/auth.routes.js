@@ -77,7 +77,7 @@ const registerValidation = [
     .isIn(['ETB', 'USD'])
     .withMessage('Currency must be ETB or USD'),
   body('termsAccepted')
-    .equals(true)
+    .equals('true')
     .withMessage('You must accept the terms and conditions'),
 ];
 
