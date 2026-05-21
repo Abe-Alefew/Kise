@@ -1,6 +1,6 @@
-const { v4: uuidv4 } = require('uuid');
-const db = require('../config/database');
-const DebtModel = require('./Debt.model');
+const { v4: uuidv4 } = require("uuid");
+const db = require("../config/database");
+const DebtModel = require("./Debt.model");
 
 const DEBT_PAYMENTS_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS debt_payments (
@@ -20,13 +20,13 @@ class DebtPaymentModel {
   static async createTable() {
     await db.run(DEBT_PAYMENTS_TABLE_SQL);
     await db.run(
-      'CREATE INDEX IF NOT EXISTS idx_debt_payments_debt_id ON debt_payments(debt_id);'
+      "CREATE INDEX IF NOT EXISTS idx_debt_payments_debt_id ON debt_payments(debt_id);",
     );
     await db.run(
-      'CREATE INDEX IF NOT EXISTS idx_debt_payments_user_id ON debt_payments(user_id);'
+      "CREATE INDEX IF NOT EXISTS idx_debt_payments_user_id ON debt_payments(user_id);",
     );
     await db.run(
-      'CREATE INDEX IF NOT EXISTS idx_debt_payments_payment_date ON debt_payments(user_id, payment_date);'
+      "CREATE INDEX IF NOT EXISTS idx_debt_payments_payment_date ON debt_payments(user_id, payment_date);",
     );
   }
 
@@ -54,7 +54,7 @@ class DebtPaymentModel {
         WHERE user_id = ? AND debt_id = ?
         ORDER BY payment_date DESC, created_at DESC;
       `,
-      [userId, debtId]
+      [userId, debtId],
     );
 
     return rows.map(DebtPaymentModel.mapRow);
@@ -68,31 +68,32 @@ class DebtPaymentModel {
         WHERE user_id = ? AND id = ?
         LIMIT 1;
       `,
-      [userId, paymentId]
+      [userId, paymentId],
     );
 
     return DebtPaymentModel.mapRow(row);
   }
 
   static async createAndApply(userId, debtId, data) {
-    await db.run('BEGIN IMMEDIATE TRANSACTION;');
+    await db.run("BEGIN IMMEDIATE TRANSACTION;");
 
     try {
       const incrementResult = await DebtModel.incrementPaidAmount(
         userId,
         debtId,
-        data.amount
+        data.amount,
+        false,
       );
 
-      if (incrementResult.error === 'NOT_FOUND') {
-        await db.run('ROLLBACK;');
-        return { error: 'DEBT_NOT_FOUND' };
+      if (incrementResult.error === "NOT_FOUND") {
+        await db.run("ROLLBACK;");
+        return { error: "DEBT_NOT_FOUND" };
       }
 
-      if (incrementResult.error === 'OVERPAYMENT') {
-        await db.run('ROLLBACK;');
+      if (incrementResult.error === "OVERPAYMENT") {
+        await db.run("ROLLBACK;");
         return {
-          error: 'OVERPAYMENT',
+          error: "OVERPAYMENT",
           remaining: incrementResult.remaining,
         };
       }
@@ -121,17 +122,17 @@ class DebtPaymentModel {
           paymentDate,
           data.notes ? data.notes.trim() : null,
           now,
-        ]
+        ],
       );
 
-      await db.run('COMMIT;');
+      await db.run("COMMIT;");
 
       const payment = await DebtPaymentModel.findById(userId, id);
       const debt = await DebtModel.findById(userId, debtId);
 
       return { debt, payment };
     } catch (error) {
-      await db.run('ROLLBACK;');
+      await db.run("ROLLBACK;");
       throw error;
     }
   }
