@@ -31,7 +31,7 @@ app.get('/api/v1/health', (req, res) => {
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
-// app.use('/api/v1/debts', debtRoutes);
+app.use('/api/v1/debts', debtRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
