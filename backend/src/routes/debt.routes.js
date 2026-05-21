@@ -117,9 +117,7 @@ const createPaymentValidation = [
 ];
 
 router.get('/summary', asyncHandler(DebtController.getSummary));
-
 router.get('/analytics', asyncHandler(DebtController.getAnalytics));
-
 router.get('/', listDebtsValidation, asyncHandler(DebtController.listDebts));
 
 router.get(
