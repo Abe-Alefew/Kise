@@ -1,6 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth.routes');
+<<<<<<< HEAD
+=======
+const userRoutes = require('./routes/user.routes');
+>>>>>>> a13a053c7e664154f0f7d23c2eded23f055112a7
 const debtRoutes = require('./routes/debt.routes'); 
 
 const { notFoundHandler, errorHandler } = require('./middleware/error.middleware');
@@ -29,6 +33,10 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 app.use('/api/v1/auth', authRoutes);
+<<<<<<< HEAD
+=======
+app.use('/api/v1/users', userRoutes);
+>>>>>>> a13a053c7e664154f0f7d23c2eded23f055112a7
 app.use('/api/v1/debts', debtRoutes);
 
 app.use(notFoundHandler);
