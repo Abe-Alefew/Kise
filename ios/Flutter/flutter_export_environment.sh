@@ -1,12 +1,12 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
 <<<<<<< HEAD
-export "FLUTTER_ROOT=C:\Users\abn\flutter"
-export "FLUTTER_APPLICATION_PATH=D:\2Month\flutter\kisee"
+export "FLUTTER_ROOT=C:\Users\hp\flutter"
+export "FLUTTER_APPLICATION_PATH=C:\Users\hp\Kise"
 =======
-export "FLUTTER_ROOT=C:\Users\Abraham A. Alefew\flutter"
-export "FLUTTER_APPLICATION_PATH=C:\Users\Abraham A. Alefew\Documents\Coding projects\mobile-app\Kise"
->>>>>>> d3693a69777efd51f4b85d10bb5816af40edb9a9
+export "FLUTTER_ROOT=C:\flutter"
+export "FLUTTER_APPLICATION_PATH=C:\Users\bethe\Desktop\Kise"
+>>>>>>> 9f5909d5ffab0a7c07304ed16c57780b578c4a77
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_TARGET=lib\main.dart"
 export "FLUTTER_BUILD_DIR=build"
