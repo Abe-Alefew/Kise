@@ -1,28 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:uuid/uuid.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/app_theme_ext.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
+import 'package:kise/features/debt/domain/debt_inputs.dart';
+import 'package:kise/features/debt/presentation/providers/debts_notifier.dart';
 
 // Result values popped by this modal:
-//   DebtEntity  → saved (add or edit)
-//   'deleted'   → debt was deleted
-//   null        → cancelled
+//   'deleted'   → debt was deleted (edit mode only)
+//   null        → cancelled or saved (persistence handled by notifier)
 
-class AddEditDebtModal extends StatefulWidget {
+class AddEditDebtModal extends ConsumerStatefulWidget {
   final DebtEntity? existingDebt; // non-null → edit mode
 
   const AddEditDebtModal({super.key, this.existingDebt});
 
   @override
-  State<AddEditDebtModal> createState() => _AddEditDebtModalState();
+  ConsumerState<AddEditDebtModal> createState() => _AddEditDebtModalState();
 }
 
-class _AddEditDebtModalState extends State<AddEditDebtModal> {
+class _AddEditDebtModalState extends ConsumerState<AddEditDebtModal> {
   final _formKey    = GlobalKey<FormState>();
   final _nameCtrl   = TextEditingController();
   final _amountCtrl = TextEditingController();
@@ -81,23 +82,61 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+
     final existing = widget.existingDebt;
-    final debt = DebtEntity(
-      id: existing?.id ?? const Uuid().v4(),
-      personName: _nameCtrl.text.trim(),
-      type: _type,
-      totalAmount:
-          double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0,
-      paidAmount: existing?.paidAmount ?? 0,
-      date: _selectedDate,
-      payments: existing?.payments ?? const [],
-    );
-    context.pop(debt); // return the saved debt to the caller
+    final totalAmount =
+        double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
+    final notesTrimmed = _notesCtrl.text.trim();
+    final notes = notesTrimmed.isEmpty ? null : notesTrimmed;
+    final notifier = ref.read(debtsNotifierProvider.notifier);
+
+    try {
+      if (existing != null) {
+        final isoDate = DebtDateParser.toIsoDate(_selectedDate);
+        final input = UpdateDebtInput(
+          personName: _nameCtrl.text.trim() != existing.personName
+              ? _nameCtrl.text.trim()
+              : null,
+          type: _type != existing.type ? _type : null,
+          totalAmount:
+              totalAmount != existing.totalAmount ? totalAmount : null,
+          debtDate: isoDate != existing.debtDate ? isoDate : null,
+          notes: notes != existing.notes ? notes : null,
+        );
+        if (!input.isEmpty) {
+          await notifier.updateDebt(existing.id, input);
+        }
+      } else {
+        await notifier.addDebt(
+          personName: _nameCtrl.text.trim(),
+          type: _type,
+          totalAmount: totalAmount,
+          debtDate: _selectedDate,
+          notes: notes,
+        );
+      }
+      if (mounted) {
+        context.pop();
+      }
+    } catch (_) {
+      // Notifier retains optimistic/error state; no modal UI changes on failure.
+    }
   }
 
-  void _delete() => context.pop('deleted');
+  Future<void> _delete() async {
+    final existing = widget.existingDebt;
+    if (existing == null) {
+      return;
+    }
+    try {
+      await ref.read(debtsNotifierProvider.notifier).removeDebt(existing.id);
+      if (mounted) {
+        context.pop('deleted');
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {

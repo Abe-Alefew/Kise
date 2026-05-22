@@ -14,7 +14,6 @@ import 'package:kise/core/widgets/kise_card_holder.dart';
 import 'package:kise/core/widgets/kise_pill_filter.dart';
 import 'package:kise/core/widgets/kise_progress_bar.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
-import 'package:kise/features/debt/domain/debt_inputs.dart';
 import 'package:kise/features/debt/presentation/providers/debts_notifier.dart';
 import 'package:kise/features/debt/presentation/widgets/debt_cart.dart';
 import 'package:kise/features/debt/presentation/widgets/status_badge.dart';
@@ -121,94 +120,14 @@ class _DebtScreenState extends ConsumerState<DebtScreen> {
   }
 
   Future<void> _openAddModal() async {
-    final result = await context.push<dynamic>(AppRoutes.debtNew);
-    if (!mounted) {
-      return;
-    }
-    if (result is DebtEntity) {
-      await ref.read(debtsNotifierProvider.notifier).addDebt(
-            personName: result.personName,
-            type: result.type,
-            totalAmount: result.totalAmount,
-            debtDate: result.date,
-            notes: result.notes,
-          );
-    }
-  }
-
-  Future<void> _applyDetailResult(
-    DebtEntity original,
-    DebtEntity updated,
-  ) async {
-    final notifier = ref.read(debtsNotifierProvider.notifier);
-    final originalPaymentIds = original.payments.map((p) => p.id).toSet();
-    var workingDebt = original;
-
-    for (final payment in updated.payments) {
-      if (originalPaymentIds.contains(payment.id)) {
-        continue;
-      }
-
-      await notifier.recordPayment(
-        debt: workingDebt,
-        amount: payment.amount,
-        paymentDate: payment.date,
-        notes: payment.notes,
-      );
-
-      final syncedList = ref.read(debtsNotifierProvider).value;
-      final synced = syncedList?.where((d) => d.id == original.id).firstOrNull;
-      if (synced != null) {
-        workingDebt = synced;
-      }
-    }
-
-    final metadataChanged = updated.personName != original.personName ||
-        updated.type != original.type ||
-        updated.totalAmount != original.totalAmount ||
-        updated.debtDate != original.debtDate ||
-        updated.notes != original.notes;
-
-    if (metadataChanged) {
-      await notifier.updateDebt(
-        original.id,
-        UpdateDebtInput(
-          personName: updated.personName != original.personName
-              ? updated.personName
-              : null,
-          type: updated.type != original.type ? updated.type : null,
-          totalAmount: updated.totalAmount != original.totalAmount
-              ? updated.totalAmount
-              : null,
-          debtDate:
-              updated.debtDate != original.debtDate ? updated.debtDate : null,
-          notes: updated.notes != original.notes ? updated.notes : null,
-        ),
-      );
-    }
-
-    await _reconcileAfterMutation();
+    await context.push<void>(AppRoutes.debtNew);
   }
 
   Future<void> _openDetailModal(DebtEntity debt) async {
-    final original = debt;
-    final result = await context.push<dynamic>(
+    await context.push<void>(
       '${AppRoutes.debtDetail}/${debt.id}',
       extra: debt,
     );
-    if (!mounted) {
-      return;
-    }
-    if (result == null) {
-      return;
-    }
-    if (result == 'deleted') {
-      await ref.read(debtsNotifierProvider.notifier).removeDebt(debt.id);
-      return;
-    }
-    if (result is DebtEntity) {
-      await _applyDetailResult(original, result);
-    }
   }
 
   @override
