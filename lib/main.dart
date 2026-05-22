@@ -30,7 +30,7 @@ class KiseApp extends ConsumerWidget {
       title: 'KISE App',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: themeMode,
+      themeMode: ThemeMode.dark,
       routerConfig: AppRouter.router,
       debugShowCheckedModeBanner: false,
     );
