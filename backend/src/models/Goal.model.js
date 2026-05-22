@@ -319,8 +319,12 @@ class GoalModel {
     return result.changes > 0;
   }
 
-  static async incrementCurrentAmount(userId, goalId, amount) {
-    await db.run('BEGIN IMMEDIATE TRANSACTION;');
+  static async incrementCurrentAmount(userId, goalId, amount, options = {}) {
+    const manageTransaction = options.manageTransaction !== false;
+
+    if (manageTransaction) {
+      await db.run('BEGIN IMMEDIATE TRANSACTION;');
+    }
 
     try {
       const row = await db.get(
@@ -347,17 +351,23 @@ class GoalModel {
       );
 
       if (!row) {
-        await db.run('ROLLBACK;');
+        if (manageTransaction) {
+          await db.run('ROLLBACK;');
+        }
         return { error: 'NOT_FOUND' };
       }
 
       if (row.status === 'canceled') {
-        await db.run('ROLLBACK;');
+        if (manageTransaction) {
+          await db.run('ROLLBACK;');
+        }
         return { error: 'CANCELED' };
       }
 
       if (row.is_locked === 1) {
-        await db.run('ROLLBACK;');
+        if (manageTransaction) {
+          await db.run('ROLLBACK;');
+        }
         return { error: 'LOCKED' };
       }
 
@@ -380,12 +390,16 @@ class GoalModel {
         [newCurrentAmount, nextStatus, completedAt, now, userId, goalId]
       );
 
-      await db.run('COMMIT;');
+      if (manageTransaction) {
+        await db.run('COMMIT;');
+      }
 
       const updated = await GoalModel.findById(userId, goalId);
       return { goal: updated };
     } catch (error) {
-      await db.run('ROLLBACK;');
+      if (manageTransaction) {
+        await db.run('ROLLBACK;');
+      }
       throw error;
     }
   }

@@ -227,7 +227,7 @@ class GoalController {
         );
       }
 
-      return sendSuccess(res, 200, {
+      return sendSuccess(res, 201, {
         goal: mapGoalResponse(result.goal),
         deposit: mapDepositResponse(result.deposit),
       });

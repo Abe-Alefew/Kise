@@ -40,8 +40,8 @@ class SettingsService {
     };
   }
 
-  async deleteAccount(id, userId) {
-    return PaymentAccountModel.delete(id, userId);
+  async deleteAccount(userId, accountId) {
+    return PaymentAccountModel.delete(userId, accountId);
   }
 
   async getPreferences(userId) {

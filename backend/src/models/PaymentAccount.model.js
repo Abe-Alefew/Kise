@@ -1,5 +1,5 @@
-const db = require("../config/database");
-const { v4: uuidv4 } = require("uuid");
+const db = require('../config/database');
+const { v4: uuidv4 } = require('uuid');
 
 class PaymentAccountModel {
   static async createTable() {
@@ -17,33 +17,80 @@ class PaymentAccountModel {
     return db.run(sql);
   }
 
-  static async findAllByUserId(userId) {
-    const sql = `SELECT * FROM payment_accounts WHERE user_id = ? ORDER BY created_at ASC`;
-    return db.all(sql, [userId]);
+  static mapRow(row) {
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      userId: row.user_id,
+      name: row.name,
+      type: row.type,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
   }
 
-  static async findById(id, userId) {
-    const sql = `SELECT * FROM payment_accounts WHERE id = ? AND user_id = ?`;
-    return db.get(sql, [id, userId]);
+  static async findAllByUserId(userId) {
+    const rows = await db.all(
+      `SELECT * FROM payment_accounts WHERE user_id = ? ORDER BY created_at ASC`,
+      [userId]
+    );
+    return rows.map(PaymentAccountModel.mapRow);
+  }
+
+  static async findById(userId, accountId) {
+    const row = await db.get(
+      `SELECT * FROM payment_accounts WHERE id = ? AND user_id = ?`,
+      [accountId, userId]
+    );
+    return PaymentAccountModel.mapRow(row);
+  }
+
+  static async findByName(userId, name) {
+    const row = await db.get(
+      `
+        SELECT * FROM payment_accounts
+        WHERE user_id = ? AND LOWER(TRIM(name)) = LOWER(TRIM(?))
+        LIMIT 1;
+      `,
+      [userId, name]
+    );
+    return PaymentAccountModel.mapRow(row);
+  }
+
+  static async countTransactionsLinked(userId, accountId) {
+    const row = await db.get(
+      `
+        SELECT COUNT(*) AS count
+        FROM goal_deposits
+        WHERE user_id = ? AND account_id = ?;
+      `,
+      [userId, accountId]
+    );
+    return row ? row.count : 0;
   }
 
   static async create(userId, data) {
     const { name, type } = data;
     const id = uuidv4();
     const now = new Date().toISOString();
-    
+
     const sql = `
       INSERT INTO payment_accounts (id, user_id, name, type, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?)
     `;
-    
-    await db.run(sql, [id, userId, name, type, now, now]);
-    return this.findById(id, userId);
+
+    await db.run(sql, [id, userId, name.trim(), type.trim(), now, now]);
+    return PaymentAccountModel.findById(userId, id);
   }
 
-  static async delete(id, userId) {
-    const sql = `DELETE FROM payment_accounts WHERE id = ? AND user_id = ?`;
-    const result = await db.run(sql, [id, userId]);
+  static async delete(userId, accountId) {
+    const result = await db.run(
+      `DELETE FROM payment_accounts WHERE id = ? AND user_id = ?`,
+      [accountId, userId]
+    );
     return result.changes > 0;
   }
 }

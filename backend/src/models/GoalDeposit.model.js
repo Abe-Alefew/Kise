@@ -84,7 +84,8 @@ class GoalDepositModel {
       const incrementResult = await GoalModel.incrementCurrentAmount(
         userId,
         goalId,
-        data.amount
+        data.amount,
+        { manageTransaction: false }
       );
 
       if (incrementResult.error === 'NOT_FOUND') {
