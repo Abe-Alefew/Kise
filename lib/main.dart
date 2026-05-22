@@ -34,5 +34,5 @@ class KiseApp extends ConsumerWidget {
       routerConfig: AppRouter.router,
       debugShowCheckedModeBanner: false,
     );
-  }a
+  }
 }
