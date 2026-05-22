@@ -374,7 +374,7 @@ class DebtDto {
     return DebtEntity(
       id: id,
       personName: personName,
-      personInitial: personInitial,
+      personInitial: personInitial ?? DebtEntity.deriveInitial(personName),
       type: debtType,
       totalAmount: totalAmount,
       paidAmount: paidAmount,
@@ -385,7 +385,11 @@ class DebtDto {
       payments: payments
           .map((payment) => payment.toEntity(isDirty: isDirty))
           .toList(),
-      status: DebtEntity._statusFromApi(status, paidAmount, totalAmount),
+      status: DebtEntity.statusFromApi(
+        status,
+        paidAmount: paidAmount,
+        totalAmount: totalAmount,
+      ),
       createdAt: createdAt,
       updatedAt: updatedAt,
       isDirty: isDirty,
