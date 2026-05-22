@@ -1,5 +1,6 @@
 node_modules/
-data/kise.db
+# Local data (kise.db and other files in data/)
+data/
 .env
 *.log
 .DS_Store
