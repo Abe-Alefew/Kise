@@ -224,11 +224,6 @@ async function testGoalRoutes() {
   });
   assertSuccess('PATCH /goals/:goalId', res, 200);
 
-  res = await api('PATCH', `/goals/${goalId}/lock`, {
-    body: { isLocked: true },
-  });
-  assertSuccess('PATCH /goals/:goalId/lock', res, 200);
-
   res = await api('POST', `/goals/${goalId}/deposits`, {
     body: { amount: 100, source: 'manual savings' },
   });
@@ -236,6 +231,11 @@ async function testGoalRoutes() {
 
   res = await api('GET', `/goals/${goalId}/deposits`);
   assertSuccess('GET /goals/:goalId/deposits', res, 200);
+
+  res = await api('PATCH', `/goals/${goalId}/lock`, {
+    body: { isLocked: true },
+  });
+  assertSuccess('PATCH /goals/:goalId/lock', res, 200);
 
   res = await api('DELETE', `/goals/${goalId}`);
   assertSuccess('DELETE /goals/:goalId', res, 200);
