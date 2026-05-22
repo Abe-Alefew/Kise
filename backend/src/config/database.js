@@ -82,11 +82,15 @@ class Database {
 
     const UserModel = require("../models/User.model");
     const RefreshTokenModel = require("../models/RefreshToken.model");
+    const DebtModel = require("../models/Debt.model");
+    const DebtPaymentModel = require("../models/DebtPayment.model");
 
     await UserModel.createTable();
     await UserModel.createPreferencesTable();
     await UserModel.createAllowanceTable();
     await RefreshTokenModel.createTable();
+    await DebtModel.createTable();
+    await DebtPaymentModel.createTable();
 
     this.initialized = true;
   }
