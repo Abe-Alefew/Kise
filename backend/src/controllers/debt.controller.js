@@ -1,17 +1,7 @@
 const DebtModel = require('../models/Debt.model');
 const DebtPaymentModel = require('../models/DebtPayment.model');
-const { collectValidationErrors } = require('../middleware/error.middleware');
-const { sendSuccess, sendError } = require('../utils/apiResponse');
-
-function createHttpError(statusCode, code, message, details) {
-  const error = new Error(message);
-  error.statusCode = statusCode;
-  error.code = code;
-  if (details) {
-    error.details = details;
-  }
-  return error;
-}
+const { sendSuccess } = require('../utils/apiResponse');
+const { createHttpError, handleValidation } = require('../utils/httpError');
 
 function mapPaymentResponse(payment) {
   return {
@@ -44,16 +34,7 @@ function mapDebtResponse(debt) {
 class DebtController {
   static async listDebts(req, res, next) {
     try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
+      if (handleValidation(req, res)) return;
 
       const filter = req.query.filter || 'all';
       const debts = await DebtModel.findAllByUserId(req.user.id, filter, true);
@@ -66,16 +47,7 @@ class DebtController {
 
   static async getDebt(req, res, next) {
     try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
+      if (handleValidation(req, res)) return;
 
       const debt = await DebtModel.findById(req.user.id, req.params.debtId, true);
       if (!debt) {
@@ -90,16 +62,7 @@ class DebtController {
 
   static async createDebt(req, res, next) {
     try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
+      if (handleValidation(req, res)) return;
 
       const debt = await DebtModel.create(req.user.id, {
         personName: req.body.personName,
@@ -128,16 +91,7 @@ class DebtController {
 
   static async updateDebt(req, res, next) {
     try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
+      if (handleValidation(req, res)) return;
 
       const existing = await DebtModel.findById(req.user.id, req.params.debtId, false);
       if (!existing) {
@@ -176,16 +130,7 @@ class DebtController {
 
   static async deleteDebt(req, res, next) {
     try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
+      if (handleValidation(req, res)) return;
 
       const deleted = await DebtModel.delete(req.user.id, req.params.debtId);
       if (!deleted) {
@@ -200,16 +145,7 @@ class DebtController {
 
   static async getSummary(req, res, next) {
     try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
+      if (handleValidation(req, res)) return;
 
       const summary = await DebtModel.getSummary(req.user.id);
       return sendSuccess(res, 200, summary);
@@ -220,16 +156,7 @@ class DebtController {
 
   static async getAnalytics(req, res, next) {
     try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
+      if (handleValidation(req, res)) return;
 
       const analytics = await DebtModel.getAnalytics(req.user.id);
       return sendSuccess(res, 200, analytics);
@@ -240,16 +167,7 @@ class DebtController {
 
   static async createPayment(req, res, next) {
     try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
+      if (handleValidation(req, res)) return;
 
       const result = await DebtPaymentModel.createAndApply(
         req.user.id,
@@ -284,16 +202,7 @@ class DebtController {
 
   static async listPayments(req, res, next) {
     try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
+      if (handleValidation(req, res)) return;
 
       const debt = await DebtModel.findById(req.user.id, req.params.debtId, false);
       if (!debt) {

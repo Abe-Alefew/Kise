@@ -82,6 +82,8 @@ class Database {
 
     const UserModel = require("../models/User.model");
     const RefreshTokenModel = require("../models/RefreshToken.model");
+    const PaymentAccountModel = require("../models/PaymentAccount.model");
+    const TransactionModel = require("../models/Transaction.model");
     const DebtModel = require("../models/Debt.model");
     const DebtPaymentModel = require("../models/DebtPayment.model");
     const UserPreferenceModel = require("../models/UserPreference.model");
@@ -92,11 +94,35 @@ class Database {
     await UserModel.createPreferencesTable();
     await UserModel.createAllowanceTable();
     await RefreshTokenModel.createTable();
+    await PaymentAccountModel.createTable();
+    await TransactionModel.createTable();
     await DebtModel.createTable();
     await DebtPaymentModel.createTable();
     await UserPreferenceModel.createTable();
     await AllowanceModel.createTable();
     // await TransactionModel.createTable();
+    
+    // New settings models
+    // const UserPreferenceModel = require("../models/UserPreference.model");
+    // const AllowanceModel = require("../models/Allowance.model");
+    const PaymentAccountModel = require("../models/PaymentAccount.model");
+    
+    // New goals models
+    const GoalModel = require("../models/Goal.model");
+    const GoalDepositModel = require("../models/GoalDeposit.model");
+
+    // Existing tables (if any)
+    if (UserModel.createTable) await UserModel.createTable();
+    if (UserModel.createPreferencesTable) await UserModel.createPreferencesTable();
+    if (UserModel.createAllowanceTable) await UserModel.createAllowanceTable();
+    if (RefreshTokenModel.createTable) await RefreshTokenModel.createTable();
+
+    // New configuration
+    await UserPreferenceModel.createTable();
+    await AllowanceModel.createTable();
+    await PaymentAccountModel.createTable();
+    await GoalModel.createTable();
+    await GoalDepositModel.createTable();
 
     this.initialized = true;
     console.log("✅ Phase 4 Database Tables & Transactions Initialized.");

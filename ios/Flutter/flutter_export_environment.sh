@@ -9,8 +9,8 @@ export "FLUTTER_ROOT=C:\Users\Abraham A. Alefew\flutter"
 export "FLUTTER_APPLICATION_PATH=C:\Users\Abraham A. Alefew\Documents\Coding projects\mobile-app\Kise"
 >>>>>>> d3693a69777efd51f4b85d10bb5816af40edb9a9
 =======
-export "FLUTTER_ROOT=C:\Users\hp\flutter"
-export "FLUTTER_APPLICATION_PATH=C:\Users\hp\Kise"
+export "FLUTTER_ROOT=C:\flutter"
+export "FLUTTER_APPLICATION_PATH=C:\Users\bethe\Desktop\Mobile App Files\Kise"
 >>>>>>> bdf4cc974da574129335fad1299bd84f3743f78d
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_TARGET=lib\main.dart"
