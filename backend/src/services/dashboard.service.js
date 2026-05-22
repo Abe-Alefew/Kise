@@ -124,23 +124,18 @@ class DashboardService {
     const monthRange = getCurrentMonthRange();
     const range = options.range || '6m';
 
-    const [
-      monthSummary,
-      allowance,
-      analytics,
-      recentTransactions,
-      cycleExpenseRow,
-    ] = await Promise.all([
+    const [monthSummary, allowance, analytics, recentTransactions] = await Promise.all([
       TransactionModel.getSummary(userId, monthRange.from, monthRange.to),
       AllowanceModel.findByUserId(userId),
       TransactionModel.getAnalytics(userId, { range, type: 'all' }),
       TransactionModel.getRecent(userId, 5),
-      DashboardService.getCycleExpenseTotal(userId, allowance),
     ]);
+
+    const cycleExpenseRow = await DashboardService.getCycleExpenseTotal(userId, allowance);
 
     const monthlyAmount = allowance ? allowance.monthlyAmount : 0;
     const cycleStartDay = allowance ? allowance.cycleStartDay : 1;
-    const cycleExpense = cycleExpenseRow;
+    const cycleExpense = cycleExpenseRow.total;
     const spendRatio =
       monthlyAmount > 0
         ? Number(Math.min(cycleExpense / monthlyAmount, 1).toFixed(4))
