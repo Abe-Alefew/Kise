@@ -1,3 +1,8 @@
+enum AuthSuccessType {
+  registration,
+  signIn,
+}
+
 class AuthTokens {
   final String accessToken;
   final String refreshToken;
@@ -140,7 +145,7 @@ class RegisterRequest {
       'department': department,
       'preferredLanguage': preferredLanguage,
       'currency': currency,
-      'termsAccepted': termsAccepted,
+      'termsAccepted': termsAccepted ? 'true' : 'false',
     };
   }
 }

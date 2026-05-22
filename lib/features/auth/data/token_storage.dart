@@ -1,49 +1,33 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-abstract final class SecureStorageKeys {
+abstract final class TokenStorageKeys {
   static const String accessToken = 'kise_access_token';
   static const String refreshToken = 'kise_refresh_token';
 }
 
 class TokenStorage {
-  TokenStorage({
-    FlutterSecureStorage? secureStorage,
-  }) : _secureStorage = secureStorage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(
-               
-              ),
-              iOptions: IOSOptions(
-                accessibility: KeychainAccessibility.first_unlock,
-              ),
-            );
-
-  final FlutterSecureStorage _secureStorage;
-
-  Future<String?> readAccessToken() {
-    return _secureStorage.read(key: SecureStorageKeys.accessToken);
+  Future<String?> readAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(TokenStorageKeys.accessToken);
   }
 
-  Future<String?> readRefreshToken() {
-    return _secureStorage.read(key: SecureStorageKeys.refreshToken);
+  Future<String?> readRefreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(TokenStorageKeys.refreshToken);
   }
 
   Future<void> saveTokens({
     required String accessToken,
     required String refreshToken,
   }) async {
-    await _secureStorage.write(
-      key: SecureStorageKeys.accessToken,
-      value: accessToken,
-    );
-    await _secureStorage.write(
-      key: SecureStorageKeys.refreshToken,
-      value: refreshToken,
-    );
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(TokenStorageKeys.accessToken, accessToken);
+    await prefs.setString(TokenStorageKeys.refreshToken, refreshToken);
   }
 
   Future<void> clearTokens() async {
-    await _secureStorage.delete(key: SecureStorageKeys.accessToken);
-    await _secureStorage.delete(key: SecureStorageKeys.refreshToken);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(TokenStorageKeys.accessToken);
+    await prefs.remove(TokenStorageKeys.refreshToken);
   }
 }
