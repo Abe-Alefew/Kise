@@ -120,7 +120,7 @@ class Database {
     // New configuration
     await UserPreferenceModel.createTable();
     await AllowanceModel.createTable();
-    await PaymentAccountModel.createTable();
+    // await PaymentAccountModel.createTable();
     await GoalModel.createTable();
     await GoalDepositModel.createTable();
 
