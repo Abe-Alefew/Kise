@@ -36,6 +36,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final TextEditingController _currencyController = TextEditingController();
 
   String? _submitErrorMessage;
+  List<ApiFieldError> _validationErrors = [];
 
   int _currentStep = 0;
   String _preferredLanguage = 'English';
@@ -99,6 +100,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     setState(() {
       _submitErrorMessage = null;
+      _validationErrors = [];
     });
     ref.read(authNotifierProvider.notifier).clearError();
 
@@ -129,8 +131,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
     } on ApiException catch (error) {
       if (!mounted) return;
+      if (error.details.isNotEmpty) {
+        debugPrint('Register validation failed: ${error.message}');
+        for (final detail in error.details) {
+          debugPrint(' - ${detail.field}: ${detail.message}');
+        }
+      } else {
+        debugPrint('Register error: ${error.message} (${error.code})');
+      }
       setState(() {
         _submitErrorMessage = error.message;
+        _validationErrors = error.details;
       });
       return;
     } catch (_) {
@@ -139,17 +150,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         _submitErrorMessage = 'Unable to register. Please try again.';
       });
       return;
-    }
-
-    if (!mounted) return;
-    final authState = ref.read(authNotifierProvider).value;
-    if (authState?.redirectRoute != null) {
-      final successType = authState?.successType;
-      if (successType != null) {
-        context.go(authState!.redirectRoute!, extra: successType);
-      } else {
-        context.go(authState!.redirectRoute!);
-      }
     }
   }
 
@@ -703,6 +703,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      if (_validationErrors.isNotEmpty) ...[
+                        const SizedBox(height: AppDimensions.xs),
+                        ..._validationErrors.map(
+                          (detail) => Text(
+                            '${detail.field.isNotEmpty ? detail.field : 'field'}: '
+                            '${detail.message}',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.error,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: AppDimensions.md),
                     ],
 

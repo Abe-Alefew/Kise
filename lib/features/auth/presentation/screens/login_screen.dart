@@ -54,17 +54,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 			});
 			return;
 		}
-
-		if (!mounted) return;
-		final authState = ref.read(authNotifierProvider).value;
-		if (authState?.redirectRoute != null) {
-			final successType = authState?.successType;
-			if (successType != null) {
-				context.go(authState!.redirectRoute!, extra: successType);
-			} else {
-				context.go(authState!.redirectRoute!);
-			}
-		}
 	}
 
 	@override

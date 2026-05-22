@@ -145,7 +145,7 @@ class RegisterRequest {
       'department': department,
       'preferredLanguage': preferredLanguage,
       'currency': currency,
-      'termsAccepted': termsAccepted,
+      'termsAccepted': termsAccepted ? 'true' : 'false',
     };
   }
 }

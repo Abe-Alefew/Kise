@@ -139,7 +139,6 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     state = AsyncData(
       AuthState.loading(
         user: state.value?.user,
-        redirectRoute: AppRoutes.loading,
         successType: null,
       ),
     );
@@ -185,7 +184,6 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     state = AsyncData(
       AuthState.loading(
         user: state.value?.user,
-        redirectRoute: AppRoutes.loading,
         successType: null,
       ),
     );
