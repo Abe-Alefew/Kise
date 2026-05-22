@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/network/api_endpoints.dart';
 import 'package:kise/core/network/auth_interceptor.dart';
 import 'package:kise/features/auth/data/token_storage.dart';
-import 'package:kise/features/auth/presentation/providers/auth_notifier.dart';
+import 'package:kise/features/auth/presentation/providers/auth_provider.dart';
 
 class ApiException implements Exception {
   final String message;
