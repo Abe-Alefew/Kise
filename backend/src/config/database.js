@@ -105,7 +105,7 @@ class Database {
     // New settings models
     // const UserPreferenceModel = require("../models/UserPreference.model");
     // const AllowanceModel = require("../models/Allowance.model");
-    const PaymentAccountModel = require("../models/PaymentAccount.model");
+    // const PaymentAccountModel = require("../models/PaymentAccount.model");
     
     // New goals models
     const GoalModel = require("../models/Goal.model");
@@ -120,7 +120,7 @@ class Database {
     // New configuration
     await UserPreferenceModel.createTable();
     await AllowanceModel.createTable();
-    await PaymentAccountModel.createTable();
+    // await PaymentAccountModel.createTable();
     await GoalModel.createTable();
     await GoalDepositModel.createTable();
 
