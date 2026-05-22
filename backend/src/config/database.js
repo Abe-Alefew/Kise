@@ -105,7 +105,7 @@ class Database {
     // New settings models
     // const UserPreferenceModel = require("../models/UserPreference.model");
     // const AllowanceModel = require("../models/Allowance.model");
-    const PaymentAccountModel = require("../models/PaymentAccount.model");
+    // const PaymentAccountModel = require("../models/PaymentAccount.model");
     
     // New goals models
     const GoalModel = require("../models/Goal.model");

@@ -1,9 +1,6 @@
 const PaymentAccountModel = require('../models/PaymentAccount.model');
-<<<<<<< HEAD
 const AllowanceModel = require('../models/Allowance.model');
 const UserPreferenceModel = require('../models/UserPreference.model');
-=======
->>>>>>> 9f5909d5ffab0a7c07304ed16c57780b578c4a77
 const { collectValidationErrors } = require('../middleware/error.middleware');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
@@ -27,7 +24,6 @@ function mapAccountResponse(account) {
   };
 }
 
-<<<<<<< HEAD
 function mapAllowanceResponse(allowance) {
   return {
     monthlyAmount: allowance.monthlyAmount,
@@ -45,8 +41,6 @@ function mapPreferencesResponse(preferences) {
   };
 }
 
-=======
->>>>>>> 9f5909d5ffab0a7c07304ed16c57780b578c4a77
 class SettingsController {
   static async listAccounts(req, res, next) {
     try {
@@ -62,10 +56,6 @@ class SettingsController {
       }
 
       const accounts = await PaymentAccountModel.findAllByUserId(req.user.id);
-<<<<<<< HEAD
-=======
-
->>>>>>> 9f5909d5ffab0a7c07304ed16c57780b578c4a77
       return sendSuccess(res, 200, accounts.map(mapAccountResponse));
     } catch (error) {
       return next(error);
@@ -137,16 +127,11 @@ class SettingsController {
       }
 
       await PaymentAccountModel.delete(req.user.id, req.params.accountId);
-<<<<<<< HEAD
-=======
-
->>>>>>> 9f5909d5ffab0a7c07304ed16c57780b578c4a77
       return sendSuccess(res, 200, { message: 'Payment account deleted successfully' });
     } catch (error) {
       return next(error);
     }
   }
-<<<<<<< HEAD
 
   static async getAllowance(req, res, next) {
     try {
@@ -243,8 +228,6 @@ class SettingsController {
       return next(error);
     }
   }
-=======
->>>>>>> 9f5909d5ffab0a7c07304ed16c57780b578c4a77
 }
 
 module.exports = SettingsController;
