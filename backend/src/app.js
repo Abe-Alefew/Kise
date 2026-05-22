@@ -3,6 +3,8 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const debtRoutes = require('./routes/debt.routes'); 
+const transactionRoutes = require('./routes/transaction.routes');
+const settingsRoutes = require('./routes/settings.routes');
 
 const { notFoundHandler, errorHandler } = require('./middleware/error.middleware');
 
@@ -32,6 +34,8 @@ app.get('/api/v1/health', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/debts', debtRoutes);
+app.use('/api/v1/transactions', transactionRoutes);
+app.use('/api/v1/settings', settingsRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
