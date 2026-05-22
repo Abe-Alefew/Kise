@@ -163,8 +163,6 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       state = AsyncData(
         AuthState.unauthenticated(
           errorMessage: error.message,
-          redirectRoute: AppRoutes.login,
-          successType: null,
         ),
       );
       rethrow;
@@ -172,8 +170,6 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       state = AsyncData(
         AuthState.unauthenticated(
           errorMessage: error.toString(),
-          redirectRoute: AppRoutes.login,
-          successType: null,
         ),
       );
       rethrow;
@@ -205,8 +201,6 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       state = AsyncData(
         AuthState.unauthenticated(
           errorMessage: error.message,
-          redirectRoute: AppRoutes.register,
-          successType: null,
         ),
       );
       rethrow;
@@ -214,8 +208,6 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       state = AsyncData(
         AuthState.unauthenticated(
           errorMessage: error.toString(),
-          redirectRoute: AppRoutes.register,
-          successType: null,
         ),
       );
       rethrow;
