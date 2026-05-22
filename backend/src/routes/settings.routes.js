@@ -1,3 +1,14 @@
+const express = require('express');
+const { body } = require('express-validator');
+const SettingsController = require('../controllers/settings.controller');
+const UserPreferenceModel = require('../models/UserPreference.model');
+const asyncHandler = require('../utils/asyncHandler');
+const { authenticate } = require('../middleware/auth.middleware');
+
+const router = express.Router();
+
+router.use(authenticate);
+
 router.get('/allowance', asyncHandler(SettingsController.getAllowance));
 
 router.put(
@@ -33,3 +44,5 @@ router.patch(
   ],
   asyncHandler(SettingsController.updatePreferences)
 );
+
+module.exports = router;

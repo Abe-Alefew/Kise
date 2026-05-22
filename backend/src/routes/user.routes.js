@@ -1,124 +1,35 @@
 const express = require('express');
-const asyncHandler = require('../utils/asyncHandler');
-const { authenticate } = require('../middleware/auth.middleware');
-const UserController = require('../controllers/user.controller');
-
-const router = express.Router();
-
-router.get('/me', authenticate, asyncHandler(UserController.getProfile));
-router.delete('/me', authenticate, asyncHandler(UserController.deleteAccount));
-
-module.exports = router;
-const express = require('express');
 const { body } = require('express-validator');
-const UserModel = require('../models/User.model');
+const UserController = require('../controllers/user.controller');
 const UserPreferenceModel = require('../models/UserPreference.model');
-const RefreshTokenModel = require('../models/RefreshToken.model');
 const asyncHandler = require('../utils/asyncHandler');
 const { authenticate } = require('../middleware/auth.middleware');
-const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 const router = express.Router();
 
+// Apply the authentication guard across all profile management pathways
 router.use(authenticate);
 
-function createHttpError(statusCode, code, message) {
-  const error = new Error(message);
-  error.statusCode = statusCode;
-  error.code = code;
-  return error;
-}
+// GET /api/v1/users/me -> Retrieve logged-in user's profile info
+router.get('/me', asyncHandler(UserController.getProfile));
 
-router.get(
-  '/me',
-  asyncHandler(async (req, res) => {
-    const user = await UserModel.findPublicById(req.user.id);
-    if (!user) {
-      throw createHttpError(404, 'NOT_FOUND', 'User not found');
-    }
-
-    const preferences = await UserPreferenceModel.findByUserId(req.user.id);
-
-    return sendSuccess(res, 200, {
-      ...user,
-      preferredLanguage: preferences
-        ? preferences.preferredLanguage
-        : 'English',
-      themeMode: preferences ? preferences.themeMode : 'system',
-    });
-  })
-);
-
+// PATCH /api/v1/users/me -> Update profile fields and UI configurations safely
 router.patch(
   '/me',
   [
-    body('firstName').optional().trim().isLength({ min: 1, max: 100 }),
-    body('lastName').optional().trim().isLength({ min: 1, max: 100 }),
-    body('phone').optional({ values: 'falsy' }).trim().isLength({ max: 30 }),
+    body('firstName').optional().trim().isLength({ min: 1, max: 100 }).withMessage('First name must be between 1 and 100 characters'),
+    body('lastName').optional().trim().isLength({ min: 1, max: 100 }).withMessage('Last name must be between 1 and 100 characters'),
+    body('phone').optional({ values: 'falsy' }).trim().isLength({ max: 30 }).withMessage('Phone number is too long'),
     body('preferredLanguage')
       .optional()
-      .isIn(UserPreferenceModel.allowedLanguages),
-    body('currency').optional().isIn(['ETB', 'USD']),
+      .isIn(UserPreferenceModel.allowedLanguages)
+      .withMessage('Language must be either English or Amharic'),
+    body('currency').optional().isIn(['ETB', 'USD']).withMessage('Currency must be ETB or USD'),
   ],
-  asyncHandler(async (req, res, next) => {
-    const user = await UserModel.findById(req.user.id);
-    if (!user) {
-      throw createHttpError(404, 'NOT_FOUND', 'User not found');
-    }
-
-    const db = require('../config/database');
-    const now = new Date().toISOString();
-
-    await db.run(
-      `
-        UPDATE users
-        SET
-          first_name = ?,
-          last_name = ?,
-          phone = ?,
-          currency = ?,
-          updated_at = ?
-        WHERE id = ?;
-      `,
-      [
-        req.body.firstName !== undefined ? req.body.firstName.trim() : user.firstName,
-        req.body.lastName !== undefined ? req.body.lastName.trim() : user.lastName,
-        req.body.phone !== undefined ? req.body.phone : user.phone,
-        req.body.currency !== undefined ? req.body.currency : user.currency,
-        now,
-        req.user.id,
-      ]
-    );
-
-    if (req.body.preferredLanguage !== undefined) {
-      await UserPreferenceModel.update(req.user.id, {
-        preferredLanguage: req.body.preferredLanguage,
-      });
-    }
-
-    const updatedUser = await UserModel.findPublicById(req.user.id);
-    const preferences = await UserPreferenceModel.findByUserId(req.user.id);
-
-    return sendSuccess(res, 200, {
-      ...updatedUser,
-      preferredLanguage: preferences
-        ? preferences.preferredLanguage
-        : 'English',
-      themeMode: preferences ? preferences.themeMode : 'system',
-    });
-  })
+  asyncHandler(UserController.updateProfile)
 );
 
-router.delete(
-  '/me',
-  asyncHandler(async (req, res) => {
-    await RefreshTokenModel.revokeAllForUser(req.user.id);
-
-    const db = require('../config/database');
-    await db.run('DELETE FROM users WHERE id = ?;', [req.user.id]);
-
-    return sendSuccess(res, 200, { message: 'Account deleted successfully' });
-  })
-);
+// DELETE /api/v1/users/me -> Wipe out user record completely from the system
+router.delete('/me', asyncHandler(UserController.deleteAccount));
 
 module.exports = router;

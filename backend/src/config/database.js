@@ -84,7 +84,12 @@ class Database {
     const RefreshTokenModel = require("../models/RefreshToken.model");
     const DebtModel = require("../models/Debt.model");
     const DebtPaymentModel = require("../models/DebtPayment.model");
+    
+    // --- Phase 4 Imports ---
+    const UserPreferenceModel = require("../models/UserPreference.model");
+    const AllowanceModel = require("../models/Allowance.model");
 
+    // Existing table initializations
     await UserModel.createTable();
     await UserModel.createPreferencesTable();
     await UserModel.createAllowanceTable();
@@ -92,7 +97,12 @@ class Database {
     await DebtModel.createTable();
     await DebtPaymentModel.createTable();
 
+    // --- Phase 4 Table Initializations ---
+    await UserPreferenceModel.createTable();
+    await AllowanceModel.createTable();
+
     this.initialized = true;
+    console.log("✅ Phase 4 Database Tables Initialized.");
   }
 
   close() {
