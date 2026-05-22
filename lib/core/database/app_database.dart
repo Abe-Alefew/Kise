@@ -103,9 +103,14 @@ class AppDatabase {
     required String lastName,
     String? phone,
     String? username,
+<<<<<<< HEAD
     required String school,
     required String department,
     required int yearOfStudy,
+=======
+    required String university,
+    required String department,
+>>>>>>> bdf4cc974da574129335fad1299bd84f3743f78d
     required String currency,
     required String preferredLanguage,
     required String themeMode,
@@ -121,9 +126,14 @@ class AppDatabase {
         'last_name': lastName,
         'phone': phone,
         'username': username,
+<<<<<<< HEAD
         'school': school,
         'department': department,
         'year_of_study': yearOfStudy,
+=======
+        'university': university,
+        'department': department,
+>>>>>>> bdf4cc974da574129335fad1299bd84f3743f78d
         'currency': currency,
         'preferred_language': preferredLanguage,
         'theme_mode': themeMode,
