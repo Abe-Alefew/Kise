@@ -1,5 +1,5 @@
-const { v4: uuidv4 } = require('uuid');
-const db = require('../config/database');
+const { v4: uuidv4 } = require("uuid");
+const db = require("../config/database");
 
 const DEBTS_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS debts (
@@ -18,7 +18,7 @@ const DEBTS_TABLE_SQL = `
   );
 `;
 
-const DEBT_TYPES = ['lent', 'borrowed'];
+const DEBT_TYPES = ["lent", "borrowed"];
 
 class DebtModel {
   static get allowedTypes() {
@@ -27,12 +27,12 @@ class DebtModel {
 
   static computeStatus(paidAmount, totalAmount) {
     if (paidAmount >= totalAmount) {
-      return 'settled';
+      return "settled";
     }
     if (paidAmount > 0) {
-      return 'partial';
+      return "partial";
     }
-    return 'pending';
+    return "pending";
   }
 
   static computeRemaining(totalAmount, paidAmount) {
@@ -41,10 +41,18 @@ class DebtModel {
 
   static async createTable() {
     await db.run(DEBTS_TABLE_SQL);
-    await db.run('CREATE INDEX IF NOT EXISTS idx_debts_user_id ON debts(user_id);');
-    await db.run('CREATE INDEX IF NOT EXISTS idx_debts_user_type ON debts(user_id, type);');
-    await db.run('CREATE INDEX IF NOT EXISTS idx_debts_user_date ON debts(user_id, debt_date);');
-    await db.run('CREATE INDEX IF NOT EXISTS idx_debts_user_person ON debts(user_id, person_name);');
+    await db.run(
+      "CREATE INDEX IF NOT EXISTS idx_debts_user_id ON debts(user_id);",
+    );
+    await db.run(
+      "CREATE INDEX IF NOT EXISTS idx_debts_user_type ON debts(user_id, type);",
+    );
+    await db.run(
+      "CREATE INDEX IF NOT EXISTS idx_debts_user_date ON debts(user_id, debt_date);",
+    );
+    await db.run(
+      "CREATE INDEX IF NOT EXISTS idx_debts_user_person ON debts(user_id, person_name);",
+    );
   }
 
   static mapRow(row) {
@@ -52,7 +60,10 @@ class DebtModel {
       return null;
     }
 
-    const remaining = DebtModel.computeRemaining(row.total_amount, row.paid_amount);
+    const remaining = DebtModel.computeRemaining(
+      row.total_amount,
+      row.paid_amount,
+    );
     const status = DebtModel.computeStatus(row.paid_amount, row.total_amount);
 
     return {
@@ -62,7 +73,7 @@ class DebtModel {
       personInitial:
         row.person_name && row.person_name.length > 0
           ? row.person_name[0].toUpperCase()
-          : '?',
+          : "?",
       type: row.type,
       totalAmount: row.total_amount,
       paidAmount: row.paid_amount,
@@ -78,21 +89,21 @@ class DebtModel {
 
   static buildFilterClause(filter) {
     switch (filter) {
-      case 'active':
-        return 'paid_amount < total_amount';
-      case 'lent':
+      case "active":
+        return "paid_amount < total_amount";
+      case "lent":
         return `type = 'lent'`;
-      case 'borrowed':
+      case "borrowed":
         return `type = 'borrowed'`;
-      case 'settled':
-        return 'paid_amount >= total_amount';
-      case 'all':
+      case "settled":
+        return "paid_amount >= total_amount";
+      case "all":
       default:
-        return '1 = 1';
+        return "1 = 1";
     }
   }
 
-  static async findAllByUserId(userId, filter = 'all', includePayments = true) {
+  static async findAllByUserId(userId, filter = "all", includePayments = true) {
     const filterClause = DebtModel.buildFilterClause(filter);
 
     const rows = await db.all(
@@ -113,7 +124,7 @@ class DebtModel {
           AND ${filterClause}
         ORDER BY debt_date DESC, created_at DESC;
       `,
-      [userId]
+      [userId],
     );
 
     const debts = rows.map(DebtModel.mapRow);
@@ -147,7 +158,7 @@ class DebtModel {
         WHERE user_id = ? AND id = ?
         LIMIT 1;
       `,
-      [userId, debtId]
+      [userId, debtId],
     );
 
     const debt = DebtModel.mapRow(row);
@@ -170,7 +181,7 @@ class DebtModel {
         WHERE user_id = ? AND debt_id = ?
         ORDER BY payment_date DESC, created_at DESC;
       `,
-      [userId, debtId]
+      [userId, debtId],
     );
 
     return rows.map((row) => ({
@@ -188,7 +199,7 @@ class DebtModel {
     const paidAmount = data.paidAmount || 0;
 
     if (paidAmount > data.totalAmount) {
-      throw new Error('Paid amount cannot exceed total amount');
+      throw new Error("Paid amount cannot exceed total amount");
     }
 
     await db.run(
@@ -217,7 +228,7 @@ class DebtModel {
         data.notes ? data.notes.trim() : null,
         now,
         now,
-      ]
+      ],
     );
 
     return DebtModel.findById(userId, id);
@@ -235,7 +246,7 @@ class DebtModel {
       data.paidAmount !== undefined ? data.paidAmount : existing.paidAmount;
 
     if (nextPaid > nextTotal) {
-      throw new Error('Paid amount cannot exceed total amount');
+      throw new Error("Paid amount cannot exceed total amount");
     }
 
     const now = new Date().toISOString();
@@ -254,16 +265,22 @@ class DebtModel {
         WHERE user_id = ? AND id = ?;
       `,
       [
-        data.personName !== undefined ? data.personName.trim() : existing.personName,
+        data.personName !== undefined
+          ? data.personName.trim()
+          : existing.personName,
         data.type !== undefined ? data.type : existing.type,
         nextTotal,
         nextPaid,
         data.debtDate !== undefined ? data.debtDate : existing.debtDate,
-        data.notes !== undefined ? (data.notes ? data.notes.trim() : null) : existing.notes,
+        data.notes !== undefined
+          ? data.notes
+            ? data.notes.trim()
+            : null
+          : existing.notes,
         now,
         userId,
         debtId,
-      ]
+      ],
     );
 
     return DebtModel.findById(userId, debtId);
@@ -275,14 +292,21 @@ class DebtModel {
         DELETE FROM debts
         WHERE user_id = ? AND id = ?;
       `,
-      [userId, debtId]
+      [userId, debtId],
     );
 
     return result.changes > 0;
   }
 
-  static async incrementPaidAmount(userId, debtId, amount) {
-    await db.run('BEGIN IMMEDIATE TRANSACTION;');
+  static async incrementPaidAmount(
+    userId,
+    debtId,
+    amount,
+    manageTransaction = true,
+  ) {
+    if (manageTransaction) {
+      await db.run("BEGIN IMMEDIATE TRANSACTION;");
+    }
 
     try {
       const row = await db.get(
@@ -292,18 +316,22 @@ class DebtModel {
           WHERE user_id = ? AND id = ?
           LIMIT 1;
         `,
-        [userId, debtId]
+        [userId, debtId],
       );
 
       if (!row) {
-        await db.run('ROLLBACK;');
-        return { error: 'NOT_FOUND' };
+        if (manageTransaction) {
+          await db.run("ROLLBACK;");
+        }
+        return { error: "NOT_FOUND" };
       }
 
       const remaining = row.total_amount - row.paid_amount;
       if (amount > remaining) {
-        await db.run('ROLLBACK;');
-        return { error: 'OVERPAYMENT', remaining };
+        if (manageTransaction) {
+          await db.run("ROLLBACK;");
+        }
+        return { error: "OVERPAYMENT", remaining };
       }
 
       const now = new Date().toISOString();
@@ -315,15 +343,19 @@ class DebtModel {
           SET paid_amount = ?, updated_at = ?
           WHERE user_id = ? AND id = ?;
         `,
-        [newPaidAmount, now, userId, debtId]
+        [newPaidAmount, now, userId, debtId],
       );
 
-      await db.run('COMMIT;');
+      if (manageTransaction) {
+        await db.run("COMMIT;");
+      }
 
       const debt = await DebtModel.findById(userId, debtId);
       return { debt };
     } catch (error) {
-      await db.run('ROLLBACK;');
+      if (manageTransaction) {
+        await db.run("ROLLBACK;");
+      }
       throw error;
     }
   }
@@ -335,7 +367,7 @@ class DebtModel {
         FROM debts
         WHERE user_id = ?;
       `,
-      [userId]
+      [userId],
     );
 
     let owedToMe = 0;
@@ -350,26 +382,29 @@ class DebtModel {
     let settled = 0;
 
     for (const row of rows) {
-      const remaining = DebtModel.computeRemaining(row.total_amount, row.paid_amount);
+      const remaining = DebtModel.computeRemaining(
+        row.total_amount,
+        row.paid_amount,
+      );
       const status = DebtModel.computeStatus(row.paid_amount, row.total_amount);
 
       totalAmount += row.total_amount;
       totalPaid += row.paid_amount;
 
-      if (status === 'pending') pending += 1;
-      if (status === 'partial') partial += 1;
-      if (status === 'settled') settled += 1;
+      if (status === "pending") pending += 1;
+      if (status === "partial") partial += 1;
+      if (status === "settled") settled += 1;
 
-      if (row.type === 'lent') {
+      if (row.type === "lent") {
         totalLent += row.total_amount;
-        if (status !== 'settled') {
+        if (status !== "settled") {
           owedToMe += remaining;
         }
       }
 
-      if (row.type === 'borrowed') {
+      if (row.type === "borrowed") {
         totalBorrowed += row.total_amount;
-        if (status !== 'settled') {
+        if (status !== "settled") {
           iOwe += remaining;
         }
       }
@@ -409,13 +444,16 @@ class DebtModel {
           AND paid_amount < total_amount
         ORDER BY person_name COLLATE NOCASE ASC;
       `,
-      [userId]
+      [userId],
     );
 
     const activeBalancesByPerson = activeRows.map((row) => {
-      const remaining = DebtModel.computeRemaining(row.total_amount, row.paid_amount);
+      const remaining = DebtModel.computeRemaining(
+        row.total_amount,
+        row.paid_amount,
+      );
       const status = DebtModel.computeStatus(row.paid_amount, row.total_amount);
-      const balance = row.type === 'lent' ? remaining : -remaining;
+      const balance = row.type === "lent" ? remaining : -remaining;
 
       return {
         debtId: row.id,
