@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../core/constants/app_constants.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/widgets.dart';
-import 'success_screen.dart';
+import '../providers/auth_notifier.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
 	const LoginScreen({super.key});
 
 	@override
-	State<LoginScreen> createState() => _LoginScreenState();
+	ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
 	final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 	final TextEditingController _emailController = TextEditingController();
 	final TextEditingController _passwordController = TextEditingController();
+	String? _submitErrorMessage;
 
 	@override
 	void dispose() {
@@ -30,21 +31,49 @@ class _LoginScreenState extends State<LoginScreen> {
 
 	Future<void> _handleLogin() async {
 		if (!(_formKey.currentState?.validate() ?? false)) return;
+		setState(() {
+			_submitErrorMessage = null;
+		});
+		ref.read(authNotifierProvider.notifier).clearError();
 
-		final router = GoRouter.of(context);
-		router.push(AppRoutes.loading);
-
-		final prefs = await SharedPreferences.getInstance();
-		await prefs.setBool(AppStorageKeys.authLoggedIn, true);
-		if (!mounted) return;
-		if (router.canPop()) {
-			router.pop();
+		try {
+			await ref.read(authNotifierProvider.notifier).login(
+				email: _emailController.text.trim(),
+				password: _passwordController.text,
+			);
+		} on ApiException catch (error) {
+			if (!mounted) return;
+			setState(() {
+				_submitErrorMessage = error.message;
+			});
+			return;
+		} catch (_) {
+			if (!mounted) return;
+			setState(() {
+				_submitErrorMessage = 'Unable to sign in. Please try again.';
+			});
+			return;
 		}
-		router.go(AppRoutes.success, extra: SuccessType.signIn);
+
+		if (!mounted) return;
+		final authState = ref.read(authNotifierProvider).value;
+		if (authState?.redirectRoute != null) {
+			final successType = authState?.successType;
+			if (successType != null) {
+				context.go(authState!.redirectRoute!, extra: successType);
+			} else {
+				context.go(authState!.redirectRoute!);
+			}
+		}
 	}
 
 	@override
 	Widget build(BuildContext context) {
+		final authAsync = ref.watch(authNotifierProvider);
+		final authState = authAsync.value;
+		final isLoading = authAsync.isLoading || authState?.isLoading == true;
+		final errorMessage =
+				_submitErrorMessage ?? authState?.errorMessage;
 		final colorScheme = Theme.of(context).colorScheme;
 		final textTheme = Theme.of(context).textTheme;
 		final scaffoldColor = Theme.of(context).scaffoldBackgroundColor;
@@ -189,12 +218,24 @@ class _LoginScreenState extends State<LoginScreen> {
 												),
 
 												const SizedBox(height: AppDimensions.lg),
+												if (errorMessage != null &&
+													errorMessage.isNotEmpty) ...[
+													Text(
+														errorMessage,
+														style: textTheme.bodySmall?.copyWith(
+															color: colorScheme.error,
+															fontWeight: FontWeight.w600,
+														),
+													),
+													const SizedBox(height: AppDimensions.md),
+												],
 
 												// ── Sign In button (centered, fixed width) ──
 												Center(
 													child: KiseActionButton(
 														label: 'SIGN IN',
 														onPressed: _handleLogin,
+														isLoading: isLoading,
 														height: AppDimensions.authButtonHeight,
 														width: AppDimensions.authButtonWidth,
 														expanded: false,

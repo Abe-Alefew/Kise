@@ -1,3 +1,8 @@
+enum AuthSuccessType {
+  registration,
+  signIn,
+}
+
 class AuthTokens {
   final String accessToken;
   final String refreshToken;

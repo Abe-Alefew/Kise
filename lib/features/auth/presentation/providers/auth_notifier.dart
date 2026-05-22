@@ -20,35 +20,41 @@ class AuthState {
   final AuthUser? user;
   final String? errorMessage;
   final String? redirectRoute;
+  final AuthSuccessType? successType;
 
   const AuthState({
     required this.status,
     this.user,
     this.errorMessage,
     this.redirectRoute,
+    this.successType,
   });
 
   const AuthState.unknown()
       : status = AuthStatus.unknown,
         user = null,
         errorMessage = null,
-        redirectRoute = null;
+        redirectRoute = null,
+        successType = null;
 
   const AuthState.loading({
     this.user,
     this.redirectRoute,
+    this.successType,
   })  : status = AuthStatus.loading,
         errorMessage = null;
 
   const AuthState.authenticated({
     required this.user,
     this.redirectRoute,
+    this.successType,
   })  : status = AuthStatus.authenticated,
         errorMessage = null;
 
   const AuthState.unauthenticated({
     this.errorMessage,
     this.redirectRoute,
+    this.successType,
   })  : status = AuthStatus.unauthenticated,
         user = null;
 
@@ -61,14 +67,20 @@ class AuthState {
     AuthUser? user,
     String? errorMessage,
     String? redirectRoute,
+    AuthSuccessType? successType,
     bool clearError = false,
     bool clearUser = false,
+    bool clearRedirect = false,
+    bool clearSuccessType = false,
   }) {
     return AuthState(
       status: status ?? this.status,
       user: clearUser ? null : (user ?? this.user),
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-      redirectRoute: redirectRoute ?? this.redirectRoute,
+      redirectRoute:
+          clearRedirect ? null : (redirectRoute ?? this.redirectRoute),
+      successType:
+          clearSuccessType ? null : (successType ?? this.successType),
     );
   }
 }
@@ -128,6 +140,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       AuthState.loading(
         user: state.value?.user,
         redirectRoute: AppRoutes.loading,
+        successType: null,
       ),
     );
 
@@ -144,6 +157,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         AuthState.authenticated(
           user: session.user,
           redirectRoute: AppRoutes.success,
+          successType: AuthSuccessType.signIn,
         ),
       );
     } on ApiException catch (error) {
@@ -151,6 +165,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         AuthState.unauthenticated(
           errorMessage: error.message,
           redirectRoute: AppRoutes.login,
+          successType: null,
         ),
       );
       rethrow;
@@ -159,6 +174,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         AuthState.unauthenticated(
           errorMessage: error.toString(),
           redirectRoute: AppRoutes.login,
+          successType: null,
         ),
       );
       rethrow;
@@ -170,6 +186,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       AuthState.loading(
         user: state.value?.user,
         redirectRoute: AppRoutes.loading,
+        successType: null,
       ),
     );
 
@@ -183,6 +200,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         AuthState.authenticated(
           user: session.user,
           redirectRoute: AppRoutes.success,
+          successType: AuthSuccessType.registration,
         ),
       );
     } on ApiException catch (error) {
@@ -190,6 +208,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         AuthState.unauthenticated(
           errorMessage: error.message,
           redirectRoute: AppRoutes.register,
+          successType: null,
         ),
       );
       rethrow;
@@ -198,6 +217,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         AuthState.unauthenticated(
           errorMessage: error.toString(),
           redirectRoute: AppRoutes.register,
+          successType: null,
         ),
       );
       rethrow;
@@ -255,7 +275,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     }
 
     state = AsyncData(
-      current.copyWith(redirectRoute: AppRoutes.home),
+      current.copyWith(clearRedirect: true, clearSuccessType: true),
     );
   }
 
