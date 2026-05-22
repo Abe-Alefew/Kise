@@ -82,7 +82,6 @@ class Database {
 
     const UserModel = require("../models/User.model");
     const RefreshTokenModel = require("../models/RefreshToken.model");
-    const PaymentAccountModel = require("../models/PaymentAccount.model");
     const TransactionModel = require("../models/Transaction.model");
     const DebtModel = require("../models/Debt.model");
     const DebtPaymentModel = require("../models/DebtPayment.model");
@@ -91,7 +90,6 @@ class Database {
     await UserModel.createPreferencesTable();
     await UserModel.createAllowanceTable();
     await RefreshTokenModel.createTable();
-    await PaymentAccountModel.createTable();
     await TransactionModel.createTable();
     await DebtModel.createTable();
     await DebtPaymentModel.createTable();
