@@ -1,7 +1,7 @@
 abstract final class ApiEndpoints {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: '<http://10.0.2.2:3000/api/v1>',
+    defaultValue: '<http://127.0.0.1:3000/api/v1>',
   );
 
   static const String authRegister = '/auth/register';
@@ -11,6 +11,7 @@ abstract final class ApiEndpoints {
   static const String authMe = '/auth/me';
 
   static const String usersMe = '/users/me';
+  static const String deleteAccount = '/users/delete';
 
   static const String settingsAllowance = '/settings/allowance';
   static const String settingsPreferences = '/settings/preferences';
