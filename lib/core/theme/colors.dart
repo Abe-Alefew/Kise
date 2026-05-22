@@ -37,8 +37,6 @@ abstract class _KiseDarkPalette {
   static const Color charcoal700 = Color(0xFF252933); // secondary-darkmode
   
   static const Color gold400     = Color(0xFFDDA22C); // primary (shared)
-  
-  static const Color cream100    = Color(0xFFF5F2EC); // foreground-darkmode
   static const Color offWhite    = Color(0xFFFFFEF1); // main_text_color-darkmode
   static const Color roseGrey    = Color(0xFFD7CECE); // secondary-text-darkmode
   static const Color slateGrey   = Color(0xFF7A8194); // muted-foreground-darkmode

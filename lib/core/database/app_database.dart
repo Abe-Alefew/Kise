@@ -6,7 +6,7 @@ class AppDatabase {
   AppDatabase._(this._database);
 
   static const String _databaseName = 'kise_local.db';
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 2;
 
   final Database _database;
 
@@ -38,9 +38,8 @@ class AppDatabase {
         last_name TEXT NOT NULL,
         phone TEXT,
         username TEXT,
-        school TEXT,
+        university TEXT,
         department TEXT,
-        year_of_study INTEGER NOT NULL,
         currency TEXT NOT NULL DEFAULT 'ETB',
         preferred_language TEXT NOT NULL DEFAULT 'English',
         theme_mode TEXT NOT NULL DEFAULT 'system',
@@ -91,7 +90,13 @@ class AppDatabase {
       return;
     }
 
-    if (oldVersion < 1) {
+    if (oldVersion < 2) {
+      // Recreate tables to apply the new schema
+      await db.execute('PRAGMA foreign_keys = OFF;');
+      await db.execute('DROP TABLE IF EXISTS local_allowance_settings;');
+      await db.execute('DROP TABLE IF EXISTS local_user_preferences;');
+      await db.execute('DROP TABLE IF EXISTS local_users;');
+      await db.execute('PRAGMA foreign_keys = ON;');
       await _onCreate(db, newVersion);
     }
   }

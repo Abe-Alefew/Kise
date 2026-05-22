@@ -88,7 +88,7 @@ class Database {
     const DebtPaymentModel = require("../models/DebtPayment.model");
     const UserPreferenceModel = require("../models/UserPreference.model");
     const AllowanceModel = require("../models/Allowance.model");
-    const TransactionModel = require("../models/Transaction.model");
+    // const TransactionModel = require("../models/Transaction.model");
 
     await UserModel.createTable();
     await UserModel.createPreferencesTable();

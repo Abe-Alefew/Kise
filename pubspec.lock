@@ -113,6 +113,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.9"
+  dev_build:
+    dependency: transitive
+    description:
+      name: dev_build
+      sha256: "39e580293ef4f14932eb7a4b4163f45c6d0fc3f109da7ec804b4592bed069f4b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.7+1"
   dio:
     dependency: "direct main"
     description:
@@ -717,6 +725,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.5.8"
+  sqflite_common_ffi:
+    dependency: "direct main"
+    description:
+      name: sqflite_common_ffi
+      sha256: cd0c7f7de39a08f2d54ef144d9058c46eca8461879aaa648025643455c1e5a20
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.0+3"
+  sqflite_common_ffi_web:
+    dependency: "direct main"
+    description:
+      name: sqflite_common_ffi_web
+      sha256: "61ea702e7aba727f28be7ead00b84c19c745cd4a4934d0c41473303df11ac9ea"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.5+4"
   sqflite_darwin:
     dependency: transitive
     description:
@@ -733,6 +757,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
+  sqlite3:
+    dependency: transitive
+    description:
+      name: sqlite3
+      sha256: "56da3e13ed7d28a66f930aa2b2b29db6736a233f08283326e96321dd812030f5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.3.1"
   stack_trace:
     dependency: transitive
     description:
@@ -796,15 +828,7 @@ packages:
       sha256: "93167629bfc610f71560ab9312acdda4959de4df6fac7492c89ff0d3886f6636"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.10"
-  test_core:
-    dependency: transitive
-    description:
-      name: test_core
-      sha256: "0381bd1585d1a924763c308100f2138205252fb90c9d4eeaf28489ee65ccde51"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.6.16"
+    version: "0.7.9"
   typed_data:
     dependency: transitive
     description:

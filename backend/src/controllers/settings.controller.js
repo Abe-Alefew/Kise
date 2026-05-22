@@ -24,23 +24,6 @@ function mapAccountResponse(account) {
   };
 }
 
-function mapAllowanceResponse(allowance) {
-  return {
-    monthlyAmount: allowance.monthlyAmount,
-    cycleStartDay: allowance.cycleStartDay,
-    isConfigured: allowance.monthlyAmount > 0,
-    updatedAt: allowance.updatedAt,
-  };
-}
-
-function mapPreferencesResponse(preferences) {
-  return {
-    preferredLanguage: preferences.preferredLanguage,
-    themeMode: preferences.themeMode,
-    updatedAt: preferences.updatedAt,
-  };
-}
-
 class SettingsController {
   static async listAccounts(req, res, next) {
     try {
@@ -128,102 +111,6 @@ class SettingsController {
 
       await PaymentAccountModel.delete(req.user.id, req.params.accountId);
       return sendSuccess(res, 200, { message: 'Payment account deleted successfully' });
-    } catch (error) {
-      return next(error);
-    }
-  }
-
-  static async getAllowance(req, res, next) {
-    try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
-
-      let allowance = await AllowanceModel.findByUserId(req.user.id);
-      if (!allowance) {
-        allowance = await AllowanceModel.createDefault(req.user.id);
-      }
-
-      return sendSuccess(res, 200, mapAllowanceResponse(allowance));
-    } catch (error) {
-      return next(error);
-    }
-  }
-
-  static async updateAllowance(req, res, next) {
-    try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
-
-      const allowance = await AllowanceModel.upsert(req.user.id, {
-        monthlyAmount: Number(req.body.monthlyAmount),
-        cycleStartDay: Number(req.body.cycleStartDay),
-      });
-
-      return sendSuccess(res, 200, mapAllowanceResponse(allowance));
-    } catch (error) {
-      return next(error);
-    }
-  }
-
-  static async getPreferences(req, res, next) {
-    try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
-
-      let preferences = await UserPreferenceModel.findByUserId(req.user.id);
-      if (!preferences) {
-        preferences = await UserPreferenceModel.createDefault(req.user.id, 'English');
-      }
-
-      return sendSuccess(res, 200, mapPreferencesResponse(preferences));
-    } catch (error) {
-      return next(error);
-    }
-  }
-
-  static async updatePreferences(req, res, next) {
-    try {
-      const validationErrors = collectValidationErrors(req);
-      if (validationErrors) {
-        return sendError(
-          res,
-          400,
-          'VALIDATION_ERROR',
-          'Request validation failed',
-          validationErrors
-        );
-      }
-
-      const preferences = await UserPreferenceModel.update(req.user.id, {
-        preferredLanguage: req.body.preferredLanguage,
-        themeMode: req.body.themeMode,
-      });
-
-      return sendSuccess(res, 200, mapPreferencesResponse(preferences));
     } catch (error) {
       return next(error);
     }
