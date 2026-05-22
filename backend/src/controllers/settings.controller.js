@@ -1,9 +1,6 @@
 const PaymentAccountModel = require('../models/PaymentAccount.model');
-<<<<<<< HEAD
 const AllowanceModel = require('../models/Allowance.model');
 const UserPreferenceModel = require('../models/UserPreference.model');
-=======
->>>>>>> 9f5909d5ffab0a7c07304ed16c57780b578c4a77
 const { collectValidationErrors } = require('../middleware/error.middleware');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
