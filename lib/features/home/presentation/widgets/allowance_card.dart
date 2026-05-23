@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:kise/core/routing/app_router.dart';
 import 'package:kise/core/widgets/kise_card_holder.dart';
 import 'package:kise/core/theme/colors.dart';
 import 'package:kise/features/home/domain/home_dashboard_models.dart';
@@ -17,25 +19,37 @@ class AllowanceCard extends StatelessWidget {
 
     if (!allowance.isConfigured) {
       return KiseCardHolder(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: ListTile(
-            leading: Icon(
-              Icons.lightbulb_outline,
-              color: AppColorsLight.primary,
-            ),
-            title: Text(
-              'Set your allowance',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: AppColorsLight.primary,
-              ),
-            ),
-            subtitle: Text(
-              'Go to Settings to set your monthly budget and unlock spending alerts.',
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark ? AppColorsDark.textBody : AppColorsLight.textBody,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => context.go(AppRoutes.settings),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: ListTile(
+                leading: Icon(
+                  Icons.lightbulb_outline,
+                  color: AppColorsLight.primary,
+                ),
+                title: Text(
+                  'Set your allowance',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColorsLight.primary,
+                  ),
+                ),
+                subtitle: Text(
+                  'Tap to open Settings and set your monthly budget.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color:
+                        isDark ? AppColorsDark.textBody : AppColorsLight.textBody,
+                  ),
+                ),
+                trailing: Icon(
+                  Icons.chevron_right,
+                  color: isDark ? AppColorsDark.textHint : AppColorsLight.textHint,
+                ),
               ),
             ),
           ),

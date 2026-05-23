@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/dio_client.dart';
-import '../../../../core/widgets/kise_action_button.dart';
-import '../../domain/transaction_entity.dart';
-import '../../domain/transaction_inputs.dart';
-import '../providers/transactions_notifier.dart';
+import 'package:go_router/go_router.dart';
+import 'package:kise/core/network/dio_client.dart';
+import 'package:kise/core/routing/app_router.dart';
+import 'package:kise/core/widgets/kise_action_button.dart';
+import 'package:kise/features/settings/domain/settings_models.dart';
+import 'package:kise/features/settings/presentation/providers/settings_notifier.dart';
+import 'package:kise/features/transactions/domain/transaction_entity.dart';
+import 'package:kise/features/transactions/domain/transaction_inputs.dart';
+import 'package:kise/features/transactions/presentation/providers/transactions_notifier.dart';
 
 class AddTransactionModal extends ConsumerStatefulWidget {
   final TransactionEntity? transactionToEdit;
@@ -20,7 +24,7 @@ class AddTransactionModal extends ConsumerStatefulWidget {
 class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
   late String selectedType;
   String? selectedCategory;
-  String? selectedAccount;
+  String? selectedAccountId;
   late DateTime selectedDate;
 
   final amountController = TextEditingController();
@@ -30,7 +34,6 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
 
   final List<String> expenseCategories = ["Food", "Transport", "Education", "Shopping"];
   final List<String> incomeSources = ["Salary", "Freelance", "Investment"];
-  final List<String> accounts = ["CBE", "Telebirr", "Cash"];
 
   List<String> get currentCategories =>
       selectedType == "Income" ? incomeSources : expenseCategories;
@@ -48,10 +51,7 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
           DateTime.now();
       amountController.text = _formatAmount(existing.amount);
       noteController.text = existing.note ?? '';
-      if (existing.accountName != null &&
-          accounts.contains(existing.accountName)) {
-        selectedAccount = existing.accountName;
-      }
+      selectedAccountId = existing.accountId;
     } else {
       selectedType = "Expense";
       selectedDate = DateTime.now();
@@ -111,11 +111,18 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
   Future<void> _submit() async {
     if (_isSubmitting) return;
 
-    if (selectedCategory == null ||
-        selectedAccount == null ||
-        amountController.text.isEmpty) {
+    final paymentAccounts = ref.read(paymentAccountsProvider);
+    final accountId = _resolvedAccountId(paymentAccounts);
+
+    if (selectedCategory == null || accountId == null || amountController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all required fields')),
+        SnackBar(
+          content: Text(
+            accountId == null
+                ? 'Add a payment account in Settings first'
+                : 'Please fill all required fields',
+          ),
+        ),
       );
       return;
     }
@@ -145,6 +152,7 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
             category: selectedCategory!,
             amount: amount,
             transactionDate: transactionDate,
+            accountId: accountId,
             note: noteController.text.trim().isEmpty
                 ? null
                 : noteController.text.trim(),
@@ -165,6 +173,7 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
             category: selectedCategory!,
             amount: amount,
             transactionDate: transactionDate,
+            accountId: accountId,
             note: noteController.text.trim().isEmpty
                 ? null
                 : noteController.text.trim(),
@@ -193,12 +202,27 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
     }
   }
 
+  String? _resolvedAccountId(List<PaymentAccountSettings> paymentAccounts) {
+    if (paymentAccounts.isEmpty) {
+      return null;
+    }
+
+    if (selectedAccountId != null &&
+        paymentAccounts.any((account) => account.id == selectedAccountId)) {
+      return selectedAccountId;
+    }
+
+    return paymentAccounts.first.id;
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final kb = MediaQuery.of(context).viewInsets.bottom;
     final isEdit = widget.isEditMode;
+    final paymentAccounts = ref.watch(paymentAccountsProvider);
+    final resolvedAccountId = _resolvedAccountId(paymentAccounts);
 
     return Padding(
       padding: EdgeInsets.only(bottom: kb),
@@ -336,30 +360,57 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
                           style: tt.labelMedium,
                         ),
                         const SizedBox(height: 5),
-                        _fieldShadow(
-                          child: DropdownButtonFormField<String>(
-                            value: selectedAccount,
-                            isExpanded: true,
-                            isDense: true,
-                            dropdownColor: cs.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            elevation: 4,
-                            icon: Icon(Icons.keyboard_arrow_down,
-                                color: cs.outline, size: 20),
-                            decoration: _inputDec(context),
-                            items: accounts
-                                .map(
-                                  (e) => DropdownMenuItem(
-                                    value: e,
-                                    child: Text(e, style: tt.bodyMedium),
+                        paymentAccounts.isEmpty
+                            ? _fieldShadow(
+                                child: ListTile(
+                                  dense: true,
+                                  title: Text(
+                                    'No accounts yet',
+                                    style: tt.bodyMedium,
                                   ),
-                                )
-                                .toList(),
-                            onChanged: _isSubmitting
-                                ? null
-                                : (v) => setState(() => selectedAccount = v),
-                          ),
-                        ),
+                                  subtitle: Text(
+                                    'Add one in Settings',
+                                    style: tt.bodySmall,
+                                  ),
+                                  trailing: TextButton(
+                                    onPressed: _isSubmitting
+                                        ? null
+                                        : () {
+                                            Navigator.pop(context);
+                                            context.go(AppRoutes.settings);
+                                          },
+                                    child: const Text('Settings'),
+                                  ),
+                                ),
+                              )
+                            : _fieldShadow(
+                                child: DropdownButtonFormField<String>(
+                                  value: resolvedAccountId,
+                                  isExpanded: true,
+                                  isDense: true,
+                                  dropdownColor: cs.surface,
+                                  borderRadius: BorderRadius.circular(12),
+                                  elevation: 4,
+                                  icon: Icon(Icons.keyboard_arrow_down,
+                                      color: cs.outline, size: 20),
+                                  decoration: _inputDec(context),
+                                  items: paymentAccounts
+                                      .map(
+                                        (account) => DropdownMenuItem(
+                                          value: account.id,
+                                          child: Text(
+                                            account.name,
+                                            style: tt.bodyMedium,
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: _isSubmitting
+                                      ? null
+                                      : (v) =>
+                                          setState(() => selectedAccountId = v),
+                                ),
+                              ),
                       ],
                     ),
                   ),
