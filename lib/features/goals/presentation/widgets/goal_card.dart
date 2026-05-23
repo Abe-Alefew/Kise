@@ -1,47 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:kise/core/theme/app_dimensions.dart';
+import 'package:kise/core/widgets/kise_card_holder.dart';
+import 'package:kise/features/goals/domain/goal_entity.dart';
 import 'package:kise/features/goals/presentation/widgets/build_top_section.dart';
 import 'package:kise/features/goals/presentation/widgets/goal_action_buttons.dart';
 import 'package:kise/features/goals/presentation/widgets/goal_deposit_form.dart';
 import 'package:kise/features/goals/presentation/widgets/goal_edit_form.dart';
-import 'package:kise/core/theme/app_dimensions.dart';
-import 'package:kise/core/widgets/kise_card_holder.dart';
 
 enum GoalCardState { collapsed, expandedActions, expandedDeposit, expandedEdit }
 
-class Goal {
-  final String id;
-  final String title;
-  final String period;
-  final String dueDate;
-  final double currentAmount;
-  final double targetAmount;
-  final bool isCompleted;
-  bool isLocked;
-
-  Goal({
-    required this.id,
-    required this.title,
-    required this.period,
-    required this.dueDate,
-    required this.currentAmount,
-    required this.targetAmount,
-    required this.isCompleted,
-    this.isLocked = false,
-  });
-
-  double get progressPercentage => (currentAmount / targetAmount).clamp(0.0, 1.0);
-}
-
 class GoalCard extends StatefulWidget {
-  final Goal goal;
+  final GoalEntity goal;
   final VoidCallback onDelete;
+  final VoidCallback onLock;
   final void Function(double amount, String source) onDeposit;
   final void Function(String title, double targetAmount, String deadline, String period) onEdit;
-  
+
   const GoalCard({
-    super.key, 
+    super.key,
     required this.goal,
     required this.onDelete,
+    required this.onLock,
     required this.onDeposit,
     required this.onEdit,
   });
@@ -82,39 +61,39 @@ class _GoalCardState extends State<GoalCard> {
                 children: [
                   buildTopSection(context, widget),
                   if (_state != GoalCardState.collapsed) ...[
-                    const Divider(height: 32, thickness: 1,),
+                    const Divider(height: 32, thickness: 1),
                   ],
-                  if (_state == GoalCardState.expandedActions) 
+                  if (_state == GoalCardState.expandedActions)
                     GoalActionButtons(
-                      onDepositTap: () => setState(() => _state = GoalCardState.expandedDeposit),
-                      onEditTap: () => setState(() => _state = GoalCardState.expandedEdit),
-                      onLockTap: () {
-                        setState(() {
-                          widget.goal.isLocked = !widget.goal.isLocked;
-                        });
-                      },
+                      onDepositTap: () =>
+                          setState(() => _state = GoalCardState.expandedDeposit),
+                      onEditTap: () =>
+                          setState(() => _state = GoalCardState.expandedEdit),
+                      onLockTap: widget.onLock,
                       onDeleteTap: widget.onDelete,
                       isLocked: widget.goal.isLocked,
                     ),
-                  if (_state == GoalCardState.expandedDeposit) 
+                  if (_state == GoalCardState.expandedDeposit)
                     GoalDepositForm(
                       onSave: (amount, source) {
                         widget.onDeposit(amount, source);
                         setState(() => _state = GoalCardState.collapsed);
                       },
-                      onCancel: () => setState(() => _state = GoalCardState.expandedActions),
+                      onCancel: () =>
+                          setState(() => _state = GoalCardState.expandedActions),
                     ),
-                  if (_state == GoalCardState.expandedEdit) 
+                  if (_state == GoalCardState.expandedEdit)
                     GoalEditForm(
                       initialTitle: widget.goal.title,
                       initialTarget: widget.goal.targetAmount,
-                      initialDeadline: widget.goal.dueDate,
-                      initialPeriod: widget.goal.period,
+                      initialDeadline: widget.goal.dueDateLabel,
+                      initialPeriod: widget.goal.periodLabel,
                       onSave: (title, target, deadline, period) {
                         widget.onEdit(title, target, deadline, period);
                         setState(() => _state = GoalCardState.collapsed);
                       },
-                      onCancel: () => setState(() => _state = GoalCardState.expandedActions),
+                      onCancel: () =>
+                          setState(() => _state = GoalCardState.expandedActions),
                     ),
                 ],
               ),
