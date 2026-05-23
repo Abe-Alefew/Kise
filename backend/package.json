@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "auth-test": "node --test tests/auth.test.js"
+    "auth-test": "node --test tests/auth.test.js",
+    "api-test": "node test-api-ends.js"
   },
   "engines": {
     "node": ">=18.0.0"

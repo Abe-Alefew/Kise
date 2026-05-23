@@ -1,40 +1,19 @@
 const express = require('express');
-const { body, param } = require('express-validator');
 const SettingsController = require('../controllers/settings.controller');
-const PaymentAccountModel = require('../models/PaymentAccount.model');
 const asyncHandler = require('../utils/asyncHandler');
 const { authenticate } = require('../middleware/auth.middleware');
+const {
+  accountIdValidation,
+  createAccountValidation,
+  updateAllowanceValidation,
+  updatePreferencesValidation,
+} = require('../middleware/settings.validate.middleware');
 
 const router = express.Router();
 
 router.use(authenticate);
 
-const createAccountValidation = [
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('Account name is required')
-    .isLength({ max: 100 })
-    .withMessage('Account name must be at most 100 characters'),
-  body('type')
-    .trim()
-    .notEmpty()
-    .withMessage('Account type is required')
-    .isIn(PaymentAccountModel.allowedTypes)
-    .withMessage(
-      `Account type must be one of: ${PaymentAccountModel.allowedTypes.join(', ')}`
-    ),
-];
-
-const accountIdValidation = [
-  param('accountId')
-    .trim()
-    .notEmpty()
-    .withMessage('Account id is required')
-    .isUUID()
-    .withMessage('Account id must be a valid UUID'),
-];
-
+// Payment accounts
 router.get('/accounts', asyncHandler(SettingsController.listAccounts));
 
 router.post(
@@ -47,6 +26,24 @@ router.delete(
   '/accounts/:accountId',
   accountIdValidation,
   asyncHandler(SettingsController.deleteAccount)
+);
+
+// Allowance
+router.get('/allowance', asyncHandler(SettingsController.getAllowance));
+
+router.put(
+  '/allowance',
+  updateAllowanceValidation,
+  asyncHandler(SettingsController.updateAllowance)
+);
+
+// Preferences
+router.get('/preferences', asyncHandler(SettingsController.getPreferences));
+
+router.patch(
+  '/preferences',
+  updatePreferencesValidation,
+  asyncHandler(SettingsController.updatePreferences)
 );
 
 module.exports = router;

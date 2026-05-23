@@ -35,6 +35,7 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
 
   static final _dateFmt = DateFormat('MM/dd/yyyy');
   static final _numFmt  = NumberFormat('#,##0.00');
+  static final _isoFmt  = DateFormat('yyyy-MM-dd');
 
   @override
   void initState() {
@@ -84,15 +85,24 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final existing = widget.existingDebt;
+    final totalAmount =
+        double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
+    final paidAmount = existing?.paidAmount ?? 0;
+    final remaining = (totalAmount - paidAmount).clamp(0.0, double.infinity);
+    final status = paidAmount >= totalAmount
+        ? DebtStatus.settled
+        : (paidAmount > 0 ? DebtStatus.partial : DebtStatus.pending);
     final debt = DebtEntity(
       id: existing?.id ?? const Uuid().v4(),
       personName: _nameCtrl.text.trim(),
       type: _type,
-      totalAmount:
-          double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0,
-      paidAmount: existing?.paidAmount ?? 0,
+      totalAmount: totalAmount,
+      paidAmount: paidAmount,
+      remaining: remaining,
+      debtDate: _isoFmt.format(_selectedDate),
       date: _selectedDate,
       payments: existing?.payments ?? const [],
+      status: status,
     );
     context.pop(debt); // return the saved debt to the caller
   }
@@ -466,7 +476,6 @@ class _ModalInput extends StatelessWidget {
 
 
 // ── Cancel button ─────────────────────────────────────────────────────────────
-
 
 class _CancelButton extends StatelessWidget {
   final VoidCallback onPressed;

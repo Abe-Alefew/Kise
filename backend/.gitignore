@@ -1,5 +1,7 @@
 node_modules/
+# Local data (kise.db and other files in data/)
 data/
 .env
 *.log
 .DS_Store
+test-goals-settings-routes.js

@@ -33,6 +33,13 @@ class _DebtScreenState extends State<DebtScreen> {
   bool _isActualView = true;
   String _selectedFilter = 'All';
 
+  static String _toIsoDate(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
   List<DebtEntity> _debts = [
     DebtEntity(
       id: '1',
@@ -40,6 +47,9 @@ class _DebtScreenState extends State<DebtScreen> {
       type: DebtType.lent,
       totalAmount: 0.19,
       paidAmount: 0,
+      remaining: 0.19,
+      status: DebtStatus.pending,
+      debtDate: _toIsoDate(DateTime(2026, 4, 16)),
       date: DateTime(2026, 4, 16),
     ),
     DebtEntity(
@@ -48,6 +58,9 @@ class _DebtScreenState extends State<DebtScreen> {
       type: DebtType.borrowed,
       totalAmount: 2000.00,
       paidAmount: 1800.00,
+      remaining: 200.00,
+      status: DebtStatus.partial,
+      debtDate: _toIsoDate(DateTime(2026, 4, 12)),
       date: DateTime(2026, 4, 12),
     ),
     DebtEntity(
@@ -56,6 +69,9 @@ class _DebtScreenState extends State<DebtScreen> {
       type: DebtType.lent,
       totalAmount: 70000.00,
       paidAmount: 0,
+      remaining: 70000.00,
+      status: DebtStatus.pending,
+      debtDate: _toIsoDate(DateTime(2026, 4, 5)),
       date: DateTime(2026, 4, 5),
     ),
     DebtEntity(
@@ -64,6 +80,9 @@ class _DebtScreenState extends State<DebtScreen> {
       type: DebtType.lent,
       totalAmount: 30000.00,
       paidAmount: 30000.00,
+      remaining: 0,
+      status: DebtStatus.settled,
+      debtDate: _toIsoDate(DateTime(2026, 3, 30)),
       date: DateTime(2026, 3, 30),
     ),
   ];

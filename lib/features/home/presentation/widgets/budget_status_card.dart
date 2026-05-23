@@ -5,12 +5,20 @@ import '../../../../core/theme/colors.dart';
 
 class BudgetStatusCard extends StatelessWidget {
   final double spendRatio;
-  const BudgetStatusCard({super.key, required this.spendRatio});
+  final String personality;
+  final String tip;
+
+  const BudgetStatusCard({
+    super.key,
+    required this.spendRatio,
+    required this.personality,
+    required this.tip,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return KiseCardHolder(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -36,14 +44,14 @@ class BudgetStatusCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Budget Spender",
-                        style: TextStyle(
+                        personality,
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
                       ),
                       Text(
-                        "Good Balance between spending and saving",
+                        'Spending personality for this cycle',
                         style: TextStyle(
                           color: AppColorsLight.textHint,
                           fontSize: 12,
@@ -59,41 +67,45 @@ class BudgetStatusCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Spend ration",
+                  'Spend ratio',
                   style: TextStyle(
                     color: AppColorsLight.textHint,
                     fontSize: 12,
                   ),
                 ),
                 Text(
-                  "${(spendRatio * 100).toInt()}%",
+                  '${(spendRatio * 100).toInt()}%',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
-                    color: isDark ? AppColorsDark.textHeading : AppColorsLight.textHeading,
+                    color: isDark
+                        ? AppColorsDark.textHeading
+                        : AppColorsLight.textHeading,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            KiseProgressBar(progress: spendRatio), // Zeamanuel's core widget
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
-                  Icons.lightbulb_outline,
-                  size: 16,
-                  color: AppColorsLight.primary,
-                ),
-                SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    "Try to push your savings a bit higher.",
-                    style: TextStyle(fontSize: 12),
+            KiseProgressBar(progress: spendRatio.clamp(0.0, 1.0)),
+            if (tip.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    Icons.lightbulb_outline,
+                    size: 16,
+                    color: AppColorsLight.primary,
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      tip,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

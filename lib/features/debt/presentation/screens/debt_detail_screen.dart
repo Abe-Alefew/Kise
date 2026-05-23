@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:uuid/uuid.dart';
 import 'package:kise/core/routing/app_router.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/app_theme_ext.dart';
@@ -10,24 +10,19 @@ import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/core/widgets/kise_card_holder.dart';
 import 'package:kise/core/widgets/kise_progress_bar.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
+import 'package:kise/features/debt/presentation/providers/debts_notifier.dart';
 import 'package:kise/features/debt/presentation/widgets/status_badge.dart';
 
-// Pop results from this modal:
-//   DebtEntity  → close with current (possibly updated) debt state
-//   'deleted'   → debt was deleted inside the edit flow
-
-class DebtDetailModal extends StatefulWidget {
+class DebtDetailModal extends ConsumerStatefulWidget {
   final DebtEntity debt;
 
   const DebtDetailModal({super.key, required this.debt});
 
   @override
-  State<DebtDetailModal> createState() => _DebtDetailModalState();
+  ConsumerState<DebtDetailModal> createState() => _DebtDetailModalState();
 }
 
-class _DebtDetailModalState extends State<DebtDetailModal> {
-  late DebtEntity _debt; // mutable local copy — updated by payments & edits
-
+class _DebtDetailModalState extends ConsumerState<DebtDetailModal> {
   bool _paymentFormVisible = false;
 
   final _amountCtrl = TextEditingController(text: '0.00');
@@ -41,8 +36,13 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
   @override
   void initState() {
     super.initState();
-    _debt = widget.debt;
     _dateCtrl.text = _dateFmt.format(_paymentDate);
+  }
+
+  DebtEntity _resolveDebt() {
+    final debts = ref.watch(debtsNotifierProvider).value;
+    return debts?.where((d) => d.id == widget.debt.id).firstOrNull ??
+        widget.debt;
   }
 
   @override
@@ -68,63 +68,71 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
     }
   }
 
-  // Records a payment locally — does NOT close the modal.
-  void _confirmPayment() {
+  Future<void> _confirmPayment() async {
     final amount =
         double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
-    if (amount <= 0) return;
-    final record = PaymentRecord(
-      id: const Uuid().v4(),
-      amount: amount,
-      date: _paymentDate,
-      notes: _notesCtrl.text.trim().isEmpty
-          ? null
-          : _notesCtrl.text.trim(),
-    );
-    setState(() {
-      _debt = _debt.copyWith(
-        paidAmount: _debt.paidAmount + amount,
-        payments: [..._debt.payments, record],
-      );
-      _paymentFormVisible = false;
-      // Reset payment form
-      _amountCtrl.text = '0.00';
-      _notesCtrl.text = '';
-      _paymentDate = DateTime.now();
-      _dateCtrl.text = _dateFmt.format(_paymentDate);
-    });
+    if (amount <= 0) {
+      return;
+    }
+
+    final notes = _notesCtrl.text.trim().isEmpty
+        ? null
+        : _notesCtrl.text.trim();
+
+    try {
+      await ref.read(debtsNotifierProvider.notifier).recordPayment(
+            debt: _resolveDebt(),
+            amount: amount,
+            paymentDate: _paymentDate,
+            notes: notes,
+          );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _paymentFormVisible = false;
+        _amountCtrl.text = '0.00';
+        _notesCtrl.text = '';
+        _paymentDate = DateTime.now();
+        _dateCtrl.text = _dateFmt.format(_paymentDate);
+      });
+    } catch (_) {}
   }
 
-  // Navigates to edit route; handles result on return.
   Future<void> _openEditModal() async {
+    final debt = _resolveDebt();
     final result = await context.push<dynamic>(
-      '${AppRoutes.debtEdit}/${_debt.id}',
-      extra: _debt,
+      '${AppRoutes.debtEdit}/${debt.id}',
+      extra: debt,
     );
-    if (!mounted) return;
-    if (result is DebtEntity) {
-      setState(() => _debt = result);
-    } else if (result == 'deleted') {
-      context.pop('deleted'); // bubble deletion up to DebtScreen
+    if (!mounted) {
+      return;
+    }
+    if (result == 'deleted') {
+      context.pop();
+      return;
+    }
+    final stillExists = ref
+            .read(debtsNotifierProvider)
+            .value
+            ?.any((d) => d.id == widget.debt.id) ??
+        false;
+    if (!stillExists) {
+      context.pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLent  = _debt.type == DebtType.lent;
-    final progress = _debt.totalAmount > 0
-        ? (_debt.paidAmount / _debt.totalAmount).clamp(0.0, 1.0)
+    final debt = _resolveDebt();
+    final isLent = debt.type == DebtType.lent;
+    final progress = debt.totalAmount > 0
+        ? (debt.paidAmount / debt.totalAmount).clamp(0.0, 1.0)
         : 0.0;
     final pct = (progress * 100).round();
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    // PopScope ensures the Android back button also returns _debt state.
-    return PopScope<Object?>(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) context.pop(_debt);
-      },
-      child: Container(
+    return Container(
         padding: EdgeInsets.fromLTRB(
           AppDimensions.md,
           AppDimensions.md,
@@ -155,7 +163,7 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
                         Row(
                           children: [
                             Text(
-                              _debt.personName,
+                              debt.personName,
                               style: AppTextStyles.h3.copyWith(
                                 color: context.kiseTextHeading,
                               ),
@@ -174,7 +182,7 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
                         const SizedBox(height: 3),
                         Text(
                           '${isLent ? 'You lent' : 'You borrowed'}  ·  '
-                          '${DateFormat('MMM d, yyyy').format(_debt.date)}',
+                          '${DateFormat('MMM d, yyyy').format(debt.date)}',
                           style: AppTextStyles.micro.copyWith(
                             fontWeight: FontWeight.w500,
                             color: context.kiseTextHeading
@@ -185,7 +193,7 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => context.pop(_debt),
+                    onTap: () => context.pop(),
                     child: Container(
                       width: 28,
                       height: 28,
@@ -213,14 +221,14 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${_amtFmt.format(_debt.remaining)} ETB',
+                          '${_amtFmt.format(debt.remaining)} ETB',
                           style: AppTextStyles.amountLg.copyWith(
                             color: context.kiseTextHeading,
                           ),
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          'remaining of ${_amtFmt.format(_debt.totalAmount)} ETB',
+                          'remaining of ${_amtFmt.format(debt.totalAmount)} ETB',
                           style: AppTextStyles.bodySm.copyWith(
                             color: context.kiseTextHeading
                                 .withValues(alpha: 0.55),
@@ -230,7 +238,7 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
                     ),
                   ),
                   const SizedBox(width: AppDimensions.sm),
-                  StatusBadge(status: _debt.status),
+                  StatusBadge(status: debt.status),
                 ],
               ),
               const SizedBox(height: AppDimensions.sm),
@@ -246,7 +254,7 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
                     ),
                   ),
                   Text(
-                    '$pct% (${_amtFmt.format(_debt.paidAmount)} ETB)',
+                    '$pct% (${_amtFmt.format(debt.paidAmount)} ETB)',
                     style: AppTextStyles.bodySm.copyWith(
                       color: context.kiseTextHeading.withValues(alpha: 0.55),
                     ),
@@ -307,7 +315,6 @@ class _DebtDetailModalState extends State<DebtDetailModal> {
             ],
           ),
         ),
-      ),
     );
   }
 }

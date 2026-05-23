@@ -9,6 +9,16 @@ async function startServer() {
     console.log(`Kise API listening on port ${config.port}`);
   });
 
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(
+        `Port ${config.port} is already in use. Stop the other process (or close the other terminal running npm run dev), then try again.`
+      );
+      process.exit(1);
+    }
+    throw err;
+  });
+
   const shutdown = async (signal) => {
     console.log(`Received ${signal}. Shutting down...`);
     server.close(async () => {
