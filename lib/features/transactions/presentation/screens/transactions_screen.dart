@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/widgets/kise_action_button.dart';
 import '../../../../core/widgets/kise_card_holder.dart';
 import '../../../../core/widgets/kise_pill_filter.dart';
@@ -36,6 +37,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   String selectedFilter = "All";
   String selectedAnalyticsRange = "1 Month";
   int _visibleCount = 3;
+  String? _deletingTransactionId;
 
   @override
   void initState() {
@@ -46,6 +48,68 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
           .read(transactionsNotifierProvider.notifier)
           .applyFilter(const TransactionQueryFilter(limit: 50));
     });
+  }
+
+  Future<void> _openEditModal(TransactionEntity transaction) async {
+    await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) =>
+          AddTransactionModal(transactionToEdit: transaction),
+    );
+  }
+
+  Future<void> _confirmDelete(TransactionEntity transaction) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete transaction?'),
+        content: Text(
+          'Remove "${transaction.title}"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deletingTransactionId = transaction.id);
+
+    try {
+      await ref
+          .read(transactionsNotifierProvider.notifier)
+          .deleteTransaction(transaction.id);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Transaction deleted successfully')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is ApiException
+          ? e.message
+          : 'Could not delete transaction. Please try again.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _deletingTransactionId = null);
+      }
+    }
   }
 
   @override
@@ -270,7 +334,14 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                         KiseCardHolder(
                           child: Column(
                             children: visible
-                                .map((t) => TransactionTile(transaction: t))
+                                .map(
+                                  (t) => TransactionTile(
+                                    transaction: t,
+                                    onEdit: () => _openEditModal(t),
+                                    onDelete: () => _confirmDelete(t),
+                                    isDeleting: _deletingTransactionId == t.id,
+                                  ),
+                                )
                                 .toList(),
                           ),
                         ),
