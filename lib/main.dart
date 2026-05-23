@@ -5,13 +5,14 @@ import 'package:kise/core/routing/app_router.dart';
 import 'package:kise/core/theme/app_theme.dart';
 import 'package:kise/core/providers/theme_provider.dart';
 import 'package:kise/features/auth/presentation/providers/auth_notifier.dart';
+import 'package:kise/features/settings/presentation/providers/settings_notifier.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (kIsWeb) {
-    databaseFactory = databaseFactoryFfiWeb;
+    databaseFactory = databaseFactoryFfiWebNoWebWorker;
   } else if (defaultTargetPlatform == TargetPlatform.linux ||
       defaultTargetPlatform == TargetPlatform.windows ||
       defaultTargetPlatform == TargetPlatform.macOS) {
@@ -38,7 +39,18 @@ class KiseApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
 
+    if (ref.watch(isAuthenticatedProvider)) {
+      ref.watch(settingsNotifierProvider);
+    }
+
     ref.listen<AsyncValue<AuthState>>(authNotifierProvider, (previous, next) {
+      final wasAuthenticated = previous?.value?.isAuthenticated ?? false;
+      final isAuthenticated = next.value?.isAuthenticated ?? false;
+      if (wasAuthenticated && !isAuthenticated) {
+        ref.invalidate(settingsNotifierProvider);
+        ref.invalidate(settingsUiFlagsProvider);
+      }
+
       final redirect = next.value?.redirectRoute;
       if (redirect != null) {
         final successType = next.value?.successType;

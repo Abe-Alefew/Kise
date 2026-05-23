@@ -20,6 +20,54 @@ class ApiException implements Exception {
 
   @override
   String toString() => 'ApiException($code): $message';
+
+  /// User-facing message including validation field details when present.
+  String get userMessage {
+    if (details.isEmpty) {
+      return message;
+    }
+
+    final detailLines = details
+        .map((detail) {
+          final label = _fieldLabel(detail.field);
+          return label.isEmpty ? detail.message : '$label: ${detail.message}';
+        })
+        .join('\n');
+
+    if (code == 'VALIDATION_ERROR' ||
+        message == 'Request validation failed' ||
+        message == 'Request failed') {
+      return detailLines;
+    }
+
+    return '$message\n$detailLines';
+  }
+
+  static String _fieldLabel(String field) {
+    switch (field) {
+      case 'title':
+        return 'Title';
+      case 'targetAmount':
+        return 'Target amount';
+      case 'currentAmount':
+        return 'Current amount';
+      case 'dueDate':
+        return 'Due date';
+      case 'period':
+        return 'Period';
+      case 'amount':
+        return 'Amount';
+      case 'source':
+        return 'Source';
+      case 'note':
+        return 'Note';
+      default:
+        if (field.isEmpty) {
+          return '';
+        }
+        return field[0].toUpperCase() + field.substring(1);
+    }
+  }
 }
 
 class ApiFieldError {
@@ -40,10 +88,20 @@ class ApiFieldError {
 }
 
 class ApiEnvelopeParser {
-  static Map<String, dynamic> parseSuccessData(Response<dynamic> response) {
-    final body = response.data;
+  static Map<String, dynamic>? responseBodyMap(dynamic body) {
+    if (body is Map<String, dynamic>) {
+      return body;
+    }
+    if (body is Map) {
+      return Map<String, dynamic>.from(body);
+    }
+    return null;
+  }
 
-    if (body is! Map<String, dynamic>) {
+  static dynamic parseSuccessPayload(Response<dynamic> response) {
+    final body = responseBodyMap(response.data);
+
+    if (body == null) {
       throw const ApiException(
         message: 'Invalid server response format',
         code: 'INVALID_RESPONSE',
@@ -55,9 +113,17 @@ class ApiEnvelopeParser {
       throw parseErrorFromMap(body, response.statusCode);
     }
 
-    final data = body['data'];
+    return body['data'];
+  }
+
+  static Map<String, dynamic> parseSuccessData(Response<dynamic> response) {
+    final data = parseSuccessPayload(response);
+
     if (data is Map<String, dynamic>) {
       return data;
+    }
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
     }
 
     if (data == null) {
@@ -70,13 +136,31 @@ class ApiEnvelopeParser {
     );
   }
 
+  static List<dynamic> parseSuccessList(Response<dynamic> response) {
+    final data = parseSuccessPayload(response);
+
+    if (data is List) {
+      return data;
+    }
+
+    if (data == null) {
+      return const [];
+    }
+
+    throw const ApiException(
+      message: 'Invalid success payload',
+      code: 'INVALID_RESPONSE',
+    );
+  }
+
   static ApiException parseDioError(DioException error) {
     final response = error.response;
 
-    if (response?.data is Map<String, dynamic>) {
+    final body = response != null ? responseBodyMap(response.data) : null;
+    if (body != null) {
       return parseErrorFromMap(
-        response!.data as Map<String, dynamic>,
-        response.statusCode,
+        body,
+        response!.statusCode,
       );
     }
 

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/widgets/kise_action_button.dart';
 import '../../../../core/widgets/kise_card_holder.dart';
 import '../../../../core/widgets/kise_pill_filter.dart';
 
 import '../../domain/transaction_entity.dart';
 import '../../domain/transaction_filters.dart';
-import '../providers/transactions_analytics_provider.dart';
 import '../providers/transactions_notifier.dart';
 import '../providers/transactions_summary_provider.dart';
 import '../widgets/analytics_bar_chart.dart';
@@ -37,6 +37,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   String selectedFilter = "All";
   String selectedAnalyticsRange = "1 Month";
   int _visibleCount = 3;
+  String? _deletingTransactionId;
 
   @override
   void initState() {
@@ -49,26 +50,70 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     });
   }
 
+  Future<void> _openEditModal(TransactionEntity transaction) async {
+    await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) =>
+          AddTransactionModal(transactionToEdit: transaction),
+    );
+  }
+
+  Future<void> _confirmDelete(TransactionEntity transaction) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete transaction?'),
+        content: Text(
+          'Remove "${transaction.title}"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deletingTransactionId = transaction.id);
+
+    try {
+      await ref
+          .read(transactionsNotifierProvider.notifier)
+          .deleteTransaction(transaction.id);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Transaction deleted successfully')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is ApiException
+          ? e.message
+          : 'Could not delete transaction. Please try again.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _deletingTransactionId = null);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    ref.listen(transactionsNotifierProvider, (previous, next) {
-      final prevCount = previous?.value?.length ?? 0;
-      final nextCount = next.value?.length ?? 0;
-      if (nextCount <= prevCount || !next.hasValue) {
-        return;
-      }
-
-      final newest = next.value!.first;
-      if (selectedFilter != 'All' && newest.type != selectedFilter) {
-        setState(() => selectedFilter = 'All');
-        ref.read(transactionsNotifierProvider.notifier).updateTypeFilter('All');
-      }
-
-      if (_visibleCount < 3) {
-        setState(() => _visibleCount = 3);
-      }
-    });
-
     final transactionsAsync = ref.watch(transactionsNotifierProvider);
     final summaryAsync = ref.watch(currentMonthSummaryProvider);
 
@@ -77,17 +122,17 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     final totalIncomeLabel = summaryAsync.when(
       data: (summary) => _formatCompactAmount(summary.totalIncome),
       loading: () => '—',
-      error: (_, __) => '—',
+      error: (_, _) => '—',
     );
     final totalSpentLabel = summaryAsync.when(
       data: (summary) => _formatCompactAmount(summary.totalExpense),
       loading: () => '—',
-      error: (_, __) => '—',
+      error: (_, _) => '—',
     );
     final savingRateLabel = summaryAsync.when(
       data: (summary) => _formatSavingRate(summary.savingRate),
       loading: () => '—',
-      error: (_, __) => '—',
+      error: (_, _) => '—',
     );
 
     return Scaffold(
@@ -126,19 +171,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                       expanded: false,
                       height: 35,
                       borderRadius: 10,
-                      onPressed: () async {
-                        final added = await showModalBottomSheet<bool>(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => const AddTransactionModal(),
-                        );
-
-                        if (added == true && mounted) {
-                          ref.invalidate(currentMonthSummaryProvider);
-                          ref.invalidate(transactionAnalyticsProvider);
-                        }
-                      },
+                      onPressed: () => showModalBottomSheet<bool>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const AddTransactionModal(),
+                      ),
                     ),
                   ],
                 ),
@@ -296,7 +334,14 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                         KiseCardHolder(
                           child: Column(
                             children: visible
-                                .map((t) => TransactionTile(transaction: t))
+                                .map(
+                                  (t) => TransactionTile(
+                                    transaction: t,
+                                    onEdit: () => _openEditModal(t),
+                                    onDelete: () => _confirmDelete(t),
+                                    isDeleting: _deletingTransactionId == t.id,
+                                  ),
+                                )
                                 .toList(),
                           ),
                         ),
