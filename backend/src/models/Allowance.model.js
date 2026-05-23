@@ -20,6 +20,7 @@ class AllowanceModel {
     );
   }
 
+  
   static mapRow(row) {
     if (!row) {
       return null;
