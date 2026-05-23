@@ -57,11 +57,11 @@ Widget buildTopSection(BuildContext context, GoalCard widget) {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              widget.goal.period,
+              widget.goal.periodLabel,
               style: AppTextStyles.micro.copyWith(color: isDark ? AppColorsDark.textHint : AppColorsLight.textHint),
             ),
             Text(
-              widget.goal.dueDate,
+              widget.goal.dueDateLabel,
               style: AppTextStyles.micro.copyWith(color: isDark ? AppColorsDark.textHint : AppColorsLight.textHint),
             ),
           ],
