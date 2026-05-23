@@ -11,7 +11,7 @@ abstract final class ApiEndpoints {
   static const String authMe = '/auth/me';
 
   static const String usersMe = '/users/me';
-  static const String deleteAccount = '/users/delete';
+  static const String deleteAccount = '/users/me';
 
   static const String settingsAllowance = '/settings/allowance';
   static const String settingsPreferences = '/settings/preferences';

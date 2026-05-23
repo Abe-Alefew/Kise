@@ -18,13 +18,13 @@ router.get('/accounts', asyncHandler(SettingsController.listAccounts));
 
 router.post(
   '/accounts',
-  createAccountValidation,
+  ...createAccountValidation,
   asyncHandler(SettingsController.createAccount)
 );
 
 router.delete(
   '/accounts/:accountId',
-  accountIdValidation,
+  ...accountIdValidation,
   asyncHandler(SettingsController.deleteAccount)
 );
 
@@ -33,7 +33,7 @@ router.get('/allowance', asyncHandler(SettingsController.getAllowance));
 
 router.put(
   '/allowance',
-  updateAllowanceValidation,
+  ...updateAllowanceValidation,
   asyncHandler(SettingsController.updateAllowance)
 );
 
@@ -42,7 +42,7 @@ router.get('/preferences', asyncHandler(SettingsController.getPreferences));
 
 router.patch(
   '/preferences',
-  updatePreferencesValidation,
+  ...updatePreferencesValidation,
   asyncHandler(SettingsController.updatePreferences)
 );
 
