@@ -14,6 +14,7 @@ function createHttpError(statusCode, code, message, details) {
   return error;
 }
 
+
 class UserController {
   static async getProfile(req, res, next) {
     try {
