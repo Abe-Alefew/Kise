@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kise/features/transactions/data/transaction_dto.dart';
-import 'package:kise/features/transactions/data/transaction_repository.dart';
+import 'package:kise/features/transactions/data/dtos/transaction_dto.dart';
+import 'package:kise/features/transactions/data/repositories/transaction_repository.dart';
 
 @immutable
 class TransactionSummaryQuery {

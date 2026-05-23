@@ -5,7 +5,7 @@ import '../../../../core/widgets/kise_form_system/form_validation.dart';
 import '../../../../core/widgets/kise_form_system/kise_text_field.dart';
 import '../../../../core/widgets/kise_form_system/kise_form_system.dart';
 
-import '../../data/transaction_form_data.dart';
+import '../../data/dtos/transaction_form_data.dart';
 
 class AddTransactionScreen extends StatefulWidget {
 
