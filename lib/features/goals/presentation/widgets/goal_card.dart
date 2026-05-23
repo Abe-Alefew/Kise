@@ -65,16 +65,39 @@ class _GoalCardState extends State<GoalCard> {
                   ],
                   if (_state == GoalCardState.expandedActions)
                     GoalActionButtons(
-                      onDepositTap: () =>
-                          setState(() => _state = GoalCardState.expandedDeposit),
-                      onEditTap: () =>
-                          setState(() => _state = GoalCardState.expandedEdit),
+                      onDepositTap: () {
+                        if (widget.goal.isLocked) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'This goal is locked. Unlock it before adding a deposit.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        setState(() => _state = GoalCardState.expandedDeposit);
+                      },
+                      onEditTap: () {
+                        if (widget.goal.isLocked) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'This goal is locked and cannot be edited.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        setState(() => _state = GoalCardState.expandedEdit);
+                      },
                       onLockTap: widget.onLock,
                       onDeleteTap: widget.onDelete,
                       isLocked: widget.goal.isLocked,
                     ),
                   if (_state == GoalCardState.expandedDeposit)
                     GoalDepositForm(
+                      isLocked: widget.goal.isLocked,
                       onSave: (amount, source) {
                         widget.onDeposit(amount, source);
                         setState(() => _state = GoalCardState.collapsed);
@@ -88,6 +111,7 @@ class _GoalCardState extends State<GoalCard> {
                       initialTarget: widget.goal.targetAmount,
                       initialDeadline: widget.goal.dueDateLabel,
                       initialPeriod: widget.goal.periodLabel,
+                      isLocked: widget.goal.isLocked,
                       onSave: (title, target, deadline, period) {
                         widget.onEdit(title, target, deadline, period);
                         setState(() => _state = GoalCardState.collapsed);

@@ -12,7 +12,6 @@ import 'package:kise/features/goals/data/goal_dto.dart';
 import 'package:kise/features/goals/domain/goal_entity.dart';
 import 'package:kise/features/goals/domain/goal_filters.dart';
 import 'package:kise/features/goals/domain/goal_inputs.dart';
-import 'package:uuid/uuid.dart';
 
 class GoalListResult {
   final List<GoalEntity> items;
@@ -60,18 +59,15 @@ class GoalRepositoryImpl implements GoalRepository {
     required Future<AppDatabase> appDatabase,
     required String? Function() currentUserId,
     CachePolicy? cachePolicy,
-    Uuid? uuid,
   })  : _dioClient = dioClient,
         _appDatabaseFuture = appDatabase,
         _currentUserId = currentUserId,
-        _cachePolicy = cachePolicy ?? const CachePolicy(),
-        _uuid = uuid ?? const Uuid();
+        _cachePolicy = cachePolicy ?? const CachePolicy();
 
   final DioClient _dioClient;
   final Future<AppDatabase> _appDatabaseFuture;
   final String? Function() _currentUserId;
   final CachePolicy _cachePolicy;
-  final Uuid _uuid;
 
   static const Duration _dbTimeout = Duration(seconds: 8);
 
@@ -233,29 +229,9 @@ class GoalRepositoryImpl implements GoalRepository {
   @override
   Future<GoalEntity> createGoal(CreateGoalInput input) async {
     final userId = _requireUserId();
-    final dao = await _tryDao();
-    final localId = _uuid.v4();
-    final now = DateTime.now().toUtc();
-
-    if (dao != null) {
-      final localDto = GoalDto.fromCreateInput(
-        id: localId,
-        input: input,
-        createdAt: now,
-      );
-
-      await dao.upsertGoal(
-        localDto.toCacheRow(
-          userId: userId,
-          syncedAt: now,
-          isDirty: true,
-        ),
-      );
-    }
-
     return _syncCreateGoal(
       userId: userId,
-      localId: dao != null ? localId : null,
+      localId: null,
       input: input,
     );
   }
@@ -273,29 +249,6 @@ class GoalRepositoryImpl implements GoalRepository {
     final userId = _requireUserId();
     final dao = await _tryDao();
 
-    if (dao != null) {
-      final existingRow = await dao.findGoalById(userId, goalId);
-      if (existingRow == null) {
-        throw const ApiException(
-          message: 'Goal not found locally',
-          code: 'NOT_FOUND',
-          statusCode: 404,
-        );
-      }
-
-      final now = DateTime.now().toUtc();
-      final patched =
-          GoalDto.fromCacheRow(existingRow).applyUpdate(input, updatedAt: now);
-
-      await dao.upsertGoal(
-        patched.toCacheRow(
-          userId: userId,
-          syncedAt: now,
-          isDirty: true,
-        ),
-      );
-    }
-
     await _syncUpdateGoal(userId: userId, goalId: goalId, input: input);
 
     if (dao != null) {
@@ -311,10 +264,6 @@ class GoalRepositoryImpl implements GoalRepository {
   @override
   Future<void> deleteGoal(String goalId) async {
     final userId = _requireUserId();
-    final dao = await _tryDao();
-    if (dao != null) {
-      await dao.softDeleteGoalById(userId, goalId);
-    }
     await _syncDeleteGoal(userId: userId, goalId: goalId);
   }
 
@@ -324,55 +273,37 @@ class GoalRepositoryImpl implements GoalRepository {
     LogDepositInput input,
   ) async {
     final userId = _requireUserId();
-    final dao = await _tryDao();
-    final localDepositId = _uuid.v4();
-    final now = DateTime.now().toUtc();
+    final goal = await _requireGoalForMutation(userId, goalId);
 
-    if (dao != null) {
-      final goalRow = await dao.findGoalById(userId, goalId);
-      if (goalRow == null) {
-        throw const ApiException(
-          message: 'Goal not found locally',
-          code: 'NOT_FOUND',
-          statusCode: 404,
-        );
-      }
-
-      final updatedGoalDto = GoalDto.fromCacheRow(goalRow).applyDeposit(
-        amount: input.amount,
-        updatedAt: now,
-      );
-
-      await dao.upsertGoal(
-        updatedGoalDto.toCacheRow(
-          userId: userId,
-          syncedAt: now,
-          isDirty: true,
-        ),
-      );
-
-      final localDepositDto = GoalDepositDto.fromLocalLog(
-        id: localDepositId,
-        goalId: goalId,
-        input: input,
-        createdAt: now,
-      );
-
-      await dao.upsertDeposit(
-        localDepositDto.toCacheRow(
-          userId: userId,
-          syncedAt: now,
-          isDirty: true,
-        ),
+    if (goal.isLocked) {
+      throw const ApiException(
+        message: 'Deposits cannot be added to a locked goal',
+        code: 'BUSINESS_RULE',
+        statusCode: 422,
       );
     }
 
     return _syncLogDeposit(
       userId: userId,
       goalId: goalId,
-      localDepositId: dao != null ? localDepositId : null,
+      localDepositId: null,
       input: input,
     );
+  }
+
+  Future<GoalEntity> _requireGoalForMutation(
+    String userId,
+    String goalId,
+  ) async {
+    final dao = await _tryDao();
+    if (dao != null) {
+      final row = await dao.findGoalById(userId, goalId);
+      if (row != null) {
+        return GoalDto.fromCacheRow(row).toEntity();
+      }
+    }
+
+    return _fetchGoalFromServer(userId, goalId);
   }
 
   Future<GoalEntity> _syncCreateGoal({

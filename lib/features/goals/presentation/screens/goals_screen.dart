@@ -27,7 +27,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     if (!mounted) {
       return;
     }
-    final message = error is ApiException ? error.message : error.toString();
+    final message =
+        error is ApiException ? error.userMessage : error.toString();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
@@ -194,7 +195,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                   error: (error, _) => KiseEmptyIndicator(
                     title: 'Could not load goals',
                     subtitle: error is ApiException
-                        ? error.message
+                        ? error.userMessage
                         : error.toString(),
                     icon: LucideIcons.target,
                   ),

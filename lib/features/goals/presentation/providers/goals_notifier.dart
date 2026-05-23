@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/network/dio_client.dart';
 import 'package:kise/features/auth/presentation/providers/auth_notifier.dart';
-import 'package:kise/features/goals/data/goal_dto.dart';
 import 'package:kise/features/goals/data/goal_repository.dart';
 import 'package:kise/features/goals/domain/goal_entity.dart';
 import 'package:kise/features/goals/domain/goal_filters.dart';
@@ -51,7 +50,6 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
       return [];
     }
 
-    // Re-fetch when the signed-in user changes (logout/login).
     ref.watch(authStateProvider.select((state) => state?.user?.id));
 
     return _loadGoals(forceRefresh: false);
@@ -80,6 +78,15 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
     return items;
   }
 
+  /// Re-sync UI from server/cache after a failed mutation (clears dirty rows).
+  Future<void> _revertAfterFailure() async {
+    try {
+      await _reloadState(forceRefresh: true);
+    } catch (_) {
+      // Keep prior list if refresh also fails.
+    }
+  }
+
   Future<void> refresh() async {
     state = await AsyncValue.guard(() => _loadGoals(forceRefresh: true));
   }
@@ -103,31 +110,11 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
     String? note,
   }) async {
     final repository = ref.read(goalRepositoryProvider);
-    final currentList = state.value ?? [];
 
     final parsedDue =
         GoalDateParser.parseDueDate(dueDateDisplay) ?? DateTime.now();
     final isoDueDate = GoalDateParser.toIsoDate(parsedDue);
     final normalizedPeriod = GoalDateParser.normalizePeriod(period);
-
-    final optimisticId = 'optimistic-${DateTime.now().microsecondsSinceEpoch}';
-    final optimistic = GoalEntity(
-      id: optimisticId,
-      title: title.trim(),
-      period: normalizedPeriod,
-      dueDate: isoDueDate,
-      dueDateDisplay: dueDateDisplay,
-      currentAmount: currentAmount,
-      targetAmount: targetAmount,
-      progress: GoalDto.computeProgress(currentAmount, targetAmount),
-      isCompleted: currentAmount >= targetAmount,
-      isLocked: false,
-      status: currentAmount >= targetAmount ? 'completed' : 'active',
-      note: note,
-      isDirty: true,
-    );
-
-    state = AsyncData([optimistic, ...currentList]);
 
     try {
       final created = await repository.createGoal(
@@ -140,16 +127,10 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
           note: note,
         ),
       );
-
       await _reloadState();
       return created;
-    } on ApiException catch (error) {
-      final failed = optimistic.copyWith(syncError: error.message);
-      state = AsyncData([failed, ...currentList]);
-      rethrow;
     } catch (error) {
-      final failed = optimistic.copyWith(syncError: error.toString());
-      state = AsyncData([failed, ...currentList]);
+      await _revertAfterFailure();
       rethrow;
     }
   }
@@ -160,28 +141,15 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
     required String source,
     String? accountId,
   }) async {
+    if (goal.isLocked) {
+      throw const ApiException(
+        message: 'Deposits cannot be added to a locked goal',
+        code: 'BUSINESS_RULE',
+        statusCode: 422,
+      );
+    }
+
     final repository = ref.read(goalRepositoryProvider);
-    final currentList = state.value ?? [];
-
-    final optimisticGoal = goal.copyWith(
-      currentAmount: goal.currentAmount + amount,
-      progress: GoalDto.computeProgress(
-        goal.currentAmount + amount,
-        goal.targetAmount,
-      ),
-      isCompleted: goal.currentAmount + amount >= goal.targetAmount,
-      status: goal.currentAmount + amount >= goal.targetAmount
-          ? 'completed'
-          : goal.status,
-      isDirty: true,
-      clearSyncError: true,
-    );
-
-    state = AsyncData(
-      currentList
-          .map((item) => item.id == goal.id ? optimisticGoal : item)
-          .toList(),
-    );
 
     try {
       final result = await repository.logDeposit(
@@ -192,24 +160,10 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
           accountId: accountId,
         ),
       );
-
       await _reloadState();
       return result.goal;
-    } on ApiException catch (error) {
-      final failed = optimisticGoal.copyWith(syncError: error.message);
-      state = AsyncData(
-        currentList
-            .map((item) => item.id == goal.id ? failed : item)
-            .toList(),
-      );
-      rethrow;
     } catch (error) {
-      final failed = optimisticGoal.copyWith(syncError: error.toString());
-      state = AsyncData(
-        currentList
-            .map((item) => item.id == goal.id ? failed : item)
-            .toList(),
-      );
+      await _revertAfterFailure();
       rethrow;
     }
   }
@@ -220,15 +174,26 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
   ) async {
     final repository = ref.read(goalRepositoryProvider);
 
-    final updated = await repository.updateGoal(goalId, input);
-    await _reloadState();
-    return updated;
+    try {
+      final updated = await repository.updateGoal(goalId, input);
+      await _reloadState();
+      return updated;
+    } catch (error) {
+      await _revertAfterFailure();
+      rethrow;
+    }
   }
 
   Future<void> deleteGoal(String goalId) async {
     final repository = ref.read(goalRepositoryProvider);
-    await repository.deleteGoal(goalId);
-    await _reloadState();
+
+    try {
+      await repository.deleteGoal(goalId);
+      await _reloadState();
+    } catch (error) {
+      await _revertAfterFailure();
+      rethrow;
+    }
   }
 
   Future<GoalEntity> toggleLock(GoalEntity goal) async {

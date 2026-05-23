@@ -1,3 +1,118 @@
+/// Client-side validation aligned with backend goal rules.
+class GoalFormValidator {
+  static String? validateCreate({
+    required String title,
+    required String targetAmountText,
+    required String currentAmountText,
+    required String deadlineText,
+  }) {
+    if (title.trim().isEmpty) {
+      return 'Please enter a goal name.';
+    }
+
+    final targetError = _validatePositiveAmount(
+      targetAmountText,
+      fieldName: 'Target amount',
+      required: true,
+    );
+    if (targetError != null) {
+      return targetError;
+    }
+
+    final currentError = _validatePositiveAmount(
+      currentAmountText,
+      fieldName: 'Saved so far',
+      required: false,
+    );
+    if (currentError != null) {
+      return currentError;
+    }
+
+    if (deadlineText.trim().isEmpty) {
+      return 'Please select a due date.';
+    }
+
+    if (GoalDateParser.parseDueDate(deadlineText) == null) {
+      return 'Due date format is invalid. Pick a date from the calendar.';
+    }
+
+    return null;
+  }
+
+  static String? validateDeposit({
+    required String amountText,
+    required bool isLocked,
+  }) {
+    if (isLocked) {
+      return 'This goal is locked. Unlock it before adding a deposit.';
+    }
+
+    return _validatePositiveAmount(
+      amountText,
+      fieldName: 'Deposit amount',
+      required: true,
+    );
+  }
+
+  static String? validateEdit({
+    required String title,
+    required String targetAmountText,
+    required String deadlineText,
+    required bool isLocked,
+  }) {
+    if (isLocked) {
+      return 'This goal is locked and cannot be edited.';
+    }
+
+    if (title.trim().isEmpty) {
+      return 'Please enter a goal name.';
+    }
+
+    final targetError = _validatePositiveAmount(
+      targetAmountText,
+      fieldName: 'Target amount',
+      required: true,
+    );
+    if (targetError != null) {
+      return targetError;
+    }
+
+    if (deadlineText.trim().isEmpty) {
+      return 'Please select a due date.';
+    }
+
+    if (GoalDateParser.parseDueDate(deadlineText) == null) {
+      return 'Due date format is invalid. Pick a date from the calendar.';
+    }
+
+    return null;
+  }
+
+  static String? _validatePositiveAmount(
+    String raw, {
+    required String fieldName,
+    required bool required,
+  }) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) {
+      return required ? '$fieldName is required.' : null;
+    }
+
+    final value = double.tryParse(trimmed);
+    if (value == null) {
+      return '$fieldName must be a valid number.';
+    }
+
+    if (value <= 0) {
+      return required
+          ? '$fieldName must be greater than 0.'
+          : '$fieldName cannot be negative.';
+    }
+
+    return null;
+  }
+}
+
 class GoalDateParser {
   static const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   static const months = [
