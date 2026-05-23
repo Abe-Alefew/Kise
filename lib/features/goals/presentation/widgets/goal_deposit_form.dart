@@ -3,15 +3,18 @@ import 'package:kise/core/theme/colors.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/core/widgets/kise_form_system/kise_text_field.dart';
+import 'package:kise/features/goals/domain/goal_inputs.dart';
 
 class GoalDepositForm extends StatefulWidget {
   final void Function(double amount, String source) onSave;
   final VoidCallback onCancel;
+  final bool isLocked;
 
   const GoalDepositForm({
     super.key,
     required this.onSave,
     required this.onCancel,
+    this.isLocked = false,
   });
 
   @override
@@ -32,9 +35,22 @@ class _GoalDepositFormState extends State<GoalDepositForm> {
   }
 
   void _handleSave() {
-    final amount = double.tryParse(_amountController.text) ?? 0.0;
-    final source = _selectedSource == 'Other' ? _customSourceController.text : _selectedSource;
-    widget.onSave(amount, source.isEmpty ? 'Unknown' : source);
+    final validationError = GoalFormValidator.validateDeposit(
+      amountText: _amountController.text,
+      isLocked: widget.isLocked,
+    );
+
+    if (validationError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(validationError)),
+      );
+      return;
+    }
+
+    final amount = double.parse(_amountController.text.trim());
+    final source =
+        _selectedSource == 'Other' ? _customSourceController.text : _selectedSource;
+    widget.onSave(amount, source.isEmpty ? 'Unknown' : source.trim());
   }
 
   @override
