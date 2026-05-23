@@ -14,6 +14,7 @@ import 'package:kise/core/widgets/kise_card_holder.dart';
 import 'package:kise/core/widgets/kise_pill_filter.dart';
 import 'package:kise/core/widgets/kise_progress_bar.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
+import 'package:kise/features/debt/domain/debt_filters.dart';
 import 'package:kise/features/debt/presentation/providers/debts_notifier.dart';
 import 'package:kise/features/debt/presentation/widgets/debt_cart.dart';
 import 'package:kise/features/debt/presentation/widgets/status_badge.dart';
@@ -33,7 +34,6 @@ class DebtScreen extends ConsumerStatefulWidget {
 class _DebtScreenState extends ConsumerState<DebtScreen> {
   bool _analyticsExpanded = false;
   bool _isActualView = true;
-  String _selectedFilter = 'All';
   bool _refreshInFlight = false;
   List<DebtEntity> _lastStableDebts = const [];
 
@@ -88,17 +88,17 @@ class _DebtScreenState extends ConsumerState<DebtScreen> {
     return meta?.recoveryRate ?? _fallbackRecoveryRate(debts);
   }
 
-  List<DebtEntity> _filterDebts(List<DebtEntity> source, String pill) {
-    return switch (pill) {
-      'Active' =>
-        source.where((d) => d.status != DebtStatus.settled).toList(),
-      'Lent' => source.where((d) => d.type == DebtType.lent).toList(),
-      'Borrowed' =>
-        source.where((d) => d.type == DebtType.borrowed).toList(),
-      'Settled' =>
-        source.where((d) => d.status == DebtStatus.settled).toList(),
-      _ => List<DebtEntity>.from(source),
-    };
+  static double _adjustedNetPositionFallback(List<DebtEntity> debts) {
+    var totalLent = 0.0;
+    var totalBorrowed = 0.0;
+    for (final debt in debts) {
+      if (debt.type == DebtType.lent) {
+        totalLent += debt.totalAmount;
+      } else {
+        totalBorrowed += debt.totalAmount;
+      }
+    }
+    return totalLent - totalBorrowed;
   }
 
   Future<void> _reconcileAfterMutation() async {
@@ -120,7 +120,10 @@ class _DebtScreenState extends ConsumerState<DebtScreen> {
   }
 
   Future<void> _openAddModal() async {
-    await context.push<void>(AppRoutes.debtNew);
+    final saved = await context.push<bool>(AppRoutes.debtNew);
+    if (saved == true) {
+      await _reconcileAfterMutation();
+    }
   }
 
   Future<void> _openDetailModal(DebtEntity debt) async {
@@ -128,18 +131,28 @@ class _DebtScreenState extends ConsumerState<DebtScreen> {
       '${AppRoutes.debtDetail}/${debt.id}',
       extra: debt,
     );
+    await _reconcileAfterMutation();
+  }
+
+  Future<void> _onFilterSelected(String pill) async {
+    await ref.read(debtsNotifierProvider.notifier).applyUiFilter(pill);
   }
 
   @override
   Widget build(BuildContext context) {
     final debtsAsync = ref.watch(debtsNotifierProvider);
     final meta = ref.watch(debtsMetaProvider);
+    final notifier = ref.read(debtsNotifierProvider.notifier);
     final allDebts = _resolveAllDebts(debtsAsync);
-    final displayDebts = _filterDebts(allDebts, _selectedFilter);
+    final displayDebts = notifier.filteredItems;
+    final selectedFilter = meta?.filter.uiLabel ?? 'All';
 
     final owedToMe = _resolveOwedToMe(meta, allDebts);
     final iOwe = _resolveIOwe(meta, allDebts);
-    final netPosition = _resolveNetPosition(meta, allDebts);
+    final netPosition = _isActualView
+        ? _resolveNetPosition(meta, allDebts)
+        : (meta?.adjustedNetPosition ??
+            _adjustedNetPositionFallback(allDebts));
     final recoveryRate = _resolveRecoveryRate(meta, allDebts);
 
     return Scaffold(
@@ -186,8 +199,8 @@ class _DebtScreenState extends ConsumerState<DebtScreen> {
                     'Borrowed',
                     'Settled',
                   ],
-                  selected: _selectedFilter,
-                  onSelected: (f) => setState(() => _selectedFilter = f),
+                  selected: selectedFilter,
+                  onSelected: _onFilterSelected,
                 ),
                 const SizedBox(height: AppDimensions.sm),
                 ...displayDebts.map(
