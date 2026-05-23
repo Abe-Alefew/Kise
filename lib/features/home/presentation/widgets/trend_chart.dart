@@ -13,11 +13,14 @@ class TrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hintColor = isDark ? AppColorsDark.textHint : AppColorsLight.textHint;
+
     if (trend.isEmpty) {
       return Center(
         child: Text(
           'No trend data yet',
-          style: TextStyle(color: AppColorsLight.textHint),
+          style: TextStyle(color: hintColor),
         ),
       );
     }
@@ -45,8 +48,8 @@ class TrendChart extends StatelessWidget {
                 if (index >= 0 && index < trend.length) {
                   return Text(
                     trend[index].month,
-                    style: const TextStyle(
-                      color: AppColorsLight.textHint,
+                    style: TextStyle(
+                      color: hintColor,
                       fontSize: 12,
                     ),
                   );

@@ -10,7 +10,7 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../domain/auth_models.dart';
-import '../providers/auth_notifier.dart';
+import '../state/auth_notifier.dart';
 
 
 class RegisterScreen extends ConsumerStatefulWidget {

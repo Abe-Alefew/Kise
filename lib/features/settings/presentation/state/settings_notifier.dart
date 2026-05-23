@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/network/dio_client.dart';
 import 'package:kise/core/providers/theme_provider.dart';
-import 'package:kise/features/auth/presentation/providers/auth_notifier.dart';
-import 'package:kise/features/home/presentation/providers/home_dashboard_notifier.dart';
-import 'package:kise/features/settings/data/settings_dto.dart';
-import 'package:kise/features/settings/data/settings_repository.dart';
+import 'package:kise/features/auth/presentation/state/auth_notifier.dart';
+import 'package:kise/features/home/presentation/state/home_dashboard_notifier.dart';
+import 'package:kise/features/settings/data/dtos/settings_dto.dart';
+import 'package:kise/features/settings/data/repositories/settings_repository.dart';
 import 'package:kise/features/settings/domain/settings_models.dart';
 
 @immutable

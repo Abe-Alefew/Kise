@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/network/api_endpoints.dart';
 import 'package:kise/core/network/dio_client.dart';
-import 'package:kise/features/settings/data/settings_dto.dart';
+import 'package:kise/features/settings/data/dtos/settings_dto.dart';
 import 'package:kise/features/settings/domain/settings_models.dart';
 
 abstract class SettingsRepository {

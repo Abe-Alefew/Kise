@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/routing/app_router.dart';
 import '../../../../core/widgets/kise_card_holder.dart';
 import '../../../../core/theme/colors.dart';
 import '../../domain/home_dashboard_models.dart';
@@ -33,7 +35,7 @@ class RecentTransactionsList extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () => context.go(AppRoutes.transactions),
               child: Text(
                 'View all',
                 style: TextStyle(

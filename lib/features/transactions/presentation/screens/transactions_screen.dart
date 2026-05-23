@@ -8,8 +8,8 @@ import '../../../../core/widgets/kise_pill_filter.dart';
 
 import '../../domain/transaction_entity.dart';
 import '../../domain/transaction_filters.dart';
-import '../providers/transactions_notifier.dart';
-import '../providers/transactions_summary_provider.dart';
+import '../state/transactions_notifier.dart';
+import '../state/transactions_summary_provider.dart';
 import '../widgets/analytics_bar_chart.dart';
 import '../widgets/add_transaction_modal.dart';
 import '../widgets/transaction_tile.dart';

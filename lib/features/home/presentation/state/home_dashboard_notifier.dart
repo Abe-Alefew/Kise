@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kise/features/home/data/home_dashboard_repository.dart';
+import 'package:kise/features/home/data/repositories/home_dashboard_repository.dart';
 import 'package:kise/features/home/domain/home_dashboard_models.dart';
 
 class HomeDashboardNotifier extends AsyncNotifier<HomeDashboardBundle> {

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/database/app_database.dart';
 import 'package:kise/core/network/api_endpoints.dart';
 import 'package:kise/core/network/dio_client.dart';
-import 'package:kise/features/auth/data/token_storage.dart';
+import 'package:kise/features/auth/data/datasources/token_storage.dart';
 import 'package:kise/features/auth/domain/auth_models.dart';
 
 abstract class AuthRepository {
