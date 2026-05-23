@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:kise/core/theme/text_theme.dart';
-import 'package:kise/core/theme/colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/widgets/kise_action_button.dart';
+import '../../domain/transaction_inputs.dart';
+import '../providers/transactions_notifier.dart';
 
-class AddTransactionModal extends StatefulWidget {
+class AddTransactionModal extends ConsumerStatefulWidget {
   const AddTransactionModal({super.key});
 
   @override
-  State<AddTransactionModal> createState() => _AddTransactionModalState();
+  ConsumerState<AddTransactionModal> createState() => _AddTransactionModalState();
 }
 
-class _AddTransactionModalState extends State<AddTransactionModal> {
+class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
   String selectedType = "Expense";
   String? selectedCategory;
   String? selectedAccount;
@@ -278,8 +280,51 @@ class _AddTransactionModalState extends State<AddTransactionModal> {
                       label: "Add Transaction",
                       borderRadius: 10,
                       height: 42,
-                      onPressed: () {
-                        // Logic to save transaction
+                      onPressed: () async {
+                        // Validate inputs
+                        if (selectedCategory == null || selectedAccount == null || amountController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please fill all required fields')),
+                          );
+                          return;
+                        }
+
+                        // Create the transaction input
+                        final transactionInput = CreateTransactionInput(
+                          type: selectedType,
+                          title: selectedCategory ?? selectedType,
+                          category: selectedCategory!,
+                          amount: double.parse(amountController.text),
+                          transactionDate:
+                              '${selectedDate.year.toString().padLeft(4, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
+                          note: noteController.text.trim().isEmpty
+                              ? null
+                              : noteController.text.trim(),
+                        );
+
+                        try {
+                          // Add transaction with optimistic update
+                          await ref.read(transactionsNotifierProvider.notifier).addTransaction(transactionInput);
+
+                          // Close modal on success
+                          if (context.mounted) {
+                            Navigator.pop(context, true);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Transaction added successfully')),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            final message = e is ApiException
+                                ? e.message
+                                : 'Could not save transaction. '
+                                    'Make sure the backend is running at '
+                                    'http://127.0.0.1:3000.';
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(message)),
+                            );
+                          }
+                        }
                       },
                     ),
                   ),
