@@ -39,6 +39,7 @@ class UpdateTransactionInput {
   final String category;
   final double amount;
   final String transactionDate;
+  final String? accountId;
   final String? note;
   final String? iconKey;
 
@@ -48,6 +49,7 @@ class UpdateTransactionInput {
     required this.category,
     required this.amount,
     required this.transactionDate,
+    this.accountId,
     this.note,
     this.iconKey,
   });
@@ -59,6 +61,7 @@ class UpdateTransactionInput {
       category: input.category,
       amount: input.amount,
       transactionDate: input.transactionDate,
+      accountId: input.accountId,
       note: input.note,
       iconKey: input.iconKey,
     );
@@ -71,6 +74,7 @@ class UpdateTransactionInput {
       'category': category,
       'amount': amount,
       'transactionDate': transactionDate,
+      if (accountId != null) 'accountId': accountId,
       if (note != null) 'note': note,
       if (iconKey != null) 'iconKey': iconKey,
     };
