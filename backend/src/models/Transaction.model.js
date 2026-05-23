@@ -21,6 +21,7 @@ const TRANSACTIONS_TABLE_SQL = `
   );
 `;
 
+
 const TRANSACTION_TYPES = ['Income', 'Expense'];
 
 const INCOME_CATEGORIES = [
