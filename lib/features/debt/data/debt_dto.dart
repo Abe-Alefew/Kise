@@ -214,17 +214,18 @@ class DebtDto {
   static List<DebtDto> listFromEnvelope(dynamic data) {
     if (data is List) {
       return data
-          .whereType<Map<String, dynamic>>()
-          .map(DebtDto.fromJson)
+          .whereType<Map>()
+          .map((item) => DebtDto.fromJson(Map<String, dynamic>.from(item)))
           .toList();
     }
 
-    if (data is Map<String, dynamic>) {
-      final items = data['items'];
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+      final items = map['items'];
       if (items is List) {
         return items
-            .whereType<Map<String, dynamic>>()
-            .map(DebtDto.fromJson)
+            .whereType<Map>()
+            .map((item) => DebtDto.fromJson(Map<String, dynamic>.from(item)))
             .toList();
       }
     }
@@ -236,8 +237,12 @@ class DebtDto {
     final paymentsJson = json['payments'];
     final payments = paymentsJson is List
         ? paymentsJson
-            .whereType<Map<String, dynamic>>()
-            .map(DebtPaymentDto.fromJson)
+            .whereType<Map>()
+            .map(
+              (item) => DebtPaymentDto.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
+            )
             .toList()
         : <DebtPaymentDto>[];
 
