@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:uuid/uuid.dart';
+import 'package:kise/core/network/dio_client.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/app_theme_ext.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
+import 'package:kise/features/debt/domain/debt_inputs.dart';
+import 'package:kise/features/debt/presentation/providers/debts_notifier.dart';
 
 // Result values popped by this modal:
-//   DebtEntity  → saved (add or edit)
-//   'deleted'   → debt was deleted
-//   null        → cancelled
+//   'deleted'   → debt was deleted (edit mode only)
+//   null        → cancelled or saved (persistence handled by notifier)
 
-class AddEditDebtModal extends StatefulWidget {
+class AddEditDebtModal extends ConsumerStatefulWidget {
   final DebtEntity? existingDebt; // non-null → edit mode
 
   const AddEditDebtModal({super.key, this.existingDebt});
 
   @override
-  State<AddEditDebtModal> createState() => _AddEditDebtModalState();
+  ConsumerState<AddEditDebtModal> createState() => _AddEditDebtModalState();
 }
 
-class _AddEditDebtModalState extends State<AddEditDebtModal> {
+class _AddEditDebtModalState extends ConsumerState<AddEditDebtModal> {
   final _formKey    = GlobalKey<FormState>();
   final _nameCtrl   = TextEditingController();
   final _amountCtrl = TextEditingController();
@@ -32,10 +34,10 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
 
   DebtType _type = DebtType.lent;
   DateTime _selectedDate = DateTime.now();
+  bool _isSubmitting = false;
 
   static final _dateFmt = DateFormat('MM/dd/yyyy');
   static final _numFmt  = NumberFormat('#,##0.00');
-  static final _isoFmt  = DateFormat('yyyy-MM-dd');
 
   @override
   void initState() {
@@ -47,6 +49,9 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
       _nameCtrl.text = existing.personName;
       _amountCtrl.text = existing.totalAmount.toStringAsFixed(2);
       _remainCtrl.text = existing.remaining.toStringAsFixed(2);
+      if (existing.notes != null) {
+        _notesCtrl.text = existing.notes!;
+      }
     }
     _dateCtrl.text = _dateFmt.format(_selectedDate);
     _amountCtrl.addListener(_syncRemaining);
@@ -82,32 +87,100 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
     }
   }
 
-  void _submit() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> _submit() async {
+    if (_isSubmitting || !(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
     final existing = widget.existingDebt;
     final totalAmount =
         double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
-    final paidAmount = existing?.paidAmount ?? 0;
-    final remaining = (totalAmount - paidAmount).clamp(0.0, double.infinity);
-    final status = paidAmount >= totalAmount
-        ? DebtStatus.settled
-        : (paidAmount > 0 ? DebtStatus.partial : DebtStatus.pending);
-    final debt = DebtEntity(
-      id: existing?.id ?? const Uuid().v4(),
-      personName: _nameCtrl.text.trim(),
-      type: _type,
-      totalAmount: totalAmount,
-      paidAmount: paidAmount,
-      remaining: remaining,
-      debtDate: _isoFmt.format(_selectedDate),
-      date: _selectedDate,
-      payments: existing?.payments ?? const [],
-      status: status,
-    );
-    context.pop(debt); // return the saved debt to the caller
+    final notesTrimmed = _notesCtrl.text.trim();
+    final notes = notesTrimmed.isEmpty ? null : notesTrimmed;
+    final notifier = ref.read(debtsNotifierProvider.notifier);
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      if (existing != null) {
+        if (isPendingSyncDebtId(existing.id)) {
+          _showError('Debt is still syncing. Please try again in a moment.');
+          return;
+        }
+
+        final isoDate = DebtDateParser.toIsoDate(_selectedDate);
+        final input = UpdateDebtInput(
+          personName: _nameCtrl.text.trim() != existing.personName
+              ? _nameCtrl.text.trim()
+              : null,
+          type: _type != existing.type ? _type : null,
+          totalAmount:
+              totalAmount != existing.totalAmount ? totalAmount : null,
+          debtDate: isoDate != existing.debtDate ? isoDate : null,
+          notes: notes != existing.notes ? notes : null,
+        );
+        if (input.isEmpty) {
+          _showError('No changes to save');
+          return;
+        }
+        await notifier.updateDebt(existing.id, input);
+      } else {
+        await notifier.addDebt(
+          personName: _nameCtrl.text.trim(),
+          type: _type,
+          totalAmount: totalAmount,
+          debtDate: _selectedDate,
+          notes: notes,
+        );
+      }
+
+      if (!mounted) return;
+      context.pop(true);
+    } on ApiException catch (error) {
+      _showError(error.message);
+    } catch (error) {
+      _showError('Could not save debt record');
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
-  void _delete() => context.pop('deleted');
+  Future<void> _delete() async {
+    final existing = widget.existingDebt;
+    if (existing == null || _isSubmitting) {
+      return;
+    }
+
+    if (isPendingSyncDebtId(existing.id)) {
+      _showError('Debt is still syncing. Please try again in a moment.');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      await ref.read(debtsNotifierProvider.notifier).removeDebt(existing.id);
+      if (!mounted) return;
+      context.pop('deleted');
+    } on ApiException catch (error) {
+      _showError(error.message);
+    } catch (_) {
+      _showError('Could not delete debt record');
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -273,13 +346,14 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
                 children: [
                   Expanded(
                     child: _CancelButton(
-                      onPressed: () => context.pop(null),
+                      onPressed:
+                          _isSubmitting ? null : () => context.pop(null),
                     ),
                   ),
                   const SizedBox(width: AppDimensions.sm),
                   Expanded(
                     child: _AddButton(
-                      onPressed: _submit,
+                      onPressed: _isSubmitting ? null : _submit,
                       label: widget.existingDebt != null
                           ? 'Save Changes'
                           : 'Add Record',
@@ -477,8 +551,9 @@ class _ModalInput extends StatelessWidget {
 
 // ── Cancel button ─────────────────────────────────────────────────────────────
 
+
 class _CancelButton extends StatelessWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   const _CancelButton({required this.onPressed});
 
   @override
@@ -514,7 +589,7 @@ class _CancelButton extends StatelessWidget {
 
 
 class _AddButton extends StatelessWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final String label;
   const _AddButton({required this.onPressed, required this.label});
 

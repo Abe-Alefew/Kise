@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:kise/core/network/dio_client.dart';
 import 'package:kise/core/routing/app_router.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/app_theme_ext.dart';
@@ -24,6 +25,7 @@ class DebtDetailModal extends ConsumerStatefulWidget {
 
 class _DebtDetailModalState extends ConsumerState<DebtDetailModal> {
   bool _paymentFormVisible = false;
+  bool _isSubmittingPayment = false;
 
   final _amountCtrl = TextEditingController(text: '0.00');
   final _dateCtrl   = TextEditingController();
@@ -68,7 +70,22 @@ class _DebtDetailModalState extends ConsumerState<DebtDetailModal> {
     }
   }
 
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   Future<void> _confirmPayment() async {
+    if (_isSubmittingPayment) return;
+
+    final debt = _resolveDebt();
+    if (isPendingSyncDebtId(debt.id)) {
+      _showError('Debt is still syncing. Please try again in a moment.');
+      return;
+    }
+
     final amount =
         double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
     if (amount <= 0) {
@@ -79,9 +96,11 @@ class _DebtDetailModalState extends ConsumerState<DebtDetailModal> {
         ? null
         : _notesCtrl.text.trim();
 
+    setState(() => _isSubmittingPayment = true);
+
     try {
       await ref.read(debtsNotifierProvider.notifier).recordPayment(
-            debt: _resolveDebt(),
+            debt: debt,
             amount: amount,
             paymentDate: _paymentDate,
             notes: notes,
@@ -96,7 +115,15 @@ class _DebtDetailModalState extends ConsumerState<DebtDetailModal> {
         _paymentDate = DateTime.now();
         _dateCtrl.text = _dateFmt.format(_paymentDate);
       });
-    } catch (_) {}
+    } on ApiException catch (error) {
+      _showError(error.message);
+    } catch (_) {
+      _showError('Could not record payment');
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmittingPayment = false);
+      }
+    }
   }
 
   Future<void> _openEditModal() async {
@@ -283,7 +310,8 @@ class _DebtDetailModalState extends ConsumerState<DebtDetailModal> {
                           onDateTap: _pickDate,
                           onCancel: () =>
                               setState(() => _paymentFormVisible = false),
-                          onConfirm: _confirmPayment,
+                          onConfirm:
+                              _isSubmittingPayment ? () {} : _confirmPayment,
                         )
                       : SizedBox(
                           width: double.infinity,
