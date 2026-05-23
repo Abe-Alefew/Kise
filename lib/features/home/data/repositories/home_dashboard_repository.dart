@@ -14,6 +14,7 @@ class HomeDashboardRepositoryImpl implements HomeDashboardRepository {
       : _dioClient = dioClient;
 
   final DioClient _dioClient;
+  
 
   @override
   Future<HomeDashboardBundle> fetchHome({String range = '6m'}) async {

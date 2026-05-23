@@ -15,6 +15,7 @@ class DashboardController {
           validationErrors
         );
       }
+      
 
       const bundle = await DashboardService.getHomeBundle(req.user.id, {
         range: req.query.range || '6m',
