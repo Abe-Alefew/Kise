@@ -1,30 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/widgets/kise_action_button.dart';
 import '../../../../core/widgets/kise_card_holder.dart';
 import '../../../../core/widgets/kise_pill_filter.dart';
 
-import '../../data/transaction_datasource.dart';
-
+import '../../domain/transaction_inputs.dart';
+import '../providers/transactions_notifier.dart';
+import '../providers/transactions_summary_provider.dart';
+import '../providers/transactions_analytics_provider.dart';
 import '../widgets/analytics_bar_chart.dart';
 import '../widgets/add_transaction_modal.dart';
 import '../widgets/transaction_tile.dart';
 
-class TransactionsScreen extends StatefulWidget {
+class TransactionsScreen extends ConsumerStatefulWidget {
   const TransactionsScreen({super.key});
 
   @override
-  State<TransactionsScreen> createState() => _TransactionsScreenState();
+  ConsumerState<TransactionsScreen> createState() => _TransactionsScreenState();
 }
 
-class _TransactionsScreenState extends State<TransactionsScreen> {
+class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   String selectedFilter = "All";
   String selectedAnalyticsRange = "1 Month";
   int _visibleCount = 3;
 
   @override
+  void initState() {
+    super.initState();
+    // Set up listener for optimistic updates and state changes
+    ref.listen(transactionsNotifierProvider, (_, __) {});
+
+    // Load initial transactions with filter
+    Future.microtask(() {
+      ref
+          .read(transactionsNotifierProvider.notifier)
+          .applyFilter(const TransactionQueryFilter(limit: 50));
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final transactions = TransactionDatasource.transactions;
+    // Watch the transactions async state
+    final transactionsAsync = ref.watch(transactionsNotifierProvider);
+
+    // Watch the summary for current month
+    final summaryAsync = ref.watch(currentMonthSummaryProvider);
+
+    // Watch analytics for the selected range
+    final analyticsAsync = ref.watch(
+      transactionsScreenAnalyticsProvider(selectedAnalyticsRange),
+    );
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -54,7 +80,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
       //   child: const Icon(Icons.add),
       // ),
-
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 40, 12, 12),
