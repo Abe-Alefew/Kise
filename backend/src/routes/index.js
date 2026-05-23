@@ -23,7 +23,7 @@ router.get('/health', (req, res) => {
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/settings', settingsRoutes);
-// router.use('/transactions', transactionRoutes);
+router.use('/transactions', transactionRoutes);
 router.use('/goals', goalRoutes);
 router.use('/debts', debtRoutes);
 router.use('/dashboard', dashboardRoutes);
