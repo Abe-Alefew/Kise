@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/widgets.dart';
-import 'success_screen.dart';
+import '../../domain/auth_models.dart';
+import '../providers/auth_notifier.dart';
 
 
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -30,6 +34,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _departmentController = TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
   final TextEditingController _currencyController = TextEditingController();
+
+  String? _submitErrorMessage;
+  List<ApiFieldError> _validationErrors = [];
 
   int _currentStep = 0;
   String _preferredLanguage = 'English';
@@ -76,6 +83,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
+    _usernameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -90,16 +98,59 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _handleRegister() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final router = GoRouter.of(context);
-    router.push(AppRoutes.loading);
+    setState(() {
+      _submitErrorMessage = null;
+      _validationErrors = [];
+    });
+    ref.read(authNotifierProvider.notifier).clearError();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(AppStorageKeys.authLoggedIn, true);
-    if (!mounted) return;
-    if (router.canPop()) {
-      router.pop();
+    final username = _usernameController.text.trim();
+    final phone = _phoneController.text.trim();
+    final currency = _selectedCurrency?.trim().isNotEmpty == true
+        ? _selectedCurrency!.trim()
+        : (_currencyController.text.trim().isNotEmpty
+            ? _currencyController.text.trim()
+            : _currencyOptions.first);
+
+    try {
+      await ref.read(authNotifierProvider.notifier).register(
+            RegisterRequest(
+              firstName: _firstNameController.text.trim(),
+              lastName: _lastNameController.text.trim(),
+              username: username.isEmpty ? null : username,
+              phone: phone.isEmpty ? null : phone,
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+              confirmPassword: _confirmController.text,
+              university: _universityController.text.trim(),
+              department: _departmentController.text.trim(),
+              preferredLanguage: _preferredLanguage,
+              currency: currency,
+              termsAccepted: _termsAccepted,
+            ),
+          );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      if (error.details.isNotEmpty) {
+        debugPrint('Register validation failed: ${error.message}');
+        for (final detail in error.details) {
+          debugPrint(' - ${detail.field}: ${detail.message}');
+        }
+      } else {
+        debugPrint('Register error: ${error.message} (${error.code})');
+      }
+      setState(() {
+        _submitErrorMessage = error.message;
+        _validationErrors = error.details;
+      });
+      return;
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _submitErrorMessage = 'Unable to register. Please try again.';
+      });
+      return;
     }
-    router.go(AppRoutes.success, extra: SuccessType.registration);
   }
 
   void _handleBack() {
@@ -213,7 +264,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           validator: Validators.requiredField,
         ),
         _buildInputField(
-          controller: _phoneController,
+          controller: _usernameController,
           label: 'USERNAME',
           sublabel: 'optional',
         ),
@@ -536,6 +587,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authAsync = ref.watch(authNotifierProvider);
+    final authState = authAsync.value;
+    final isLoading = authAsync.isLoading || authState?.isLoading == true;
+    final errorMessage =
+        _submitErrorMessage ?? authState?.errorMessage;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final scaffoldColor = Theme.of(context).scaffoldBackgroundColor;
@@ -639,11 +695,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: AppDimensions.xxxl),
 
+                    if (errorMessage != null && errorMessage.isNotEmpty) ...[
+                      Text(
+                        errorMessage,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (_validationErrors.isNotEmpty) ...[
+                        const SizedBox(height: AppDimensions.xs),
+                        ..._validationErrors.map(
+                          (detail) => Text(
+                            '${detail.field.isNotEmpty ? detail.field : 'field'}: '
+                            '${detail.message}',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.error,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: AppDimensions.md),
+                    ],
+
                     // ── Primary action button — centered, fixed width ─────
                     Center(
                       child: KiseActionButton(
                         label: isLastStep ? 'CONTINUE' : 'NEXT',
                         onPressed: _handlePrimaryAction,
+                        isLoading: isLoading,
                         height: AppDimensions.authButtonHeight,
                         width: AppDimensions.authButtonWidth,
                         expanded: false,

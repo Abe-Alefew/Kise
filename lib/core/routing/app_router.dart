@@ -7,6 +7,7 @@ import 'package:kise/features/auth/presentation/screens/login_screen.dart';
 import 'package:kise/features/auth/presentation/screens/register_screen.dart';
 import 'package:kise/features/auth/presentation/screens/terms_and_conditions.dart';
 import 'package:kise/features/auth/presentation/screens/success_screen.dart';
+import 'package:kise/features/auth/domain/auth_models.dart';
 import 'package:kise/features/auth/presentation/screens/loading_screen.dart';
 import 'package:kise/features/home/presentation/screens/home_dashboard.dart';
 import 'package:kise/features/transactions/presentation/screens/transactions_screen.dart';
@@ -112,9 +113,9 @@ abstract class AppRouter {
       GoRoute(
         path: AppRoutes.success,
         builder: (context, state) {
-          final type = state.extra is SuccessType
-              ? state.extra as SuccessType
-              : SuccessType.registration;
+          final type = state.extra is AuthSuccessType
+              ? state.extra as AuthSuccessType
+              : AuthSuccessType.registration;
           return SuccessScreen(type: type);
         },
       ),

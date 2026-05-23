@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/app_router.dart';
+import '../../domain/auth_models.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/colors.dart';
 
-enum SuccessType { registration, signIn }
-
 class SuccessScreen extends StatefulWidget {
-  final SuccessType type;
+  final AuthSuccessType type;
 
   const SuccessScreen({super.key, required this.type});
 
@@ -34,7 +33,7 @@ class _SuccessScreenState extends State<SuccessScreen> {
     final textTheme = Theme.of(context).textTheme;
     final scaffoldColor = Theme.of(context).scaffoldBackgroundColor;
 
-    final labelText = widget.type == SuccessType.registration
+    final labelText = widget.type == AuthSuccessType.registration
         ? 'Registration'
         : 'Logged In';
 

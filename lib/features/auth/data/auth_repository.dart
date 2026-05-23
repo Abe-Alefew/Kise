@@ -54,9 +54,16 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       final data = ApiEnvelopeParser.parseSuccessData(response);
-      return _persistSessionFromAuthPayload(data);
+      return await _persistSessionFromAuthPayload(data);
+    } on ApiException {
+      rethrow;
     } on DioException catch (error) {
       throw ApiEnvelopeParser.parseDioError(error);
+    } catch (error) {
+      throw ApiException(
+        message: 'Registration failed: ${error.toString()}',
+        code: 'SESSION_ERROR',
+      );
     }
   }
 
@@ -79,9 +86,16 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       final data = ApiEnvelopeParser.parseSuccessData(response);
-      return _persistSessionFromAuthPayload(data);
+      return await _persistSessionFromAuthPayload(data);
+    } on ApiException {
+      rethrow;
     } on DioException catch (error) {
       throw ApiEnvelopeParser.parseDioError(error);
+    } catch (error) {
+      throw ApiException(
+        message: 'Login failed: ${error.toString()}',
+        code: 'SESSION_ERROR',
+      );
     }
   }
 
@@ -136,7 +150,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       final user = AuthUser.fromJson(userJson);
-      await _cacheUserLocally(user);
+      _cacheUserLocally(user).ignore();
       return user;
     } on DioException catch (error) {
       throw ApiEnvelopeParser.parseDioError(error);
@@ -193,8 +207,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
   Future<void> clearLocalSession() async {
     await _tokenStorage.clearTokens();
-    final db = await _appDatabaseFuture;
-    await db.clearUserData();
+    try {
+      final db = await _appDatabaseFuture.timeout(const Duration(seconds: 5));
+      await db.clearUserData();
+    } catch (_) {}
   }
 
   Future<AuthSession> _persistSessionFromAuthPayload(
@@ -218,27 +234,28 @@ class AuthRepositoryImpl implements AuthRepository {
       refreshToken: tokens.refreshToken,
     );
 
-    await _cacheUserLocally(user);
+    _cacheUserLocally(user).ignore();
 
     return AuthSession(user: user, tokens: tokens);
   }
 
   Future<void> _cacheUserLocally(AuthUser user) async {
-    final db = await _appDatabaseFuture;
-
-    await db.upsertUser(
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phone: user.phone,
-      username: user.username,
-      university: user.university,
-      department: user.department,
-      currency: user.currency,
-      preferredLanguage: user.preferredLanguage,
-      themeMode: user.themeMode,
-    );
+    try {
+      final db = await _appDatabaseFuture.timeout(const Duration(seconds: 5));
+      await db.upsertUser(
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        username: user.username,
+        university: user.university,
+        department: user.department,
+        currency: user.currency,
+        preferredLanguage: user.preferredLanguage,
+        themeMode: user.themeMode,
+      );
+    } catch (_) {}
   }
 
   ApiException _unexpectedStatus(Response<dynamic> response) {

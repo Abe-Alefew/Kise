@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +14,7 @@ import 'package:kise/core/widgets/kise_card_holder.dart';
 import 'package:kise/core/widgets/kise_pill_filter.dart';
 import 'package:kise/core/widgets/kise_progress_bar.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
+import 'package:kise/features/debt/presentation/providers/debts_notifier.dart';
 import 'package:kise/features/debt/presentation/widgets/debt_cart.dart';
 import 'package:kise/features/debt/presentation/widgets/status_badge.dart';
 import 'package:kise/features/debt/presentation/widgets/toggle_actual_adjusted.dart';
@@ -21,186 +23,182 @@ import 'package:kise/features/debt/presentation/widgets/toggle_actual_adjusted.d
 // Screen
 
 
-class DebtScreen extends StatefulWidget {
+class DebtScreen extends ConsumerStatefulWidget {
   const DebtScreen({super.key});
 
   @override
-  State<DebtScreen> createState() => _DebtScreenState();
+  ConsumerState<DebtScreen> createState() => _DebtScreenState();
 }
 
-class _DebtScreenState extends State<DebtScreen> {
+class _DebtScreenState extends ConsumerState<DebtScreen> {
   bool _analyticsExpanded = false;
   bool _isActualView = true;
   String _selectedFilter = 'All';
+  bool _refreshInFlight = false;
+  List<DebtEntity> _lastStableDebts = const [];
 
-  static String _toIsoDate(DateTime date) {
-    final year = date.year.toString().padLeft(4, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '$year-$month-$day';
+  List<DebtEntity> _resolveAllDebts(AsyncValue<List<DebtEntity>> debtsAsync) {
+    if (debtsAsync.hasValue && debtsAsync.value != null) {
+      _lastStableDebts = debtsAsync.value!;
+      return debtsAsync.value!;
+    }
+    return _lastStableDebts;
   }
 
-  List<DebtEntity> _debts = [
-    DebtEntity(
-      id: '1',
-      personName: 'Kirubel',
-      type: DebtType.lent,
-      totalAmount: 0.19,
-      paidAmount: 0,
-      remaining: 0.19,
-      status: DebtStatus.pending,
-      debtDate: _toIsoDate(DateTime(2026, 4, 16)),
-      date: DateTime(2026, 4, 16),
-    ),
-    DebtEntity(
-      id: '2',
-      personName: 'Abel',
-      type: DebtType.borrowed,
-      totalAmount: 2000.00,
-      paidAmount: 1800.00,
-      remaining: 200.00,
-      status: DebtStatus.partial,
-      debtDate: _toIsoDate(DateTime(2026, 4, 12)),
-      date: DateTime(2026, 4, 12),
-    ),
-    DebtEntity(
-      id: '3',
-      personName: 'Zeaman',
-      type: DebtType.lent,
-      totalAmount: 70000.00,
-      paidAmount: 0,
-      remaining: 70000.00,
-      status: DebtStatus.pending,
-      debtDate: _toIsoDate(DateTime(2026, 4, 5)),
-      date: DateTime(2026, 4, 5),
-    ),
-    DebtEntity(
-      id: '4',
-      personName: 'Liya',
-      type: DebtType.lent,
-      totalAmount: 30000.00,
-      paidAmount: 30000.00,
-      remaining: 0,
-      status: DebtStatus.settled,
-      debtDate: _toIsoDate(DateTime(2026, 3, 30)),
-      date: DateTime(2026, 3, 30),
-    ),
-  ];
+  static double _fallbackOwedToMe(List<DebtEntity> debts) {
+    return debts
+        .where(
+          (d) => d.type == DebtType.lent && d.status != DebtStatus.settled,
+        )
+        .fold(0.0, (sum, d) => sum + d.remaining);
+  }
 
-  // Computed helpers
+  static double _fallbackIOwe(List<DebtEntity> debts) {
+    return debts
+        .where(
+          (d) =>
+              d.type == DebtType.borrowed && d.status != DebtStatus.settled,
+        )
+        .fold(0.0, (sum, d) => sum + d.remaining);
+  }
 
-  double get _owedToMe => _debts
-      .where((d) =>
-          d.type == DebtType.lent && d.status != DebtStatus.settled)
-      .fold(0.0, (s, d) => s + d.remaining);
-
-  double get _iOwe => _debts
-      .where((d) =>
-          d.type == DebtType.borrowed &&
-          d.status != DebtStatus.settled)
-      .fold(0.0, (s, d) => s + d.remaining);
-
-  double get _netPosition => _owedToMe - _iOwe;
-
-  double get _recoveryRate {
-    final totalAmount =
-        _debts.fold(0.0, (s, d) => s + d.totalAmount);
-    if (totalAmount == 0) return 0;
-    final totalPaid =
-        _debts.fold(0.0, (s, d) => s + d.paidAmount);
+  static double _fallbackRecoveryRate(List<DebtEntity> debts) {
+    final totalAmount = debts.fold(0.0, (sum, d) => sum + d.totalAmount);
+    if (totalAmount == 0) {
+      return 0;
+    }
+    final totalPaid = debts.fold(0.0, (sum, d) => sum + d.paidAmount);
     return totalPaid / totalAmount;
   }
 
-  List<DebtEntity> get _filteredDebts => switch (_selectedFilter) {
-        'Active' => _debts
-            .where((d) => d.status != DebtStatus.settled)
-            .toList(),
-        'Lent' =>
-          _debts.where((d) => d.type == DebtType.lent).toList(),
-        'Borrowed' =>
-          _debts.where((d) => d.type == DebtType.borrowed).toList(),
-        'Settled' =>
-          _debts.where((d) => d.status == DebtStatus.settled).toList(),
-        _ => List.of(_debts),
-      };
+  double _resolveOwedToMe(DebtsViewState? meta, List<DebtEntity> debts) {
+    return meta?.owedToMe ?? _fallbackOwedToMe(debts);
+  }
 
-  // Navigation launchers
+  double _resolveIOwe(DebtsViewState? meta, List<DebtEntity> debts) {
+    return meta?.iOwe ?? _fallbackIOwe(debts);
+  }
+
+  double _resolveNetPosition(DebtsViewState? meta, List<DebtEntity> debts) {
+    return meta?.netPosition ??
+        (_resolveOwedToMe(meta, debts) - _resolveIOwe(meta, debts));
+  }
+
+  double _resolveRecoveryRate(DebtsViewState? meta, List<DebtEntity> debts) {
+    return meta?.recoveryRate ?? _fallbackRecoveryRate(debts);
+  }
+
+  List<DebtEntity> _filterDebts(List<DebtEntity> source, String pill) {
+    return switch (pill) {
+      'Active' =>
+        source.where((d) => d.status != DebtStatus.settled).toList(),
+      'Lent' => source.where((d) => d.type == DebtType.lent).toList(),
+      'Borrowed' =>
+        source.where((d) => d.type == DebtType.borrowed).toList(),
+      'Settled' =>
+        source.where((d) => d.status == DebtStatus.settled).toList(),
+      _ => List<DebtEntity>.from(source),
+    };
+  }
+
+  Future<void> _reconcileAfterMutation() async {
+    if (_refreshInFlight) {
+      return;
+    }
+    _refreshInFlight = true;
+    try {
+      await ref.read(debtsNotifierProvider.notifier).refresh();
+    } finally {
+      if (mounted) {
+        _refreshInFlight = false;
+      }
+    }
+  }
+
+  Future<void> _handlePullToRefresh() async {
+    await _reconcileAfterMutation();
+  }
 
   Future<void> _openAddModal() async {
-    final result = await context.push<dynamic>(AppRoutes.debtNew);
-    if (!mounted) return;
-    if (result is DebtEntity) {
-      setState(() => _debts = [..._debts, result]);
-    }
+    await context.push<void>(AppRoutes.debtNew);
   }
 
   Future<void> _openDetailModal(DebtEntity debt) async {
-    final result = await context.push<dynamic>(
+    await context.push<void>(
       '${AppRoutes.debtDetail}/${debt.id}',
       extra: debt,
     );
-    if (!mounted) return;
-    if (result is DebtEntity) {
-      setState(() {
-        final idx = _debts.indexWhere((d) => d.id == result.id);
-        if (idx >= 0) _debts = List.of(_debts)..[idx] = result;
-      });
-    } else if (result == 'deleted') {
-      setState(() => _debts = _debts.where((d) => d.id != debt.id).toList());
-    }
   }
-
-  // Build
 
   @override
   Widget build(BuildContext context) {
+    final debtsAsync = ref.watch(debtsNotifierProvider);
+    final meta = ref.watch(debtsMetaProvider);
+    final allDebts = _resolveAllDebts(debtsAsync);
+    final displayDebts = _filterDebts(allDebts, _selectedFilter);
+
+    final owedToMe = _resolveOwedToMe(meta, allDebts);
+    final iOwe = _resolveIOwe(meta, allDebts);
+    final netPosition = _resolveNetPosition(meta, allDebts);
+    final recoveryRate = _resolveRecoveryRate(meta, allDebts);
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: AppDimensions.md),
-              _Header(onAdd: _openAddModal),
-              const SizedBox(height: AppDimensions.md),
-              _SummaryCards(
-                owedToMe: _owedToMe,
-                iOwe: _iOwe,
-              ),
-              const SizedBox(height: AppDimensions.sm),
-              _NetPositionCard(
-                netAmount: _netPosition,
-                recoveryRate: _recoveryRate,
-                isActual: _isActualView,
-                onToggle: (v) =>
-                    setState(() => _isActualView = v),
-              ),
-              const SizedBox(height: AppDimensions.sm),
-              _AnalyticsAccordion(
-                expanded: _analyticsExpanded,
-                onToggle: () => setState(
-                    () => _analyticsExpanded = !_analyticsExpanded),
-                debts: _debts,
-              ),
-              const SizedBox(height: AppDimensions.sm),
-              KisePillFilter(
-                options: const ['All', 'Active', 'Lent', 'Borrowed', 'Settled'],
-                selected: _selectedFilter,
-                onSelected: (f) =>
-                    setState(() => _selectedFilter = f),
-              ),
-              const SizedBox(height: AppDimensions.sm),
-              ..._filteredDebts.map(
-                (d) => DebtCard(
-                  debt: d,
-                  onTap: () => _openDetailModal(d),
+        child: RefreshIndicator(
+          onRefresh: _handlePullToRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.md,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: AppDimensions.md),
+                _Header(onAdd: _openAddModal),
+                const SizedBox(height: AppDimensions.md),
+                _SummaryCards(
+                  owedToMe: owedToMe,
+                  iOwe: iOwe,
                 ),
-              ),
-              const SizedBox(height: AppDimensions.xl),
-            ],
+                const SizedBox(height: AppDimensions.sm),
+                _NetPositionCard(
+                  netAmount: netPosition,
+                  recoveryRate: recoveryRate,
+                  isActual: _isActualView,
+                  onToggle: (v) => setState(() => _isActualView = v),
+                ),
+                const SizedBox(height: AppDimensions.sm),
+                _AnalyticsAccordion(
+                  expanded: _analyticsExpanded,
+                  onToggle: () => setState(
+                    () => _analyticsExpanded = !_analyticsExpanded,
+                  ),
+                  debts: allDebts,
+                ),
+                const SizedBox(height: AppDimensions.sm),
+                KisePillFilter(
+                  options: const [
+                    'All',
+                    'Active',
+                    'Lent',
+                    'Borrowed',
+                    'Settled',
+                  ],
+                  selected: _selectedFilter,
+                  onSelected: (f) => setState(() => _selectedFilter = f),
+                ),
+                const SizedBox(height: AppDimensions.sm),
+                ...displayDebts.map(
+                  (d) => DebtCard(
+                    debt: d,
+                    onTap: () => _openDetailModal(d),
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.xl),
+              ],
+            ),
           ),
         ),
       ),

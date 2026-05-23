@@ -5,12 +5,14 @@ class BalanceCard extends StatelessWidget {
   final double totalBalance;
   final double income;
   final double expenses;
+  final String currency;
 
   const BalanceCard({
     super.key,
     required this.totalBalance,
     required this.income,
     required this.expenses,
+    this.currency = 'ETB',
   });
 
   @override
@@ -33,7 +35,7 @@ class BalanceCard extends StatelessWidget {
             ),
           ),
           Text(
-            "${totalBalance.toStringAsFixed(2)} ETB",
+            "${totalBalance.toStringAsFixed(2)} $currency",
             style: const TextStyle(
               color: AppColorsLight.textOnPrimary,
               fontSize: 32,
@@ -44,8 +46,14 @@ class BalanceCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStat(context, Icons.trending_up, "Income", income),
-              _buildStat(context, Icons.trending_down, "Expenses", expenses),
+              _buildStat(context, Icons.trending_up, "Income", income, currency),
+              _buildStat(
+                context,
+                Icons.trending_down,
+                "Expenses",
+                expenses,
+                currency,
+              ),
             ],
           ),
         ],
@@ -58,6 +66,7 @@ class BalanceCard extends StatelessWidget {
     IconData icon,
     String title,
     double amount,
+    String currency,
   ) {
     
 
@@ -77,7 +86,7 @@ class BalanceCard extends StatelessWidget {
               style: const TextStyle(color: AppColorsLight.textOnPrimary, fontSize: 12),
             ),
             Text(
-              "${amount.toStringAsFixed(2)} ETB",
+              "${amount.toStringAsFixed(2)} $currency",
               style: const TextStyle(
                 color: AppColorsLight.textOnPrimary,
                 fontWeight: FontWeight.bold,

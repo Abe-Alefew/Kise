@@ -1,31 +1,50 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/colors.dart';
+import '../../domain/home_dashboard_models.dart';
 
 class TrendChart extends StatelessWidget {
-  const TrendChart({super.key});
+  final List<HomeTrendPoint> trend;
+
+  const TrendChart({
+    super.key,
+    required this.trend,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (trend.isEmpty) {
+      return Center(
+        child: Text(
+          'No trend data yet',
+          style: TextStyle(color: AppColorsLight.textHint),
+        ),
+      );
+    }
+
+    final maxValue = trend.fold<double>(
+      0,
+      (max, point) {
+        final peak = point.income > point.expense ? point.income : point.expense;
+        return peak > max ? peak : max;
+      },
+    );
+    final chartMaxY = maxValue <= 0 ? 1.0 : maxValue * 1.2;
+
     return LineChart(
       LineChartData(
+        minY: 0,
+        maxY: chartMaxY,
         gridData: const FlGridData(show: false),
         titlesData: FlTitlesData(
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
               getTitlesWidget: (value, meta) {
-                const months = [
-                  'Nov',
-                  'Dec',
-                  'Jan',
-                  'Feb',
-                  'Mar',
-                  'Apr',
-                ]; // 6-month history
-                if (value.toInt() >= 0 && value.toInt() < months.length) {
+                final index = value.toInt();
+                if (index >= 0 && index < trend.length) {
                   return Text(
-                    months[value.toInt()],
+                    trend[index].month,
                     style: const TextStyle(
                       color: AppColorsLight.textHint,
                       fontSize: 12,
@@ -49,26 +68,29 @@ class TrendChart extends StatelessWidget {
         borderData: FlBorderData(show: false),
         lineBarsData: [
           LineChartBarData(
-            spots: const [
-              FlSpot(0, 500),
-              FlSpot(5, 30000),
-            ], // Expenses - Yellow
+            spots: [
+              for (var i = 0; i < trend.length; i++)
+                FlSpot(i.toDouble(), trend[i].expense),
+            ],
             isCurved: true,
-            color: Color(0xFFEAB308),
+            color: const Color(0xFFEAB308),
             barWidth: 3,
             belowBarData: BarAreaData(
               show: true,
-              color: Color(0xFFEAB308).withOpacity(0.1),
+              color: const Color(0xFFEAB308).withOpacity(0.1),
             ),
           ),
           LineChartBarData(
-            spots: const [FlSpot(0, 200), FlSpot(5, 20000)], // Income - Green
+            spots: [
+              for (var i = 0; i < trend.length; i++)
+                FlSpot(i.toDouble(), trend[i].income),
+            ],
             isCurved: true,
-            color: Color(0xFF22C55E),
+            color: const Color(0xFF22C55E),
             barWidth: 3,
             belowBarData: BarAreaData(
               show: true,
-              color: Color(0xFF22C55E).withOpacity(0.1),
+              color: const Color(0xFF22C55E).withOpacity(0.1),
             ),
           ),
         ],

@@ -1,21 +1,6 @@
 // This is a generated file; do not edit or check into version control.
-<<<<<<< HEAD
-<<<<<<< HEAD
-FLUTTER_ROOT=C:\Users\abn\flutter
-FLUTTER_APPLICATION_PATH=D:\2Month\flutter\kisee
-=======
-FLUTTER_ROOT=C:\Users\Abraham A. Alefew\flutter
-FLUTTER_APPLICATION_PATH=C:\Users\Abraham A. Alefew\Documents\Coding projects\mobile-app\Kise
->>>>>>> d3693a69777efd51f4b85d10bb5816af40edb9a9
-=======
-<<<<<<< HEAD
 FLUTTER_ROOT=C:\Users\hp\flutter
 FLUTTER_APPLICATION_PATH=C:\Users\hp\Kise
-=======
-FLUTTER_ROOT=C:\flutter
-FLUTTER_APPLICATION_PATH=C:\Users\bethe\Desktop\Kise
->>>>>>> 9f5909d5ffab0a7c07304ed16c57780b578c4a77
->>>>>>> bdf4cc974da574129335fad1299bd84f3743f78d
 COCOAPODS_PARALLEL_CODE_SIGN=true
 FLUTTER_TARGET=lib\main.dart
 FLUTTER_BUILD_DIR=build
