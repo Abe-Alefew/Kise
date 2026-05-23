@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const db = require('../config/database');
 
+
 const TRANSACTIONS_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS transactions (
     id TEXT PRIMARY KEY,
