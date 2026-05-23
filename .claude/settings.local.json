@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\bethe\\\\Desktop\\\\Mobile App Files\\\\Kise\\\\lib\\\\features\\\\transactions\" -Recurse -File)",
-      "Bash(Select-Object FullName)"
-    ]
-  }
-}
