@@ -3,6 +3,8 @@ import 'package:kise/features/debt/domain/debt_inputs.dart';
 
 enum DebtStatus { pending, partial, settled }
 
+bool isPendingSyncDebtId(String debtId) => debtId.startsWith('optimistic-');
+
 enum DebtType { lent, borrowed }
 
 @immutable

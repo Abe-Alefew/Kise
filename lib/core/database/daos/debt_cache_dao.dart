@@ -321,6 +321,22 @@ class DebtCacheDao {
     );
   }
 
+  /// Removes stale offline-only rows left from older sync flows.
+  Future<void> clearDirtyEntriesForUser(String userId) async {
+    await _database.transaction((txn) async {
+      await txn.delete(
+        paymentsTableName,
+        where: 'user_id = ? AND is_dirty = 1',
+        whereArgs: [userId],
+      );
+      await txn.delete(
+        debtsTableName,
+        where: 'user_id = ? AND is_dirty = 1',
+        whereArgs: [userId],
+      );
+    });
+  }
+
   Future<List<Map<String, dynamic>>> getDirtyPayments(String userId) async {
     return _database.query(
       paymentsTableName,
