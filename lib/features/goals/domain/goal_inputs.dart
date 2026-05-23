@@ -24,14 +24,14 @@ class GoalDateParser {
       return null;
     }
 
-    if (RegExp(r'^\\d{4}-\\d{2}-\\d{2}$').hasMatch(trimmed)) {
+    if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(trimmed)) {
       return DateTime.tryParse('${trimmed}T00:00:00.000Z')?.toLocal();
     }
 
     final withoutPrefix =
         trimmed.startsWith('Due ') ? trimmed.substring(4).trim() : trimmed;
 
-    final parts = withoutPrefix.split(RegExp(r'\\s+'));
+    final parts = withoutPrefix.split(RegExp(r'\s+'));
     if (parts.length < 4) {
       return null;
     }

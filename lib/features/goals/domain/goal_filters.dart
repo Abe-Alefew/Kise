@@ -1,3 +1,5 @@
+import 'package:kise/features/goals/domain/goal_entity.dart';
+
 enum GoalStatusFilter {
   all,
   active,
@@ -64,6 +66,22 @@ extension GoalStatusFilterX on GoalStatusFilter {
       case 'All':
       default:
         return GoalStatusFilter.all;
+    }
+  }
+
+  /// Matches backend status filter semantics (see Goal.model.js).
+  bool matches(GoalEntity goal) {
+    switch (this) {
+      case GoalStatusFilter.all:
+        return true;
+      case GoalStatusFilter.active:
+        return goal.status == 'active' &&
+            goal.currentAmount < goal.targetAmount;
+      case GoalStatusFilter.completed:
+        return goal.status == 'completed' ||
+            goal.currentAmount >= goal.targetAmount;
+      case GoalStatusFilter.canceled:
+        return goal.status == 'canceled';
     }
   }
 }

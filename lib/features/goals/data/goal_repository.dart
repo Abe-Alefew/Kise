@@ -73,10 +73,16 @@ class GoalRepositoryImpl implements GoalRepository {
   final CachePolicy _cachePolicy;
   final Uuid _uuid;
 
-  Future<GoalCacheDao> _dao() async {
-    final db = await _appDatabaseFuture;
-    await GoalCacheDao.ensureSchema(db.database);
-    return GoalCacheDao(db.database);
+  static const Duration _dbTimeout = Duration(seconds: 8);
+
+  Future<GoalCacheDao?> _tryDao() async {
+    try {
+      final db = await _appDatabaseFuture.timeout(_dbTimeout);
+      await GoalCacheDao.ensureSchema(db.database);
+      return GoalCacheDao(db.database);
+    } catch (_) {
+      return null;
+    }
   }
 
   String _requireUserId() {
@@ -97,27 +103,42 @@ class GoalRepositoryImpl implements GoalRepository {
     bool forceRefresh = false,
   }) async {
     final userId = _requireUserId();
-    final dao = await _dao();
+    final dao = await _tryDao();
 
-    final cachedRows = await dao.queryGoals(
-      userId: userId,
-      status: status.apiValue,
-    );
+    var cachedRows = <Map<String, dynamic>>[];
+    DateTime? lastSyncAt;
+    var hasDirtyGoals = false;
 
-    final lastSyncAt = await dao.getLastSyncAt();
-    final cacheIsFresh = !forceRefresh &&
-        _cachePolicy.isFresh(lastSyncAt) &&
-        cachedRows.isNotEmpty;
+    if (dao != null) {
+      cachedRows = await dao.queryGoals(
+        userId: userId,
+        status: status.apiValue,
+      );
+      lastSyncAt = await dao.getLastSyncAt();
+      final dirtyRows = await dao.getDirtyGoals(userId);
+      hasDirtyGoals = dirtyRows.isNotEmpty;
 
-    if (cacheIsFresh) {
-      return GoalListResult(
-        items: cachedRows
+      final cacheIsFresh = !forceRefresh &&
+          !hasDirtyGoals &&
+          _cachePolicy.isFresh(lastSyncAt) &&
+          cachedRows.isNotEmpty;
+
+      if (cacheIsFresh) {
+        final cachedEntities = cachedRows
             .map(GoalDto.fromCacheRow)
             .map((dto) => dto.toEntity())
-            .toList(),
-        fromCache: true,
-        isStale: false,
-      );
+            .toList();
+
+        return GoalListResult(
+          items: _mergeServerAndDirty(
+            serverItems: cachedEntities,
+            dirtyItems: const [],
+            status: status,
+          ),
+          fromCache: true,
+          isStale: false,
+        );
+      }
     }
 
     try {
@@ -130,34 +151,48 @@ class GoalRepositoryImpl implements GoalRepository {
         throw _unexpectedStatus(response);
       }
 
-      final envelopeData = ApiEnvelopeParser.parseSuccessData(response);
+      final envelopeData = ApiEnvelopeParser.parseSuccessPayload(response);
       final serverGoals = GoalDto.listFromEnvelope(envelopeData);
       final syncedAt = DateTime.now().toUtc();
+      final serverEntities =
+          serverGoals.map((dto) => dto.toEntity()).toList();
 
-      await dao.replaceAllGoalsForUser(
-        userId,
-        serverGoals
-            .map(
-              (goal) => goal.toCacheRow(
-                userId: userId,
-                syncedAt: syncedAt,
-                isDirty: false,
-              ),
-            )
-            .toList(),
-      );
-      await dao.setLastSyncAt(syncedAt);
+      if (dao != null) {
+        await dao.replaceAllGoalsForUser(
+          userId,
+          serverGoals
+              .map(
+                (goal) => goal.toCacheRow(
+                  userId: userId,
+                  syncedAt: syncedAt,
+                  isDirty: false,
+                ),
+              )
+              .toList(),
+        );
+        await dao.setLastSyncAt(syncedAt);
 
-      final dirtyRows = await dao.getDirtyGoals(userId);
-      final dirtyEntities = dirtyRows
-          .map(GoalDto.fromCacheRow)
-          .map((dto) => dto.toEntity(isDirty: true))
-          .toList();
+        final pendingDirtyRows = await dao.getDirtyGoals(userId);
+        final dirtyEntities = pendingDirtyRows
+            .map(GoalDto.fromCacheRow)
+            .map((dto) => dto.toEntity(isDirty: true))
+            .toList();
+
+        return GoalListResult(
+          items: _mergeServerAndDirty(
+            serverItems: serverEntities,
+            dirtyItems: dirtyEntities,
+            status: status,
+          ),
+          fromCache: false,
+          isStale: false,
+        );
+      }
 
       return GoalListResult(
         items: _mergeServerAndDirty(
-          serverItems: serverGoals.map((dto) => dto.toEntity()).toList(),
-          dirtyItems: dirtyEntities,
+          serverItems: serverEntities,
+          dirtyItems: const [],
           status: status,
         ),
         fromCache: false,
@@ -198,27 +233,31 @@ class GoalRepositoryImpl implements GoalRepository {
   @override
   Future<GoalEntity> createGoal(CreateGoalInput input) async {
     final userId = _requireUserId();
-    final dao = await _dao();
+    final dao = await _tryDao();
     final localId = _uuid.v4();
     final now = DateTime.now().toUtc();
 
-    final localDto = GoalDto.fromCreateInput(
-      id: localId,
+    if (dao != null) {
+      final localDto = GoalDto.fromCreateInput(
+        id: localId,
+        input: input,
+        createdAt: now,
+      );
+
+      await dao.upsertGoal(
+        localDto.toCacheRow(
+          userId: userId,
+          syncedAt: now,
+          isDirty: true,
+        ),
+      );
+    }
+
+    return _syncCreateGoal(
+      userId: userId,
+      localId: dao != null ? localId : null,
       input: input,
-      createdAt: now,
     );
-
-    await dao.upsertGoal(
-      localDto.toCacheRow(
-        userId: userId,
-        syncedAt: now,
-        isDirty: true,
-      ),
-    );
-
-    final optimistic = localDto.toEntity(isDirty: true);
-    unawaited(_syncCreateGoal(userId: userId, localId: localId, input: input));
-    return optimistic;
   }
 
   @override
@@ -232,40 +271,51 @@ class GoalRepositoryImpl implements GoalRepository {
     }
 
     final userId = _requireUserId();
-    final dao = await _dao();
+    final dao = await _tryDao();
 
-    final existingRow = await dao.findGoalById(userId, goalId);
-    if (existingRow == null) {
-      throw const ApiException(
-        message: 'Goal not found locally',
-        code: 'NOT_FOUND',
-        statusCode: 404,
+    if (dao != null) {
+      final existingRow = await dao.findGoalById(userId, goalId);
+      if (existingRow == null) {
+        throw const ApiException(
+          message: 'Goal not found locally',
+          code: 'NOT_FOUND',
+          statusCode: 404,
+        );
+      }
+
+      final now = DateTime.now().toUtc();
+      final patched =
+          GoalDto.fromCacheRow(existingRow).applyUpdate(input, updatedAt: now);
+
+      await dao.upsertGoal(
+        patched.toCacheRow(
+          userId: userId,
+          syncedAt: now,
+          isDirty: true,
+        ),
       );
     }
 
-    final now = DateTime.now().toUtc();
-    final patched =
-        GoalDto.fromCacheRow(existingRow).applyUpdate(input, updatedAt: now);
+    await _syncUpdateGoal(userId: userId, goalId: goalId, input: input);
 
-    await dao.upsertGoal(
-      patched.toCacheRow(
-        userId: userId,
-        syncedAt: now,
-        isDirty: true,
-      ),
-    );
+    if (dao != null) {
+      final syncedRow = await dao.findGoalById(userId, goalId);
+      if (syncedRow != null) {
+        return GoalDto.fromCacheRow(syncedRow).toEntity();
+      }
+    }
 
-    final optimistic = patched.toEntity(isDirty: true);
-    unawaited(_syncUpdateGoal(userId: userId, goalId: goalId, input: input));
-    return optimistic;
+    return _fetchGoalFromServer(userId, goalId);
   }
 
   @override
   Future<void> deleteGoal(String goalId) async {
     final userId = _requireUserId();
-    final dao = await _dao();
-    await dao.softDeleteGoalById(userId, goalId);
-    unawaited(_syncDeleteGoal(userId: userId, goalId: goalId));
+    final dao = await _tryDao();
+    if (dao != null) {
+      await dao.softDeleteGoalById(userId, goalId);
+    }
+    await _syncDeleteGoal(userId: userId, goalId: goalId);
   }
 
   @override
@@ -274,87 +324,81 @@ class GoalRepositoryImpl implements GoalRepository {
     LogDepositInput input,
   ) async {
     final userId = _requireUserId();
-    final dao = await _dao();
-
-    final goalRow = await dao.findGoalById(userId, goalId);
-    if (goalRow == null) {
-      throw const ApiException(
-        message: 'Goal not found locally',
-        code: 'NOT_FOUND',
-        statusCode: 404,
-      );
-    }
-
+    final dao = await _tryDao();
     final localDepositId = _uuid.v4();
     final now = DateTime.now().toUtc();
 
-    final updatedGoalDto = GoalDto.fromCacheRow(goalRow).applyDeposit(
-      amount: input.amount,
-      updatedAt: now,
-    );
-
-    await dao.upsertGoal(
-      updatedGoalDto.toCacheRow(
-        userId: userId,
-        syncedAt: now,
-        isDirty: true,
-      ),
-    );
-
-    final localDepositDto = GoalDepositDto.fromLocalLog(
-      id: localDepositId,
-      goalId: goalId,
-      input: input,
-      createdAt: now,
-    );
-
-    await dao.upsertDeposit(
-      localDepositDto.toCacheRow(
-        userId: userId,
-        syncedAt: now,
-        isDirty: true,
-      ),
-    );
-
-    final result = GoalDepositResult(
-      goal: updatedGoalDto.toEntity(isDirty: true),
-      deposit: localDepositDto.toEntity(isDirty: true),
-    );
-
-    unawaited(
-      _syncLogDeposit(
-        userId: userId,
-        goalId: goalId,
-        localDepositId: localDepositId,
-        input: input,
-      ),
-    );
-
-    return result;
-  }
-
-  Future<void> _syncCreateGoal({
-    required String userId,
-    required String localId,
-    required CreateGoalInput input,
-  }) async {
-    final dao = await _dao();
-
-    try {
-      final response = await _dioClient.post<Map<String, dynamic>>(
-        ApiEndpoints.goals,
-        data: input.toJson(),
-      );
-
-      if (response.statusCode != 201) {
-        throw _unexpectedStatus(response);
+    if (dao != null) {
+      final goalRow = await dao.findGoalById(userId, goalId);
+      if (goalRow == null) {
+        throw const ApiException(
+          message: 'Goal not found locally',
+          code: 'NOT_FOUND',
+          statusCode: 404,
+        );
       }
 
-      final data = ApiEnvelopeParser.parseSuccessData(response);
-      final serverDto = GoalDto.fromJson(data);
-      final syncedAt = DateTime.now().toUtc();
+      final updatedGoalDto = GoalDto.fromCacheRow(goalRow).applyDeposit(
+        amount: input.amount,
+        updatedAt: now,
+      );
 
-      await dao.deleteGoalById(userId, localId);
+      await dao.upsertGoal(
+        updatedGoalDto.toCacheRow(
+          userId: userId,
+          syncedAt: now,
+          isDirty: true,
+        ),
+      );
+
+      final localDepositDto = GoalDepositDto.fromLocalLog(
+        id: localDepositId,
+        goalId: goalId,
+        input: input,
+        createdAt: now,
+      );
+
+      await dao.upsertDeposit(
+        localDepositDto.toCacheRow(
+          userId: userId,
+          syncedAt: now,
+          isDirty: true,
+        ),
+      );
+    }
+
+    return _syncLogDeposit(
+      userId: userId,
+      goalId: goalId,
+      localDepositId: dao != null ? localDepositId : null,
+      input: input,
+    );
+  }
+
+  Future<GoalEntity> _syncCreateGoal({
+    required String userId,
+    required String? localId,
+    required CreateGoalInput input,
+  }) async {
+    final dao = await _tryDao();
+
+    final response = await _dioClient.post<Map<String, dynamic>>(
+      ApiEndpoints.goals,
+      data: input.toJson(),
+    );
+
+    if (response.statusCode != 201) {
+      throw _unexpectedStatus(response);
+    }
+
+    final data = ApiEnvelopeParser.parseSuccessData(response);
+    final serverDto = GoalDto.fromJson(data);
+    final syncedAt = DateTime.now().toUtc();
+
+    if (dao != null) {
+      if (localId != null) {
+        await dao.deleteGoalById(userId, localId);
+      }
       await dao.upsertGoal(
         serverDto.toCacheRow(
           userId: userId,
@@ -362,7 +406,23 @@ class GoalRepositoryImpl implements GoalRepository {
           isDirty: false,
         ),
       );
-    } catch (_) {}
+      await dao.setLastSyncAt(syncedAt);
+    }
+
+    return serverDto.toEntity();
+  }
+
+  Future<GoalEntity> _fetchGoalFromServer(String userId, String goalId) async {
+    final response = await _dioClient.get<Map<String, dynamic>>(
+      '${ApiEndpoints.goals}/$goalId',
+    );
+
+    if (response.statusCode != 200) {
+      throw _unexpectedStatus(response);
+    }
+
+    final data = ApiEnvelopeParser.parseSuccessData(response);
+    return GoalDto.fromJson(data).toEntity();
   }
 
   Future<void> _syncUpdateGoal({
@@ -370,22 +430,22 @@ class GoalRepositoryImpl implements GoalRepository {
     required String goalId,
     required UpdateGoalInput input,
   }) async {
-    final dao = await _dao();
+    final dao = await _tryDao();
 
-    try {
-      final response = await _dioClient.patch<Map<String, dynamic>>(
-        '${ApiEndpoints.goals}/$goalId',
-        data: input.toJson(),
-      );
+    final response = await _dioClient.patch<Map<String, dynamic>>(
+      '${ApiEndpoints.goals}/$goalId',
+      data: input.toJson(),
+    );
 
-      if (response.statusCode != 200) {
-        throw _unexpectedStatus(response);
-      }
+    if (response.statusCode != 200) {
+      throw _unexpectedStatus(response);
+    }
 
-      final data = ApiEnvelopeParser.parseSuccessData(response);
-      final serverDto = GoalDto.fromJson(data);
-      final syncedAt = DateTime.now().toUtc();
+    final data = ApiEnvelopeParser.parseSuccessData(response);
+    final serverDto = GoalDto.fromJson(data);
+    final syncedAt = DateTime.now().toUtc();
 
+    if (dao != null) {
       await dao.upsertGoal(
         serverDto.toCacheRow(
           userId: userId,
@@ -393,62 +453,64 @@ class GoalRepositoryImpl implements GoalRepository {
           isDirty: false,
         ),
       );
-    } catch (_) {}
+      await dao.setLastSyncAt(syncedAt);
+    }
   }
 
   Future<void> _syncDeleteGoal({
     required String userId,
     required String goalId,
   }) async {
-    final dao = await _dao();
+    final dao = await _tryDao();
 
-    try {
-      final response = await _dioClient.delete<Map<String, dynamic>>(
-        '${ApiEndpoints.goals}/$goalId',
-      );
+    final response = await _dioClient.delete<Map<String, dynamic>>(
+      '${ApiEndpoints.goals}/$goalId',
+    );
 
-      if (response.statusCode != 200) {
-        throw _unexpectedStatus(response);
-      }
+    if (response.statusCode != 200) {
+      throw _unexpectedStatus(response);
+    }
 
+    if (dao != null) {
       await dao.deleteGoalById(userId, goalId);
-    } catch (_) {}
+      await dao.setLastSyncAt(DateTime.now().toUtc());
+    }
   }
 
-  Future<void> _syncLogDeposit({
+  Future<GoalDepositResult> _syncLogDeposit({
     required String userId,
     required String goalId,
-    required String localDepositId,
+    required String? localDepositId,
     required LogDepositInput input,
   }) async {
-    final dao = await _dao();
+    final dao = await _tryDao();
 
-    try {
-      final response = await _dioClient.post<Map<String, dynamic>>(
-        '${ApiEndpoints.goals}/$goalId/deposits',
-        data: input.toJson(),
+    final response = await _dioClient.post<Map<String, dynamic>>(
+      '${ApiEndpoints.goals}/$goalId/deposits',
+      data: input.toJson(),
+    );
+
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      throw _unexpectedStatus(response);
+    }
+
+    final data = ApiEnvelopeParser.parseSuccessData(response);
+    final goalJson = data['goal'];
+    final depositJson = data['deposit'];
+
+    if (goalJson is! Map<String, dynamic> ||
+        depositJson is! Map<String, dynamic>) {
+      throw const ApiException(
+        message: 'Invalid deposit response payload',
+        code: 'INVALID_RESPONSE',
       );
+    }
 
-      if (response.statusCode != 200) {
-        throw _unexpectedStatus(response);
-      }
+    final syncedAt = DateTime.now().toUtc();
+    final serverGoal = GoalDto.fromJson(goalJson);
+    final serverDeposit = GoalDepositDto.fromJson(depositJson);
 
-      final data = ApiEnvelopeParser.parseSuccessData(response);
-      final goalJson = data['goal'];
-      final depositJson = data['deposit'];
-
-      if (goalJson is! Map<String, dynamic> ||
-          depositJson is! Map<String, dynamic>) {
-        throw const ApiException(
-          message: 'Invalid deposit response payload',
-          code: 'INVALID_RESPONSE',
-        );
-      }
-
-      final syncedAt = DateTime.now().toUtc();
-      final serverGoal = GoalDto.fromJson(goalJson);
-      final serverDeposit = GoalDepositDto.fromJson(depositJson);
-
+    if (dao != null) {
       await dao.upsertGoal(
         serverGoal.toCacheRow(
           userId: userId,
@@ -457,7 +519,9 @@ class GoalRepositoryImpl implements GoalRepository {
         ),
       );
 
-      await dao.deleteDepositById(userId, localDepositId);
+      if (localDepositId != null) {
+        await dao.deleteDepositById(userId, localDepositId);
+      }
       await dao.upsertDeposit(
         serverDeposit.toCacheRow(
           userId: userId,
@@ -465,7 +529,13 @@ class GoalRepositoryImpl implements GoalRepository {
           isDirty: false,
         ),
       );
-    } catch (_) {}
+      await dao.setLastSyncAt(syncedAt);
+    }
+
+    return GoalDepositResult(
+      goal: serverGoal.toEntity(),
+      deposit: serverDeposit.toEntity(),
+    );
   }
 
   List<GoalEntity> _mergeServerAndDirty({
@@ -481,8 +551,7 @@ class GoalRepositoryImpl implements GoalRepository {
     ];
 
     if (status != GoalStatusFilter.all) {
-      merged =
-          merged.where((goal) => goal.status == status.apiValue).toList();
+      merged = merged.where(status.matches).toList();
     }
 
     merged.sort((a, b) => a.dueDate.compareTo(b.dueDate));
@@ -508,7 +577,7 @@ class GoalRepositoryImpl implements GoalRepository {
 final goalRepositoryProvider = Provider<GoalRepository>((ref) {
   return GoalRepositoryImpl(
     dioClient: ref.watch(dioClientProvider),
-    appDatabase: ref.watch(appDatabaseProvider.future),
+    appDatabase: ref.read(appDatabaseProvider.future),
     currentUserId: () => ref.watch(authStateProvider)?.user?.id,
   );
 });

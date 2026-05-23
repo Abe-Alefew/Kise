@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/network/dio_client.dart';
+import 'package:kise/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:kise/features/goals/data/goal_dto.dart';
 import 'package:kise/features/goals/data/goal_repository.dart';
 import 'package:kise/features/goals/domain/goal_entity.dart';
@@ -45,6 +46,14 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
 
   @override
   Future<List<GoalEntity>> build() async {
+    final auth = ref.watch(authStateProvider);
+    if (auth?.isAuthenticated != true || auth?.user == null) {
+      return [];
+    }
+
+    // Re-fetch when the signed-in user changes (logout/login).
+    ref.watch(authStateProvider.select((state) => state?.user?.id));
+
     return _loadGoals(forceRefresh: false);
   }
 
@@ -65,23 +74,24 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
     return result.items;
   }
 
+  Future<List<GoalEntity>> _reloadState({bool forceRefresh = false}) async {
+    final items = await _loadGoals(forceRefresh: forceRefresh);
+    state = AsyncData(items);
+    return items;
+  }
+
   Future<void> refresh() async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() => _loadGoals(forceRefresh: true));
   }
 
   Future<void> applyUiFilter(String uiLabel) async {
     _filter = GoalStatusFilterX.fromUiLabel(uiLabel);
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() => _loadGoals(forceRefresh: false));
   }
 
   List<GoalEntity> get filteredItems {
     final items = state.value ?? [];
-    if (_filter == GoalStatusFilter.all) {
-      return items;
-    }
-    return items.where((goal) => goal.status == _filter.apiValue).toList();
+    return items.where(_filter.matches).toList();
   }
 
   Future<GoalEntity> addGoal({
@@ -95,7 +105,8 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
     final repository = ref.read(goalRepositoryProvider);
     final currentList = state.value ?? [];
 
-    final parsedDue = GoalDateParser.parseDueDate(dueDateDisplay) ?? DateTime.now();
+    final parsedDue =
+        GoalDateParser.parseDueDate(dueDateDisplay) ?? DateTime.now();
     final isoDueDate = GoalDateParser.toIsoDate(parsedDue);
     final normalizedPeriod = GoalDateParser.normalizePeriod(period);
 
@@ -130,20 +141,7 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
         ),
       );
 
-      final updatedList = [
-        created,
-        ...currentList.where((goal) => goal.id != optimisticId),
-      ];
-
-      state = AsyncData(updatedList);
-      _meta = _meta?.copyWith(items: updatedList) ??
-          GoalsViewState(
-            items: updatedList,
-            fromCache: true,
-            isStale: false,
-            filter: _filter,
-          );
-
+      await _reloadState();
       return created;
     } on ApiException catch (error) {
       final failed = optimistic.copyWith(syncError: error.message);
@@ -195,13 +193,7 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
         ),
       );
 
-      final syncedList = currentList
-          .map((item) => item.id == goal.id ? result.goal : item)
-          .toList();
-
-      state = AsyncData(syncedList);
-      _meta = _meta?.copyWith(items: syncedList);
-
+      await _reloadState();
       return result.goal;
     } on ApiException catch (error) {
       final failed = optimisticGoal.copyWith(syncError: error.message);
@@ -227,28 +219,16 @@ class GoalsNotifier extends AsyncNotifier<List<GoalEntity>> {
     UpdateGoalInput input,
   ) async {
     final repository = ref.read(goalRepositoryProvider);
-    final currentList = state.value ?? [];
 
     final updated = await repository.updateGoal(goalId, input);
-    final syncedList =
-        currentList.map((goal) => goal.id == goalId ? updated : goal).toList();
-
-    state = AsyncData(syncedList);
-    _meta = _meta?.copyWith(items: syncedList);
-
+    await _reloadState();
     return updated;
   }
 
   Future<void> deleteGoal(String goalId) async {
     final repository = ref.read(goalRepositoryProvider);
     await repository.deleteGoal(goalId);
-
-    final currentList = state.value ?? [];
-    final updatedList =
-        currentList.where((goal) => goal.id != goalId).toList();
-
-    state = AsyncData(updatedList);
-    _meta = _meta?.copyWith(items: updatedList);
+    await _reloadState();
   }
 
   Future<GoalEntity> toggleLock(GoalEntity goal) async {

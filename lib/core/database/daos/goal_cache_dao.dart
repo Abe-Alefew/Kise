@@ -227,9 +227,23 @@ class GoalCacheDao {
     }
 
     final normalizedStatus = status.toLowerCase();
-    if (normalizedStatus != 'all' && normalizedStatus.isNotEmpty) {
-      whereParts.add('status = ?');
-      whereArgs.add(normalizedStatus);
+    switch (normalizedStatus) {
+      case 'active':
+        whereParts.add(
+          "status = 'active' AND current_amount < target_amount",
+        );
+        break;
+      case 'completed':
+        whereParts.add(
+          "(status = 'completed' OR current_amount >= target_amount)",
+        );
+        break;
+      case 'canceled':
+        whereParts.add("status = 'canceled'");
+        break;
+      case 'all':
+      default:
+        break;
     }
 
     return _database.query(

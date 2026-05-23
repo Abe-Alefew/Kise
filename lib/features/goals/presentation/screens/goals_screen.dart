@@ -22,25 +22,6 @@ class GoalsScreen extends ConsumerStatefulWidget {
 
 class _GoalsScreenState extends ConsumerState<GoalsScreen> {
   String _selectedFilter = 'All';
-  List<GoalEntity> _lastStableGoals = const [];
-
-  List<GoalEntity> _resolveGoals(AsyncValue<List<GoalEntity>> goalsAsync) {
-    if (goalsAsync.hasValue && goalsAsync.value != null) {
-      _lastStableGoals = goalsAsync.value!;
-      return goalsAsync.value!;
-    }
-    return _lastStableGoals;
-  }
-
-  List<GoalEntity> _filteredDisplay(
-    List<GoalEntity> items,
-    GoalStatusFilter filter,
-  ) {
-    if (filter == GoalStatusFilter.all) {
-      return items;
-    }
-    return items.where((goal) => goal.status == filter.apiValue).toList();
-  }
 
   void _showError(Object error) {
     if (!mounted) {
@@ -69,7 +50,11 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     }
   }
 
-  Future<void> _handleDeposit(GoalEntity goal, double amount, String source,) async {
+  Future<void> _handleDeposit(
+    GoalEntity goal,
+    double amount,
+    String source,
+  ) async {
     try {
       await ref.read(goalsNotifierProvider.notifier).logDeposit(
             goal: goal,
@@ -144,10 +129,14 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<List<GoalEntity>>>(goalsNotifierProvider, (prev, next) {
+      if (next.hasError && next.error != prev?.error) {
+        _showError(next.error!);
+      }
+    });
+
     final goalsAsync = ref.watch(goalsNotifierProvider);
-    final notifier = ref.read(goalsNotifierProvider.notifier);
-    final allGoals = _resolveGoals(goalsAsync);
-    final displayGoals = _filteredDisplay(allGoals, notifier.filter);
+    final filter = ref.read(goalsNotifierProvider.notifier).filter;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -174,7 +163,9 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                       Text(
                         'Track your savings targets',
                         style: AppTextStyles.bodySm.copyWith(
-                          color: isDark ? AppColorsDark.textHint : AppColorsLight.textHint,
+                          color: isDark
+                              ? AppColorsDark.textHint
+                              : AppColorsLight.textHint,
                         ),
                       ),
                     ],
@@ -195,39 +186,56 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                 onSelected: _onFilterSelected,
               ),
               const SizedBox(height: AppDimensions.lg),
-              displayGoals.isEmpty
-                  ? const Expanded(
-                      child: KiseEmptyIndicator(
+              Expanded(
+                child: goalsAsync.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (error, _) => KiseEmptyIndicator(
+                    title: 'Could not load goals',
+                    subtitle: error is ApiException
+                        ? error.message
+                        : error.toString(),
+                    icon: LucideIcons.target,
+                  ),
+                  data: (goals) {
+                    final displayGoals =
+                        goals.where(filter.matches).toList();
+
+                    if (displayGoals.isEmpty) {
+                      return const KiseEmptyIndicator(
                         title: 'No goals found',
                         subtitle:
                             'Try adjusting your filters or add a new goal.',
                         icon: LucideIcons.target,
-                      ),
-                    )
-                  : Expanded(
-                      child: ListView.builder(
-                        itemCount: displayGoals.length,
-                        itemBuilder: (context, index) {
-                          final goal = displayGoals[index];
-                          return GoalCard(
-                            key: ValueKey(goal.id),
-                            goal: goal,
-                            onDelete: () => _handleDelete(goal.id),
-                            onLock: () => _handleLock(goal),
-                            onDeposit: (amount, source) =>
-                                _handleDeposit(goal, amount, source),
-                            onEdit: (title, target, deadline, period) =>
-                                _handleEdit(
-                              goal,
-                              title,
-                              target,
-                              deadline,
-                              period,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: displayGoals.length,
+                      itemBuilder: (context, index) {
+                        final goal = displayGoals[index];
+                        return GoalCard(
+                          key: ValueKey(goal.id),
+                          goal: goal,
+                          onDelete: () => _handleDelete(goal.id),
+                          onLock: () => _handleLock(goal),
+                          onDeposit: (amount, source) =>
+                              _handleDeposit(goal, amount, source),
+                          onEdit: (title, target, deadline, period) =>
+                              _handleEdit(
+                            goal,
+                            title,
+                            target,
+                            deadline,
+                            period,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),
