@@ -14,6 +14,7 @@ function createHttpError(statusCode, code, message, details) {
   return error;
 }
 
+
 function mapTransactionResponse(transaction) {
   return {
     id: transaction.id,
