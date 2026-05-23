@@ -11,7 +11,7 @@ import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/core/widgets/kise_card_holder.dart';
 import 'package:kise/core/widgets/kise_progress_bar.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
-import 'package:kise/features/debt/presentation/providers/debts_notifier.dart';
+import 'package:kise/features/debt/presentation/state/debts_notifier.dart';
 import 'package:kise/features/debt/presentation/widgets/status_badge.dart';
 
 class DebtDetailModal extends ConsumerStatefulWidget {

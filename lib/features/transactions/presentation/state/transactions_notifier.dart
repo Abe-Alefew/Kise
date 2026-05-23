@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/network/dio_client.dart';
-import 'package:kise/features/transactions/data/transaction_repository.dart';
+import 'package:kise/features/transactions/data/repositories/transaction_repository.dart';
 import 'package:kise/features/transactions/domain/transaction_entity.dart';
 import 'package:kise/features/transactions/domain/transaction_filters.dart';
 import 'package:kise/features/transactions/domain/transaction_inputs.dart';
-import 'package:kise/features/home/presentation/providers/home_dashboard_notifier.dart';
-import 'package:kise/features/transactions/presentation/providers/transactions_analytics_provider.dart';
-import 'package:kise/features/transactions/presentation/providers/transactions_summary_provider.dart';
+import 'package:kise/features/home/presentation/state/home_dashboard_notifier.dart';
+import 'package:kise/features/transactions/presentation/state/transactions_analytics_provider.dart';
+import 'package:kise/features/transactions/presentation/state/transactions_summary_provider.dart';
 
 @immutable
 class TransactionsViewState {
