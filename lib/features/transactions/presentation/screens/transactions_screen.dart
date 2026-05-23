@@ -1,77 +1,155 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/widgets/kise_action_button.dart';
 import '../../../../core/widgets/kise_card_holder.dart';
 import '../../../../core/widgets/kise_pill_filter.dart';
 
-import '../../data/transaction_datasource.dart';
-
+import '../../domain/transaction_entity.dart';
+import '../../domain/transaction_filters.dart';
+import '../providers/transactions_notifier.dart';
+import '../providers/transactions_summary_provider.dart';
 import '../widgets/analytics_bar_chart.dart';
 import '../widgets/add_transaction_modal.dart';
 import '../widgets/transaction_tile.dart';
 
-class TransactionsScreen extends StatefulWidget {
+String _formatCompactAmount(double value) {
+  if (value >= 1000) {
+    final compact = value / 1000;
+    return '${compact.toStringAsFixed(compact >= 10 ? 0 : 1)}k';
+  }
+  return value.toStringAsFixed(0);
+}
+
+String _formatSavingRate(double rate) {
+  return '${(rate * 100).round()}%';
+}
+
+class TransactionsScreen extends ConsumerStatefulWidget {
   const TransactionsScreen({super.key});
 
   @override
-  State<TransactionsScreen> createState() => _TransactionsScreenState();
+  ConsumerState<TransactionsScreen> createState() => _TransactionsScreenState();
 }
 
-class _TransactionsScreenState extends State<TransactionsScreen> {
+class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   String selectedFilter = "All";
   String selectedAnalyticsRange = "1 Month";
   int _visibleCount = 3;
+  String? _deletingTransactionId;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      ref
+          .read(transactionsNotifierProvider.notifier)
+          .applyFilter(const TransactionQueryFilter(limit: 50));
+    });
+  }
+
+  Future<void> _openEditModal(TransactionEntity transaction) async {
+    await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) =>
+          AddTransactionModal(transactionToEdit: transaction),
+    );
+  }
+
+  Future<void> _confirmDelete(TransactionEntity transaction) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete transaction?'),
+        content: Text(
+          'Remove "${transaction.title}"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deletingTransactionId = transaction.id);
+
+    try {
+      await ref
+          .read(transactionsNotifierProvider.notifier)
+          .deleteTransaction(transaction.id);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Transaction deleted successfully')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is ApiException
+          ? e.message
+          : 'Could not delete transaction. Please try again.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _deletingTransactionId = null);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final transactions = TransactionDatasource.transactions;
+    final transactionsAsync = ref.watch(transactionsNotifierProvider);
+    final summaryAsync = ref.watch(currentMonthSummaryProvider);
+
+    final transactions = transactionsAsync.value ?? const <TransactionEntity>[];
+
+    final totalIncomeLabel = summaryAsync.when(
+      data: (summary) => _formatCompactAmount(summary.totalIncome),
+      loading: () => '—',
+      error: (_, _) => '—',
+    );
+    final totalSpentLabel = summaryAsync.when(
+      data: (summary) => _formatCompactAmount(summary.totalExpense),
+      loading: () => '—',
+      error: (_, _) => '—',
+    );
+    final savingRateLabel = summaryAsync.when(
+      data: (summary) => _formatSavingRate(summary.savingRate),
+      loading: () => '—',
+      error: (_, _) => '—',
+    );
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-
-      // floatingActionButton:
-      //     FloatingActionButton(
-
-      //   backgroundColor: Theme.of(context).colorScheme.primary,
-
-      //   onPressed: () {
-
-      //     showModalBottomSheet(
-
-      //       context: context,
-
-      //       isScrollControlled: true,
-
-      //       backgroundColor:
-      //           Colors.transparent,
-
-      //       builder: (context) {
-
-      //         return const AddTransactionModal();
-      //       },
-      //     );
-      //   },
-
-      //   child: const Icon(Icons.add),
-      // ),
-
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 40, 12, 12),
-
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
                 /// HEADER
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-
                       children: [
                         Text(
                           "Transactions",
@@ -79,7 +157,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             context,
                           ).textTheme.displaySmall?.copyWith(fontSize: 24),
                         ),
-
                         Text(
                           "${transactions.length} records",
                           style: Theme.of(
@@ -88,21 +165,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         ),
                       ],
                     ),
-
                     KiseActionButton(
                       label: 'Add',
                       leadingIcon: Icons.add,
                       expanded: false,
                       height: 35,
                       borderRadius: 10,
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => const AddTransactionModal(),
-                        );
-                      },
+                      onPressed: () => showModalBottomSheet<bool>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const AddTransactionModal(),
+                      ),
                     ),
                   ],
                 ),
@@ -154,6 +228,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         borderSide: BorderSide.none,
                       ),
                     ),
+                    onChanged: (query) {
+                      ref
+                          .read(transactionsNotifierProvider.notifier)
+                          .updateSearchQuery(query);
+                    },
                   ),
                 ),
 
@@ -162,14 +241,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 /// FILTERS
                 KisePillFilter(
                   options: const ["All", "Income", "Expense"],
-
                   selected: selectedFilter,
-
                   onSelected: (value) {
                     setState(() {
                       selectedFilter = value;
                       _visibleCount = 3;
                     });
+                    ref
+                        .read(transactionsNotifierProvider.notifier)
+                        .updateTypeFilter(value);
                   },
                 ),
 
@@ -180,27 +260,23 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   children: [
                     Expanded(
                       child: _summaryCard(
-                        amount: "30.0k",
+                        amount: totalIncomeLabel,
                         label: "Total Income",
                         color: Theme.of(context).colorScheme.tertiary,
                       ),
                     ),
-
                     const SizedBox(width: 12),
-
                     Expanded(
                       child: _summaryCard(
-                        amount: "20.0k",
+                        amount: totalSpentLabel,
                         label: "Total Spent",
                         color: Theme.of(context).colorScheme.error,
                       ),
                     ),
-
                     const SizedBox(width: 12),
-
                     Expanded(
                       child: _summaryCard(
-                        amount: "33%",
+                        amount: savingRateLabel,
                         label: "Saving Rate",
                         color: Theme.of(context).colorScheme.tertiary,
                       ),
@@ -258,7 +334,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         KiseCardHolder(
                           child: Column(
                             children: visible
-                                .map((t) => TransactionTile(transaction: t))
+                                .map(
+                                  (t) => TransactionTile(
+                                    transaction: t,
+                                    onEdit: () => _openEditModal(t),
+                                    onDelete: () => _confirmDelete(t),
+                                    isDeleting: _deletingTransactionId == t.id,
+                                  ),
+                                )
                                 .toList(),
                           ),
                         ),
