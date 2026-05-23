@@ -7,7 +7,6 @@ import '../../../../core/widgets/kise_pill_filter.dart';
 
 import '../../domain/transaction_entity.dart';
 import '../../domain/transaction_filters.dart';
-import '../providers/transactions_analytics_provider.dart';
 import '../providers/transactions_notifier.dart';
 import '../providers/transactions_summary_provider.dart';
 import '../widgets/analytics_bar_chart.dart';
@@ -51,24 +50,6 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(transactionsNotifierProvider, (previous, next) {
-      final prevCount = previous?.value?.length ?? 0;
-      final nextCount = next.value?.length ?? 0;
-      if (nextCount <= prevCount || !next.hasValue) {
-        return;
-      }
-
-      final newest = next.value!.first;
-      if (selectedFilter != 'All' && newest.type != selectedFilter) {
-        setState(() => selectedFilter = 'All');
-        ref.read(transactionsNotifierProvider.notifier).updateTypeFilter('All');
-      }
-
-      if (_visibleCount < 3) {
-        setState(() => _visibleCount = 3);
-      }
-    });
-
     final transactionsAsync = ref.watch(transactionsNotifierProvider);
     final summaryAsync = ref.watch(currentMonthSummaryProvider);
 
@@ -77,17 +58,17 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     final totalIncomeLabel = summaryAsync.when(
       data: (summary) => _formatCompactAmount(summary.totalIncome),
       loading: () => '—',
-      error: (_, __) => '—',
+      error: (_, _) => '—',
     );
     final totalSpentLabel = summaryAsync.when(
       data: (summary) => _formatCompactAmount(summary.totalExpense),
       loading: () => '—',
-      error: (_, __) => '—',
+      error: (_, _) => '—',
     );
     final savingRateLabel = summaryAsync.when(
       data: (summary) => _formatSavingRate(summary.savingRate),
       loading: () => '—',
-      error: (_, __) => '—',
+      error: (_, _) => '—',
     );
 
     return Scaffold(
@@ -126,19 +107,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                       expanded: false,
                       height: 35,
                       borderRadius: 10,
-                      onPressed: () async {
-                        final added = await showModalBottomSheet<bool>(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => const AddTransactionModal(),
-                        );
-
-                        if (added == true && mounted) {
-                          ref.invalidate(currentMonthSummaryProvider);
-                          ref.invalidate(transactionAnalyticsProvider);
-                        }
-                      },
+                      onPressed: () => showModalBottomSheet<bool>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const AddTransactionModal(),
+                      ),
                     ),
                   ],
                 ),
