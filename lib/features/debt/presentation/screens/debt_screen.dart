@@ -149,12 +149,10 @@ class _DebtScreenState extends ConsumerState<DebtScreen> {
 
     final owedToMe = _resolveOwedToMe(meta, allDebts);
     final iOwe = _resolveIOwe(meta, allDebts);
-    final actualNetPosition = _resolveNetPosition(meta, allDebts);
-    final adjustedNetPosition = meta?.adjustedNetPosition ??
-        _adjustedNetPositionFallback(allDebts);
-    final netPosition =
-        _isActualView ? actualNetPosition : adjustedNetPosition;
-    final includedAmount = adjustedNetPosition - actualNetPosition;
+    final netPosition = _isActualView
+        ? _resolveNetPosition(meta, allDebts)
+        : (meta?.adjustedNetPosition ??
+            _adjustedNetPositionFallback(allDebts));
     final recoveryRate = _resolveRecoveryRate(meta, allDebts);
 
     return Scaffold(
@@ -180,7 +178,6 @@ class _DebtScreenState extends ConsumerState<DebtScreen> {
                 const SizedBox(height: AppDimensions.sm),
                 _NetPositionCard(
                   netAmount: netPosition,
-                  includedAmount: includedAmount,
                   recoveryRate: recoveryRate,
                   isActual: _isActualView,
                   onToggle: (v) => setState(() => _isActualView = v),
@@ -371,14 +368,12 @@ class _SummaryCard extends StatelessWidget {
 
 class _NetPositionCard extends StatelessWidget {
   final double netAmount;
-  final double includedAmount;
   final double recoveryRate;
   final bool isActual;
   final ValueChanged<bool> onToggle;
 
   const _NetPositionCard({
     required this.netAmount,
-    required this.includedAmount,
     required this.recoveryRate,
     required this.isActual,
     required this.onToggle,
@@ -444,17 +439,6 @@ class _NetPositionCard extends StatelessWidget {
                 isActual: isActual,
                 onChanged: onToggle,
               ),
-              if (!isActual) ...[
-                const SizedBox(height: 4),
-                Text(
-                  '${_amtFmt.format(includedAmount)} ETB included',
-                  style: tt.bodySmall?.copyWith(
-                    color: cs.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.end,
-                ),
-              ],
             ],
           ),
         ],
