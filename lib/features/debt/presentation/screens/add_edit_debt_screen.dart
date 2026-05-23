@@ -9,7 +9,7 @@ import 'package:kise/core/theme/app_theme_ext.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
 import 'package:kise/features/debt/domain/debt_inputs.dart';
-import 'package:kise/features/debt/presentation/providers/debts_notifier.dart';
+import 'package:kise/features/debt/presentation/state/debts_notifier.dart';
 
 // Result values popped by this modal:
 //   'deleted'   → debt was deleted (edit mode only)
