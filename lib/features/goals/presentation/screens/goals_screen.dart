@@ -136,6 +136,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
       }
     });
 
+    // states
     final goalsAsync = ref.watch(goalsNotifierProvider);
     final filter = ref.read(goalsNotifierProvider.notifier).filter;
     final isDark = Theme.of(context).brightness == Brightness.dark;
