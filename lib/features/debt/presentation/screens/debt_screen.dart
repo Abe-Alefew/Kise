@@ -1073,3 +1073,4 @@ class _PersonBalanceRow extends StatelessWidget {
     );
   }
 }
+
