@@ -32,8 +32,6 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
-./claude
-
 
 # Symbolication related
 app.*.symbols

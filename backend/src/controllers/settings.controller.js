@@ -53,6 +53,39 @@ function mapPreferencesResponse(preferences) {
 }
 
 class SettingsController {
+  static async getAllowance(req, res, next) {
+    try {
+      const allowance = await AllowanceModel.findByUserId(req.user.id);
+      return sendSuccess(res, 200, allowance);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  static async updateAllowance(req, res, next) {
+    try {
+      const validationErrors = collectValidationErrors(req);
+      if (validationErrors) {
+        return sendError(
+          res,
+          400,
+          'VALIDATION_ERROR',
+          'Request validation failed',
+          validationErrors
+        );
+      }
+
+      const allowance = await AllowanceModel.upsert(req.user.id, {
+        monthlyAmount: Number(req.body.monthlyAmount),
+        cycleStartDay: Number(req.body.cycleStartDay),
+      });
+
+      return sendSuccess(res, 200, allowance);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   static async listAccounts(req, res, next) {
     try {
       const validationErrors = collectValidationErrors(req);
