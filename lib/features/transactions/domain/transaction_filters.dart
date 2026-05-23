@@ -46,14 +46,17 @@ class TransactionQueryFilter {
   }
 
   Map<String, dynamic> toQueryParameters() {
+    final effectivePage = offset > 0 ? (offset ~/ limit) + 1 : page;
+
     return {
       if (type != null && type!.isNotEmpty && type != 'All') 'type': type,
       if (category != null && category!.isNotEmpty) 'category': category,
       if (from != null && from!.isNotEmpty) 'from': from,
       if (to != null && to!.isNotEmpty) 'to': to,
-      if (searchQuery != null && searchQuery!.trim().isNotEmpty) 'q': searchQuery!.trim(),
+      if (searchQuery != null && searchQuery!.trim().isNotEmpty)
+        'q': searchQuery!.trim(),
       'sort': sort,
-      'page': page,
+      'page': effectivePage,
       'limit': limit,
     };
   }

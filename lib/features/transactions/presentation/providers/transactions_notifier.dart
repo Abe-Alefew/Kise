@@ -1,9 +1,14 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/network/dio_client.dart';
 import 'package:kise/features/transactions/data/transaction_repository.dart';
 import 'package:kise/features/transactions/domain/transaction_entity.dart';
 import 'package:kise/features/transactions/domain/transaction_filters.dart';
 import 'package:kise/features/transactions/domain/transaction_inputs.dart';
+import 'package:kise/features/transactions/presentation/providers/transactions_analytics_provider.dart';
+import 'package:kise/features/transactions/presentation/providers/transactions_summary_provider.dart';
 
 @immutable
 class TransactionsViewState {
@@ -78,10 +83,27 @@ class TransactionsNotifier extends AsyncNotifier<List<TransactionEntity>> {
   }
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(
       () => _loadTransactions(forceRefresh: true),
     );
+  }
+
+  void _reloadSummaryAndAnalytics() {
+    ref.invalidate(currentMonthSummaryProvider);
+    ref.invalidate(transactionAnalyticsProvider);
+    unawaited(ref.refresh(currentMonthSummaryProvider.future));
+  }
+
+  Future<void> _syncListInBackground() async {
+    final previous = state.value ?? const <TransactionEntity>[];
+    try {
+      final items = await _loadTransactions(forceRefresh: true);
+      state = AsyncData(items);
+    } catch (_) {
+      if (previous.isNotEmpty) {
+        state = AsyncData(previous);
+      }
+    }
   }
 
   Future<void> applyFilter(TransactionQueryFilter filter) async {
@@ -168,11 +190,11 @@ class TransactionsNotifier extends AsyncNotifier<List<TransactionEntity>> {
 
       _meta = _meta?.copyWith(
             items: updatedList,
-            total: (_meta?.total ?? updatedList.length) + 1,
+            total: (_meta?.total ?? current.length) + 1,
           ) ??
           TransactionsViewState(
             items: updatedList,
-            fromCache: true,
+            fromCache: false,
             isStale: false,
             total: updatedList.length,
             hasMore: false,
@@ -180,33 +202,22 @@ class TransactionsNotifier extends AsyncNotifier<List<TransactionEntity>> {
           );
 
       state = AsyncData(updatedList);
+      _reloadSummaryAndAnalytics();
+      unawaited(_syncListInBackground());
+
       return created;
-    } on ApiException catch (error) {
-      final failedOptimistic = optimistic.copyWith(
-        isDirty: true,
-        syncError: error.message,
-      );
-
-      final updatedList = [
-        failedOptimistic,
-        ...current,
-      ];
-
-      state = AsyncData(updatedList);
+    } on ApiException {
+      state = AsyncData(current);
       rethrow;
     } catch (error) {
-      final failedOptimistic = optimistic.copyWith(
-        isDirty: true,
-        syncError: error.toString(),
+      state = AsyncData(current);
+      if (error is ApiException) {
+        rethrow;
+      }
+      throw ApiException(
+        message: error.toString(),
+        code: 'UNKNOWN_ERROR',
       );
-
-      final updatedList = [
-        failedOptimistic,
-        ...current,
-      ];
-
-      state = AsyncData(updatedList);
-      rethrow;
     }
   }
 

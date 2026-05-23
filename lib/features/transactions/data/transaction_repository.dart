@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/cache/cache_policy.dart';
 import 'package:kise/core/database/app_database.dart';
@@ -36,6 +37,13 @@ abstract class TransactionRepository {
 
   Future<TransactionEntity> createTransaction(CreateTransactionInput input);
 
+  Future<TransactionEntity> updateTransaction(
+    String transactionId,
+    Map<String, dynamic> updates,
+  );
+
+  Future<void> deleteTransaction(String transactionId);
+
   Future<TransactionSummary> getSummary({
     String? from,
     String? to,
@@ -56,22 +64,33 @@ class TransactionRepositoryImpl implements TransactionRepository {
     required String? Function() currentUserId,
     CachePolicy? cachePolicy,
     Uuid? uuid,
+    bool enableLocalCache = true,
   })  : _dioClient = dioClient,
         _appDatabaseFuture = appDatabase,
         _currentUserId = currentUserId,
         _cachePolicy = cachePolicy ?? const CachePolicy(),
-        _uuid = uuid ?? const Uuid();
+        _uuid = uuid ?? const Uuid(),
+        _enableLocalCache = enableLocalCache;
 
   final DioClient _dioClient;
   final Future<AppDatabase> _appDatabaseFuture;
   final String? Function() _currentUserId;
   final CachePolicy _cachePolicy;
   final Uuid _uuid;
+  final bool _enableLocalCache;
 
-  Future<TransactionCacheDao> _dao() async {
-    final db = await _appDatabaseFuture;
-    await TransactionCacheDao.ensureSchema(db.database);
-    return TransactionCacheDao(db.database);
+  Future<TransactionCacheDao?> _tryDao() async {
+    if (!_enableLocalCache) {
+      return null;
+    }
+
+    try {
+      final db = await _appDatabaseFuture;
+      await TransactionCacheDao.ensureSchema(db.database);
+      return TransactionCacheDao(db.database);
+    } catch (_) {
+      return null;
+    }
   }
 
   String _requireUserId() {
@@ -92,9 +111,11 @@ class TransactionRepositoryImpl implements TransactionRepository {
     bool forceRefresh = false,
   }) async {
     final userId = _requireUserId();
-    final dao = await _dao();
+    final dao = await _tryDao();
 
-    final cachedRows = await dao.queryTransactions(
+    final cachedRows = dao == null
+        ? <Map<String, dynamic>>[]
+        : await dao.queryTransactions(
       userId: userId,
       type: filter.type,
       category: filter.category,
@@ -106,12 +127,15 @@ class TransactionRepositoryImpl implements TransactionRepository {
       offset: filter.offset,
     );
 
-    final lastSyncAt = await dao.getLastSyncAt();
-    final cacheIsFresh =
-        !forceRefresh && _cachePolicy.isFresh(lastSyncAt) && cachedRows.isNotEmpty;
+    final lastSyncAt =
+        dao == null ? null : await dao.getLastSyncAt();
+    final cacheIsFresh = dao != null &&
+        !forceRefresh &&
+        _cachePolicy.isFresh(lastSyncAt) &&
+        cachedRows.isNotEmpty;
 
     if (cacheIsFresh) {
-      final total = await dao.countTransactions(
+      final total = await dao!.countTransactions(
         userId: userId,
         type: filter.type,
         category: filter.category,
@@ -153,10 +177,14 @@ class TransactionRepositoryImpl implements TransactionRepository {
           )
           .toList();
 
-      await dao.replaceAllForUser(userId, cacheMaps);
-      await dao.setLastSyncAt(now);
+      if (dao != null) {
+        await dao.replaceAllForUser(userId, cacheMaps);
+        await dao.setLastSyncAt(now);
+      }
 
-      final dirtyRows = await dao.getDirtyTransactions(userId);
+      final dirtyRows = dao == null
+          ? <Map<String, dynamic>>[]
+          : await dao.getDirtyTransactions(userId);
       final dirtyEntities =
           dirtyRows.map(TransactionDto.fromCacheRow).map((e) => e.toEntity()).toList();
 
@@ -176,7 +204,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
     } on DioException catch (error) {
       final apiError = ApiEnvelopeParser.parseDioError(error);
 
-      if (cachedRows.isNotEmpty) {
+      if (dao != null && cachedRows.isNotEmpty) {
         final total = await dao.countTransactions(
           userId: userId,
           type: filter.type,
@@ -199,7 +227,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
     } on ApiException {
       rethrow;
     } catch (error) {
-      if (cachedRows.isNotEmpty) {
+      if (dao != null && cachedRows.isNotEmpty) {
         final total = await dao.countTransactions(
           userId: userId,
           type: filter.type,
@@ -228,23 +256,28 @@ class TransactionRepositoryImpl implements TransactionRepository {
   @override
   Future<TransactionEntity> createTransaction(CreateTransactionInput input) async {
     final userId = _requireUserId();
-    final dao = await _dao();
+    final dao = await _tryDao();
 
     final localId = _uuid.v4();
     final now = DateTime.now().toUtc();
-    final dto = TransactionDto.fromCreateInput(
-      id: localId,
-      userId: userId,
-      input: input,
-      createdAt: now,
-      isDirty: true,
-    );
 
-    await dao.upsertOne(dto.toCacheRow(
-      userId: userId,
-      syncedAt: now,
-      isDirty: true,
-    ));
+    if (dao != null) {
+      final dto = TransactionDto.fromCreateInput(
+        id: localId,
+        userId: userId,
+        input: input,
+        createdAt: now,
+        isDirty: true,
+      );
+
+      await dao.upsertOne(
+        dto.toCacheRow(
+          userId: userId,
+          syncedAt: now,
+          isDirty: true,
+        ),
+      );
+    }
 
     try {
       final response = await _dioClient.post<Map<String, dynamic>>(
@@ -260,35 +293,88 @@ class TransactionRepositoryImpl implements TransactionRepository {
       final serverDto = TransactionDto.fromJson(data);
       final syncedAt = DateTime.now().toUtc();
 
-      await dao.deleteById(userId, localId);
-      await dao.upsertOne(
-        serverDto.toCacheRow(
-          userId: userId,
-          syncedAt: syncedAt,
-          isDirty: false,
-        ),
-      );
+      if (dao != null) {
+        await dao.deleteById(userId, localId);
+        await dao.upsertOne(
+          serverDto.toCacheRow(
+            userId: userId,
+            syncedAt: syncedAt,
+            isDirty: false,
+          ),
+        );
+        await dao.setLastSyncAt(syncedAt);
+      }
 
       return serverDto.toEntity().copyWith(isDirty: false);
     } on DioException catch (error) {
-      final apiError = ApiEnvelopeParser.parseDioError(error);
-      final cached = await dao.findById(userId, localId);
-      if (cached != null) {
-        return TransactionDto.fromCacheRow(cached).toEntity().copyWith(
-              isDirty: true,
-              syncError: apiError.message,
-            );
+      if (dao != null) {
+        await dao.deleteById(userId, localId);
       }
-      throw apiError;
-    } on ApiException catch (error) {
-      final cached = await dao.findById(userId, localId);
-      if (cached != null) {
-        return TransactionDto.fromCacheRow(cached).toEntity().copyWith(
-              isDirty: true,
-              syncError: error.message,
-            );
+      throw ApiEnvelopeParser.parseDioError(error);
+    } on ApiException {
+      if (dao != null) {
+        await dao.deleteById(userId, localId);
       }
       rethrow;
+    }
+  }
+
+  @override
+  Future<TransactionEntity> updateTransaction(
+    String transactionId,
+    Map<String, dynamic> updates,
+  ) async {
+    _requireUserId();
+
+    try {
+      final response = await _dioClient.patch<Map<String, dynamic>>(
+        '${ApiEndpoints.transactions}/$transactionId',
+        data: updates,
+      );
+
+      if (response.statusCode != 200) {
+        throw _unexpectedStatus(response);
+      }
+
+      final data = ApiEnvelopeParser.parseSuccessData(response);
+      final serverDto = TransactionDto.fromJson(data);
+      final userId = _requireUserId();
+      final dao = await _tryDao();
+      final syncedAt = DateTime.now().toUtc();
+
+      if (dao != null) {
+        await dao.upsertOne(
+          serverDto.toCacheRow(
+            userId: userId,
+            syncedAt: syncedAt,
+            isDirty: false,
+          ),
+        );
+      }
+
+      return serverDto.toEntity();
+    } on DioException catch (error) {
+      throw ApiEnvelopeParser.parseDioError(error);
+    }
+  }
+
+  @override
+  Future<void> deleteTransaction(String transactionId) async {
+    final userId = _requireUserId();
+    final dao = await _tryDao();
+
+    try {
+      final response = await _dioClient.delete<Map<String, dynamic>>(
+        '${ApiEndpoints.transactions}/$transactionId',
+      );
+
+      if (response.statusCode != 200) {
+        throw _unexpectedStatus(response);
+      }
+
+      await dao?.deleteById(userId, transactionId);
+    } on DioException catch (error) {
+      throw ApiEnvelopeParser.parseDioError(error);
     }
   }
 
@@ -417,5 +503,6 @@ final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
     dioClient: ref.watch(dioClientProvider),
     appDatabase: ref.watch(appDatabaseProvider.future),
     currentUserId: () => ref.watch(authStateProvider)?.user?.id,
+    enableLocalCache: !kIsWeb,
   );
 });

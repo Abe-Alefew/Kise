@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kise/core/theme/text_theme.dart';
-import 'package:kise/core/theme/colors.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/widgets/kise_action_button.dart';
 import '../../domain/transaction_inputs.dart';
 import '../providers/transactions_notifier.dart';
@@ -298,8 +297,9 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
                           amount: double.parse(amountController.text),
                           transactionDate:
                               '${selectedDate.year.toString().padLeft(4, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
-                          accountId: selectedAccount!,
-                          note: noteController.text.trim().isEmpty ? null : noteController.text.trim(),
+                          note: noteController.text.trim().isEmpty
+                              ? null
+                              : noteController.text.trim(),
                         );
 
                         try {
@@ -308,15 +308,20 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
 
                           // Close modal on success
                           if (context.mounted) {
-                            Navigator.pop(context);
+                            Navigator.pop(context, true);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Transaction added successfully')),
                             );
                           }
                         } catch (e) {
                           if (context.mounted) {
+                            final message = e is ApiException
+                                ? e.message
+                                : 'Could not save transaction. '
+                                    'Make sure the backend is running at '
+                                    'http://127.0.0.1:3000.';
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: ${e.toString()}')),
+                              SnackBar(content: Text(message)),
                             );
                           }
                         }

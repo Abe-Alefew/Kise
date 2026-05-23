@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/features/transactions/data/transaction_dto.dart';
 import 'package:kise/features/transactions/data/transaction_repository.dart';
@@ -49,9 +50,6 @@ final currentMonthSummaryProvider = FutureProvider<TransactionSummary>((ref) asy
   final toIso =
       '${to.year.toString().padLeft(4, '0')}-${to.month.toString().padLeft(2, '0')}-${to.day.toString().padLeft(2, '0')}';
 
-  return ref.watch(
-    transactionSummaryProvider(
-      TransactionSummaryQuery(from: fromIso, to: toIso),
-    ).future,
-  );
+  final repository = ref.watch(transactionRepositoryProvider);
+  return repository.getSummary(from: fromIso, to: toIso);
 });

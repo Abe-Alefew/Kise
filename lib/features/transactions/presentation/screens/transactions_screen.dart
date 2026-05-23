@@ -5,13 +5,26 @@ import '../../../../core/widgets/kise_action_button.dart';
 import '../../../../core/widgets/kise_card_holder.dart';
 import '../../../../core/widgets/kise_pill_filter.dart';
 
-import '../../domain/transaction_inputs.dart';
+import '../../domain/transaction_entity.dart';
+import '../../domain/transaction_filters.dart';
+import '../providers/transactions_analytics_provider.dart';
 import '../providers/transactions_notifier.dart';
 import '../providers/transactions_summary_provider.dart';
-import '../providers/transactions_analytics_provider.dart';
 import '../widgets/analytics_bar_chart.dart';
 import '../widgets/add_transaction_modal.dart';
 import '../widgets/transaction_tile.dart';
+
+String _formatCompactAmount(double value) {
+  if (value >= 1000) {
+    final compact = value / 1000;
+    return '${compact.toStringAsFixed(compact >= 10 ? 0 : 1)}k';
+  }
+  return value.toStringAsFixed(0);
+}
+
+String _formatSavingRate(double rate) {
+  return '${(rate * 100).round()}%';
+}
 
 class TransactionsScreen extends ConsumerStatefulWidget {
   const TransactionsScreen({super.key});
@@ -28,10 +41,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   @override
   void initState() {
     super.initState();
-    // Set up listener for optimistic updates and state changes
-    ref.listen(transactionsNotifierProvider, (_, __) {});
 
-    // Load initial transactions with filter
     Future.microtask(() {
       ref
           .read(transactionsNotifierProvider.notifier)
@@ -41,62 +51,60 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch the transactions async state
-    final transactionsAsync = ref.watch(transactionsNotifierProvider);
+    ref.listen(transactionsNotifierProvider, (previous, next) {
+      final prevCount = previous?.value?.length ?? 0;
+      final nextCount = next.value?.length ?? 0;
+      if (nextCount <= prevCount || !next.hasValue) {
+        return;
+      }
 
-    // Watch the summary for current month
+      final newest = next.value!.first;
+      if (selectedFilter != 'All' && newest.type != selectedFilter) {
+        setState(() => selectedFilter = 'All');
+        ref.read(transactionsNotifierProvider.notifier).updateTypeFilter('All');
+      }
+
+      if (_visibleCount < 3) {
+        setState(() => _visibleCount = 3);
+      }
+    });
+
+    final transactionsAsync = ref.watch(transactionsNotifierProvider);
     final summaryAsync = ref.watch(currentMonthSummaryProvider);
 
-    // Watch analytics for the selected range
-    final analyticsAsync = ref.watch(
-      transactionsScreenAnalyticsProvider(selectedAnalyticsRange),
+    final transactions = transactionsAsync.value ?? const <TransactionEntity>[];
+
+    final totalIncomeLabel = summaryAsync.when(
+      data: (summary) => _formatCompactAmount(summary.totalIncome),
+      loading: () => '—',
+      error: (_, __) => '—',
+    );
+    final totalSpentLabel = summaryAsync.when(
+      data: (summary) => _formatCompactAmount(summary.totalExpense),
+      loading: () => '—',
+      error: (_, __) => '—',
+    );
+    final savingRateLabel = summaryAsync.when(
+      data: (summary) => _formatSavingRate(summary.savingRate),
+      loading: () => '—',
+      error: (_, __) => '—',
     );
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-
-      // floatingActionButton:
-      //     FloatingActionButton(
-
-      //   backgroundColor: Theme.of(context).colorScheme.primary,
-
-      //   onPressed: () {
-
-      //     showModalBottomSheet(
-
-      //       context: context,
-
-      //       isScrollControlled: true,
-
-      //       backgroundColor:
-      //           Colors.transparent,
-
-      //       builder: (context) {
-
-      //         return const AddTransactionModal();
-      //       },
-      //     );
-      //   },
-
-      //   child: const Icon(Icons.add),
-      // ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 40, 12, 12),
-
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
                 /// HEADER
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-
                       children: [
                         Text(
                           "Transactions",
@@ -104,7 +112,6 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                             context,
                           ).textTheme.displaySmall?.copyWith(fontSize: 24),
                         ),
-
                         Text(
                           "${transactions.length} records",
                           style: Theme.of(
@@ -113,20 +120,24 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                         ),
                       ],
                     ),
-
                     KiseActionButton(
                       label: 'Add',
                       leadingIcon: Icons.add,
                       expanded: false,
                       height: 35,
                       borderRadius: 10,
-                      onPressed: () {
-                        showModalBottomSheet(
+                      onPressed: () async {
+                        final added = await showModalBottomSheet<bool>(
                           context: context,
                           isScrollControlled: true,
                           backgroundColor: Colors.transparent,
                           builder: (context) => const AddTransactionModal(),
                         );
+
+                        if (added == true && mounted) {
+                          ref.invalidate(currentMonthSummaryProvider);
+                          ref.invalidate(transactionAnalyticsProvider);
+                        }
                       },
                     ),
                   ],
@@ -179,6 +190,11 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                         borderSide: BorderSide.none,
                       ),
                     ),
+                    onChanged: (query) {
+                      ref
+                          .read(transactionsNotifierProvider.notifier)
+                          .updateSearchQuery(query);
+                    },
                   ),
                 ),
 
@@ -187,14 +203,15 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                 /// FILTERS
                 KisePillFilter(
                   options: const ["All", "Income", "Expense"],
-
                   selected: selectedFilter,
-
                   onSelected: (value) {
                     setState(() {
                       selectedFilter = value;
                       _visibleCount = 3;
                     });
+                    ref
+                        .read(transactionsNotifierProvider.notifier)
+                        .updateTypeFilter(value);
                   },
                 ),
 
@@ -205,27 +222,23 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   children: [
                     Expanded(
                       child: _summaryCard(
-                        amount: "30.0k",
+                        amount: totalIncomeLabel,
                         label: "Total Income",
                         color: Theme.of(context).colorScheme.tertiary,
                       ),
                     ),
-
                     const SizedBox(width: 12),
-
                     Expanded(
                       child: _summaryCard(
-                        amount: "20.0k",
+                        amount: totalSpentLabel,
                         label: "Total Spent",
                         color: Theme.of(context).colorScheme.error,
                       ),
                     ),
-
                     const SizedBox(width: 12),
-
                     Expanded(
                       child: _summaryCard(
-                        amount: "33%",
+                        amount: savingRateLabel,
                         label: "Saving Rate",
                         color: Theme.of(context).colorScheme.tertiary,
                       ),

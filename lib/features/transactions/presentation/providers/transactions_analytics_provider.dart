@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/features/transactions/data/transaction_dto.dart';
 import 'package:kise/features/transactions/data/transaction_repository.dart';
@@ -68,19 +69,8 @@ final transactionAnalyticsProvider =
 );
 
 final transactionsScreenAnalyticsProvider =
-    Provider.family<AsyncValue<TransactionAnalytics>, String>((ref, uiRangeLabel) {
-  final typeFilter = ref.watch(transactionsAnalyticsTypeFilterProvider);
-
-  return ref.watch(
-    transactionAnalyticsProvider(
-      TransactionAnalyticsQuery(
-        range: uiRangeLabel,
-        type: typeFilter,
-      ),
-    ),
-  );
-});
-
-final transactionsAnalyticsTypeFilterProvider = Provider<String>((ref) {
-  return 'All';
-});
+    Provider.family<AsyncValue<TransactionAnalytics>, TransactionAnalyticsQuery>(
+  (ref, query) {
+    return ref.watch(transactionAnalyticsProvider(query));
+  },
+);
