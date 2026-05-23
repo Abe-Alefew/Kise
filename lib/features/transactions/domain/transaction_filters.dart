@@ -21,23 +21,26 @@ class TransactionQueryFilter {
     this.offset = 0,
   });
 
+  // Sentinel to distinguish "not passed" from "explicitly null"
+  static const _absent = Object();
+
   TransactionQueryFilter copyWith({
-    String? type,
-    String? category,
-    String? from,
-    String? to,
-    String? searchQuery,
+    Object? type = _absent,
+    Object? category = _absent,
+    Object? from = _absent,
+    Object? to = _absent,
+    Object? searchQuery = _absent,
     String? sort,
     int? page,
     int? limit,
     int? offset,
   }) {
     return TransactionQueryFilter(
-      type: type ?? this.type,
-      category: category ?? this.category,
-      from: from ?? this.from,
-      to: to ?? this.to,
-      searchQuery: searchQuery ?? this.searchQuery,
+      type: identical(type, _absent) ? this.type : type as String?,
+      category: identical(category, _absent) ? this.category : category as String?,
+      from: identical(from, _absent) ? this.from : from as String?,
+      to: identical(to, _absent) ? this.to : to as String?,
+      searchQuery: identical(searchQuery, _absent) ? this.searchQuery : searchQuery as String?,
       sort: sort ?? this.sort,
       page: page ?? this.page,
       limit: limit ?? this.limit,

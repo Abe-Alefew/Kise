@@ -2,24 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/widgets/kise_action_button.dart';
+import '../../domain/transaction_entity.dart';
 import '../../domain/transaction_inputs.dart';
 import '../providers/transactions_notifier.dart';
 
 class AddTransactionModal extends ConsumerStatefulWidget {
-  const AddTransactionModal({super.key});
+  final TransactionEntity? transactionToEdit;
+
+  const AddTransactionModal({super.key, this.transactionToEdit});
+
+  bool get isEditMode => transactionToEdit != null;
 
   @override
   ConsumerState<AddTransactionModal> createState() => _AddTransactionModalState();
 }
 
 class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
-  String selectedType = "Expense";
+  late String selectedType;
   String? selectedCategory;
   String? selectedAccount;
-  DateTime selectedDate = DateTime.now(); // Track actual date
+  late DateTime selectedDate;
 
   final amountController = TextEditingController();
   final noteController = TextEditingController();
+
+  bool _isSubmitting = false;
 
   final List<String> expenseCategories = ["Food", "Transport", "Education", "Shopping"];
   final List<String> incomeSources = ["Salary", "Freelance", "Investment"];
@@ -27,6 +34,36 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
 
   List<String> get currentCategories =>
       selectedType == "Income" ? incomeSources : expenseCategories;
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.transactionToEdit;
+    if (existing != null) {
+      selectedType = existing.type;
+      selectedCategory = currentCategories.contains(existing.category)
+          ? existing.category
+          : null;
+      selectedDate = DateTime.tryParse('${existing.transactionDate}T00:00:00') ??
+          DateTime.now();
+      amountController.text = _formatAmount(existing.amount);
+      noteController.text = existing.note ?? '';
+      if (existing.accountName != null &&
+          accounts.contains(existing.accountName)) {
+        selectedAccount = existing.accountName;
+      }
+    } else {
+      selectedType = "Expense";
+      selectedDate = DateTime.now();
+    }
+  }
+
+  static String _formatAmount(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toInt().toString();
+    }
+    return value.toString();
+  }
 
   @override
   void dispose() {
@@ -55,7 +92,7 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
     final cs = Theme.of(context).colorScheme;
     return InputDecoration(
       isDense: true,
-      filled: true, // Set to true to allow surface color
+      filled: true,
       fillColor: cs.surface,
       hintText: hint,
       suffixIcon: suffix,
@@ -71,11 +108,97 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
     );
   }
 
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+
+    if (selectedCategory == null ||
+        selectedAccount == null ||
+        amountController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields')),
+      );
+      return;
+    }
+
+    final amount = double.tryParse(amountController.text.trim());
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid amount')),
+      );
+      return;
+    }
+
+    final transactionDate =
+        '${selectedDate.year.toString().padLeft(4, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final notifier = ref.read(transactionsNotifierProvider.notifier);
+
+      if (widget.isEditMode) {
+        await notifier.updateTransaction(
+          widget.transactionToEdit!.id,
+          UpdateTransactionInput(
+            type: selectedType,
+            title: selectedCategory ?? selectedType,
+            category: selectedCategory!,
+            amount: amount,
+            transactionDate: transactionDate,
+            note: noteController.text.trim().isEmpty
+                ? null
+                : noteController.text.trim(),
+            iconKey: widget.transactionToEdit!.iconKey,
+          ),
+        );
+
+        if (!context.mounted) return;
+        Navigator.pop(context, true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaction updated successfully')),
+        );
+      } else {
+        await notifier.addTransaction(
+          CreateTransactionInput(
+            type: selectedType,
+            title: selectedCategory ?? selectedType,
+            category: selectedCategory!,
+            amount: amount,
+            transactionDate: transactionDate,
+            note: noteController.text.trim().isEmpty
+                ? null
+                : noteController.text.trim(),
+          ),
+        );
+
+        if (!context.mounted) return;
+        Navigator.pop(context, true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaction added successfully')),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      final message = e is ApiException
+          ? e.message
+          : 'Could not save transaction. '
+              'Make sure the backend is running at http://127.0.0.1:3000.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final kb = MediaQuery.of(context).viewInsets.bottom;
+    final isEdit = widget.isEditMode;
 
     return Padding(
       padding: EdgeInsets.only(bottom: kb),
@@ -85,25 +208,26 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
           color: cs.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: SingleChildScrollView( // Added for keyboard overflow
+        child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// HEADER
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("New Transaction", style: tt.titleMedium),
+                  Text(
+                    isEdit ? "Edit Transaction" : "New Transaction",
+                    style: tt.titleMedium,
+                  ),
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _isSubmitting ? null : () => Navigator.pop(context),
                     icon: Icon(Icons.close, size: 20, color: cs.primary),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
 
-              /// TYPE TOGGLE
               Container(
                 decoration: BoxDecoration(
                   color: cs.surfaceContainerHighest,
@@ -115,10 +239,15 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
                     final isSelected = selectedType == type;
                     return Expanded(
                       child: GestureDetector(
-                        onTap: () => setState(() {
-                          selectedType = type;
-                          selectedCategory = null; // Reset category to avoid error
-                        }),
+                        onTap: _isSubmitting
+                            ? null
+                            : () => setState(() {
+                                  selectedType = type;
+                                  if (selectedCategory != null &&
+                                      !currentCategories.contains(selectedCategory)) {
+                                    selectedCategory = null;
+                                  }
+                                }),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           height: 34,
@@ -132,9 +261,9 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
                             child: Text(
                               type,
                               style: tt.labelMedium?.copyWith(
-                                color: isSelected 
-                                   ? (type == "Income" ? cs.onTertiary : cs.onError)
-                                   : cs.onSurfaceVariant,
+                                color: isSelected
+                                    ? (type == "Income" ? cs.onTertiary : cs.onError)
+                                    : cs.onSurfaceVariant,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -147,43 +276,51 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
               ),
               const SizedBox(height: 16),
 
-              /// AMOUNT
               Text("Amount (ETB)", style: tt.labelMedium),
               const SizedBox(height: 5),
               _fieldShadow(
                 child: TextField(
                   controller: amountController,
+                  enabled: !_isSubmitting,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: _inputDec(context, hint: "0.00"),
                 ),
               ),
               const SizedBox(height: 12),
 
-              /// CATEGORY + ACCOUNT
               Row(
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(selectedType == "Income" ? "Source" : "Category", style: tt.labelMedium),
+                        Text(
+                          selectedType == "Income" ? "Source" : "Category",
+                          style: tt.labelMedium,
+                        ),
                         const SizedBox(height: 5),
                         _fieldShadow(
                           child: DropdownButtonFormField<String>(
-                            value: selectedCategory, // Use 'value' instead of 'initialValue'
-                            // hint: Text("Select category", style: tt.bodySmall?.copyWith(color: cs.outline)),
+                            value: selectedCategory,
                             isExpanded: true,
                             isDense: true,
                             dropdownColor: cs.surface,
                             borderRadius: BorderRadius.circular(12),
                             elevation: 4,
-                            icon: Icon(Icons.keyboard_arrow_down, color: cs.outline, size: 20),
+                            icon: Icon(Icons.keyboard_arrow_down,
+                                color: cs.outline, size: 20),
                             decoration: _inputDec(context),
-                            items: currentCategories.map((e) => DropdownMenuItem(
-                              value: e,
-                              child: Text(e, style: tt.bodyMedium),
-                            )).toList(),
-                            onChanged: (v) => setState(() => selectedCategory = v),
+                            items: currentCategories
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text(e, style: tt.bodyMedium),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: _isSubmitting
+                                ? null
+                                : (v) => setState(() => selectedCategory = v),
                           ),
                         ),
                       ],
@@ -194,24 +331,33 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(selectedType == "Income" ? "Deposit To" : "Paid From", style: tt.labelMedium),
+                        Text(
+                          selectedType == "Income" ? "Deposit To" : "Paid From",
+                          style: tt.labelMedium,
+                        ),
                         const SizedBox(height: 5),
                         _fieldShadow(
                           child: DropdownButtonFormField<String>(
                             value: selectedAccount,
-                            // hint: Text("Select account", style: tt.bodySmall?.copyWith(color: cs.outline)),
                             isExpanded: true,
                             isDense: true,
                             dropdownColor: cs.surface,
                             borderRadius: BorderRadius.circular(12),
                             elevation: 4,
-                            icon: Icon(Icons.keyboard_arrow_down, color: cs.outline, size: 20),
+                            icon: Icon(Icons.keyboard_arrow_down,
+                                color: cs.outline, size: 20),
                             decoration: _inputDec(context),
-                            items: accounts.map((e) => DropdownMenuItem(
-                              value: e,
-                              child: Text(e, style: tt.bodyMedium),
-                            )).toList(),
-                            onChanged: (v) => setState(() => selectedAccount = v),
+                            items: accounts
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text(e, style: tt.bodyMedium),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: _isSubmitting
+                                ? null
+                                : (v) => setState(() => selectedAccount = v),
                           ),
                         ),
                       ],
@@ -221,43 +367,44 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
               ),
               const SizedBox(height: 12),
 
-              /// DATE
               Text("Date", style: tt.labelMedium),
               const SizedBox(height: 5),
               _fieldShadow(
                 child: TextField(
                   readOnly: true,
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: selectedDate,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (date != null) setState(() => selectedDate = date);
-                  },
+                  onTap: _isSubmitting
+                      ? null
+                      : () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                          );
+                          if (date != null) setState(() => selectedDate = date);
+                        },
                   decoration: _inputDec(
                     context,
-                    hint: "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
+                    hint:
+                        "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
                     suffix: Icon(Icons.calendar_today, size: 16, color: cs.outline),
                   ),
                 ),
               ),
               const SizedBox(height: 12),
 
-              /// NOTE
               Text("Note (optional)", style: tt.labelMedium),
               const SizedBox(height: 5),
               _fieldShadow(
                 child: TextField(
                   controller: noteController,
+                  enabled: !_isSubmitting,
                   maxLines: 2,
                   decoration: _inputDec(context, hint: "Add a note..."),
                 ),
               ),
               const SizedBox(height: 20),
 
-              /// BUTTONS
               Row(
                 children: [
                   Expanded(
@@ -266,70 +413,36 @@ class _AddTransactionModalState extends ConsumerState<AddTransactionModal> {
                       variant: KiseButtonVariant.outline,
                       height: 42,
                       borderRadius: 10,
-                      textColor: Theme.of(context).colorScheme.onSurface,
+                      textColor: cs.onSurface,
                       outlineBorderSide: BorderSide(
-                        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
+                        color: cs.outline.withValues(alpha: 0.25),
                         width: 0.8,
                       ),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed:
+                          _isSubmitting ? null : () => Navigator.pop(context),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: KiseActionButton(
-                      label: "Add Transaction",
+                      label: isEdit ? "Save Update" : "Add Transaction",
                       borderRadius: 10,
                       height: 42,
-                      onPressed: () async {
-                        // Validate inputs
-                        if (selectedCategory == null || selectedAccount == null || amountController.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please fill all required fields')),
-                          );
-                          return;
-                        }
-
-                        // Create the transaction input
-                        final transactionInput = CreateTransactionInput(
-                          type: selectedType,
-                          title: selectedCategory ?? selectedType,
-                          category: selectedCategory!,
-                          amount: double.parse(amountController.text),
-                          transactionDate:
-                              '${selectedDate.year.toString().padLeft(4, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
-                          note: noteController.text.trim().isEmpty
-                              ? null
-                              : noteController.text.trim(),
-                        );
-
-                        try {
-                          // Add transaction with optimistic update
-                          await ref.read(transactionsNotifierProvider.notifier).addTransaction(transactionInput);
-
-                          // Close modal on success
-                          if (context.mounted) {
-                            Navigator.pop(context, true);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Transaction added successfully')),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            final message = e is ApiException
-                                ? e.message
-                                : 'Could not save transaction. '
-                                    'Make sure the backend is running at '
-                                    'http://127.0.0.1:3000.';
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(message)),
-                            );
-                          }
-                        }
-                      },
+                      onPressed: _isSubmitting ? null : _submit,
                     ),
                   ),
                 ],
               ),
+              if (_isSubmitting) ...[
+                const SizedBox(height: 12),
+                const Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
