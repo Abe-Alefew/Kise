@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:kise/features/debt/domain/debt_inputs.dart';
 
 enum DebtStatus { pending, partial, settled }
 
@@ -87,10 +88,7 @@ class PaymentRecord {
   }
 
   static String _toIsoDate(DateTime value) {
-    final year = value.year.toString().padLeft(4, '0');
-    final month = value.month.toString().padLeft(2, '0');
-    final day = value.day.toString().padLeft(2, '0');
-    return '$year-$month-$day';
+    return DebtDateParser.toIsoDate(value);
   }
 }
 
@@ -98,7 +96,10 @@ class PaymentRecord {
 class DebtEntity {
   final String id;
   final String personName;
-  final String? personInitial;
+
+  /// Single-character avatar label; never null (UI reads this directly).
+  final String personInitial;
+
   final DebtType type;
   final double totalAmount;
   final double paidAmount;
@@ -113,40 +114,35 @@ class DebtEntity {
   final bool isDirty;
   final String? syncError;
 
-  const DebtEntity({
+  DebtEntity({
     required this.id,
     required this.personName,
-    this.personInitial,
+    String? personInitial,
     required this.type,
     required this.totalAmount,
-    required this.paidAmount,
-    required this.remaining,
-    required this.debtDate,
+    this.paidAmount = 0,
+    double? remaining,
+    String? debtDate,
     required this.date,
     this.notes,
     this.payments = const [],
-    required this.status,
+    DebtStatus? status,
     this.createdAt,
     this.updatedAt,
     this.isDirty = false,
     this.syncError,
-  });
+  })  : personInitial = personInitial ?? deriveInitial(personName),
+        remaining = remaining ?? deriveRemaining(totalAmount, paidAmount),
+        debtDate = debtDate ?? DebtDateParser.toIsoDate(date),
+        status = status ?? deriveStatus(paidAmount: paidAmount, totalAmount: totalAmount);
 
-  double get computedRemaining => totalAmount - paidAmount;
+  double get computedRemaining => deriveRemaining(totalAmount, paidAmount);
 
-  String get personInitialLabel =>
-      personInitial ??
-      (personName.isNotEmpty ? personName[0].toUpperCase() : '?');
-
-  DebtStatus resolveStatus() {
-    if (paidAmount >= totalAmount) {
-      return DebtStatus.settled;
-    }
-    if (paidAmount > 0) {
-      return DebtStatus.partial;
-    }
-    return DebtStatus.pending;
-  }
+  DebtStatus resolveStatus() => deriveStatus(
+        paidAmount: paidAmount,
+        totalAmount: totalAmount,
+        apiStatus: DebtEntity.statusToApi(status),
+      );
 
   factory DebtEntity.fromJson(Map<String, dynamic> json) {
     final paymentsJson = json['payments'];
@@ -165,12 +161,10 @@ class DebtEntity {
     final paid = PaymentRecord._readDouble(json['paidAmount']);
     final remaining = json['remaining'] != null
         ? PaymentRecord._readDouble(json['remaining'])
-        : (total - paid).clamp(0.0, double.infinity);
+        : deriveRemaining(total, paid);
 
     final debtDateIso = json['debtDate']?.toString() ?? '';
-    final parsedDate = DateTime.tryParse('${debtDateIso}T00:00:00.000Z') ??
-        DateTime.tryParse(debtDateIso) ??
-        DateTime.now();
+    final parsedDate = DebtDateParser.parseIsoDate(debtDateIso) ?? DateTime.now();
 
     return DebtEntity(
       id: json['id']?.toString() ?? '',
@@ -180,11 +174,17 @@ class DebtEntity {
       totalAmount: total,
       paidAmount: paid,
       remaining: remaining,
-      debtDate: debtDateIso,
-      date: parsedDate.toLocal(),
+      debtDate: debtDateIso.isNotEmpty
+          ? debtDateIso
+          : DebtDateParser.toIsoDate(parsedDate),
+      date: parsedDate,
       notes: json['notes']?.toString(),
       payments: payments,
-      status: _statusFromApi(json['status']?.toString(), paid, total),
+      status: statusFromApi(
+        json['status']?.toString(),
+        paidAmount: paid,
+        totalAmount: total,
+      ),
       createdAt: json['createdAt']?.toString(),
       updatedAt: json['updatedAt']?.toString(),
       isDirty: json['isDirty'] == true,
@@ -196,12 +196,12 @@ class DebtEntity {
     return {
       'id': id,
       'personName': personName,
-      if (personInitial != null) 'personInitial': personInitial,
+      'personInitial': personInitial,
       'type': type == DebtType.lent ? 'lent' : 'borrowed',
       'totalAmount': totalAmount,
       'paidAmount': paidAmount,
       'remaining': remaining,
-      'status': _statusToApi(status),
+      'status': statusToApi(status),
       'debtDate': debtDate,
       if (notes != null) 'notes': notes,
       'payments': payments.map((payment) => payment.toJson()).toList(),
@@ -231,19 +231,29 @@ class DebtEntity {
     String? syncError,
     bool clearSyncError = false,
   }) {
+    final nextPersonName = personName ?? this.personName;
+    final nextTotal = totalAmount ?? this.totalAmount;
+    final nextPaid = paidAmount ?? this.paidAmount;
+    final nextDate = date ?? this.date;
+
     return DebtEntity(
       id: id ?? this.id,
-      personName: personName ?? this.personName,
+      personName: nextPersonName,
       personInitial: personInitial ?? this.personInitial,
       type: type ?? this.type,
-      totalAmount: totalAmount ?? this.totalAmount,
-      paidAmount: paidAmount ?? this.paidAmount,
-      remaining: remaining ?? this.remaining,
+      totalAmount: nextTotal,
+      paidAmount: nextPaid,
+      remaining: remaining ?? deriveRemaining(nextTotal, nextPaid),
       debtDate: debtDate ?? this.debtDate,
-      date: date ?? this.date,
+      date: nextDate,
       notes: notes ?? this.notes,
       payments: payments ?? this.payments,
-      status: status ?? this.status,
+      status: status ??
+          deriveStatus(
+            paidAmount: nextPaid,
+            totalAmount: nextTotal,
+            apiStatus: DebtEntity.statusToApi(this.status),
+          ),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isDirty: isDirty ?? this.isDirty,
@@ -251,11 +261,12 @@ class DebtEntity {
     );
   }
 
-  static DebtStatus _statusFromApi(
-    String? apiStatus,
-    double paid,
-    double total,
-  ) {
+  /// Maps API/cache status strings to [DebtStatus] (shared with DTO layer).
+  static DebtStatus statusFromApi(
+    String? apiStatus, {
+    required double paidAmount,
+    required double totalAmount,
+  }) {
     switch (apiStatus) {
       case 'settled':
         return DebtStatus.settled;
@@ -264,17 +275,14 @@ class DebtEntity {
       case 'pending':
         return DebtStatus.pending;
       default:
-        if (paid >= total) {
-          return DebtStatus.settled;
-        }
-        if (paid > 0) {
-          return DebtStatus.partial;
-        }
-        return DebtStatus.pending;
+        return deriveStatus(
+          paidAmount: paidAmount,
+          totalAmount: totalAmount,
+        );
     }
   }
 
-  static String _statusToApi(DebtStatus value) {
+  static String statusToApi(DebtStatus value) {
     switch (value) {
       case DebtStatus.settled:
         return 'settled';
@@ -283,5 +291,38 @@ class DebtEntity {
       case DebtStatus.pending:
         return 'pending';
     }
+  }
+
+  static String deriveInitial(String personName) {
+    final trimmed = personName.trim();
+    if (trimmed.isEmpty) {
+      return '?';
+    }
+    return trimmed[0].toUpperCase();
+  }
+
+  static double deriveRemaining(double totalAmount, double paidAmount) {
+    return (totalAmount - paidAmount).clamp(0.0, double.infinity);
+  }
+
+  static DebtStatus deriveStatus({
+    required double paidAmount,
+    required double totalAmount,
+    String? apiStatus,
+  }) {
+    if (apiStatus != null && apiStatus.isNotEmpty) {
+      return statusFromApi(
+        apiStatus,
+        paidAmount: paidAmount,
+        totalAmount: totalAmount,
+      );
+    }
+    if (paidAmount >= totalAmount && totalAmount > 0) {
+      return DebtStatus.settled;
+    }
+    if (paidAmount > 0) {
+      return DebtStatus.partial;
+    }
+    return DebtStatus.pending;
   }
 }

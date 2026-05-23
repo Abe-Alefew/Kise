@@ -1,10 +1,4 @@
-const express = require('express');
-<<<<<<< HEAD
-
-const router = express.Router();
-
-module.exports = router;
-=======
+﻿const express = require('express');
 const { body, param, query } = require('express-validator');
 const TransactionController = require('../controllers/transaction.controller');
 const TransactionModel = require('../models/Transaction.model');
@@ -236,4 +230,3 @@ router.delete(
 );
 
 module.exports = router;
->>>>>>> 9f5909d5ffab0a7c07304ed16c57780b578c4a77
