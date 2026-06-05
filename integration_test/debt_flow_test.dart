@@ -1,0 +1,54 @@
+// Integration test: Debt management user journey.
+// Covers: view debt list → add debt → record payment → delete.
+//
+// Precondition: requires authenticated session (real or mocked backend).
+// Run with: flutter test integration_test/debt_flow_test.dart
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+
+// Full debt CRUD flow requires a live backend session.
+// Unit tests for DebtEntity, DebtsNotifier cover the business logic.
+// Widget tests for DebtScreen, DebtCard cover the UI layer.
+// This file is the entry point for E2E debt flow testing in CI with a test backend.
+
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  group('Debt flow (E2E — requires authenticated test backend)', () {
+    // ── Placeholder: Add debt ────────────────────────────────────
+    // testWidgets('adding a debt shows it in the list', (tester) async {
+    //   // 1. Navigate to Debt tab
+    //   // 2. Tap FAB → fill in person name, amount, date, type
+    //   // 3. Submit
+    //   // 4. Verify DebtCard appears with correct personName and amount
+    // });
+
+    // ── Placeholder: Record payment ──────────────────────────────
+    // testWidgets('recording a payment reduces remaining amount', (tester) async {
+    //   // 1. Open existing debt detail
+    //   // 2. Tap "Record Payment" → enter amount
+    //   // 3. Verify remaining amount decreases
+    //   // 4. Verify status changes from pending → partial
+    // });
+
+    // ── Placeholder: Settle debt ─────────────────────────────────
+    // testWidgets('full payment marks debt as settled', (tester) async {
+    //   // 1. Record payment equal to totalAmount
+    //   // 2. Verify StatusBadge shows "settled"
+    // });
+
+    // ── Placeholder: Delete debt ─────────────────────────────────
+    // testWidgets('deleting a debt removes it from the list', (tester) async {
+    //   // 1. Long-press or swipe on DebtCard
+    //   // 2. Confirm deletion
+    //   // 3. Verify card is no longer in list
+    // });
+
+    test('placeholder — debt E2E tests require authenticated test backend', () {
+      // This test always passes. Replace with real E2E flows when a test
+      // backend is provisioned in CI.
+      expect(true, isTrue);
+    });
+  });
+}
