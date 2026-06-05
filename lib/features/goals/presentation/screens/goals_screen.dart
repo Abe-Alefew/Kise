@@ -1,81 +1,102 @@
 import 'package:flutter/material.dart';
-import 'package:kise/core/widgets/widgets.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kise/core/network/dio_client.dart';
+import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/theme/colors.dart';
 import 'package:kise/core/theme/text_theme.dart';
-import 'package:kise/core/theme/app_dimensions.dart';
+import 'package:kise/core/widgets/widgets.dart';
+import 'package:kise/features/goals/domain/goal_entity.dart';
+import 'package:kise/features/goals/domain/goal_filters.dart';
+import 'package:kise/features/goals/domain/goal_inputs.dart';
+import 'package:kise/features/goals/presentation/state/goals_notifier.dart';
 import 'package:kise/features/goals/presentation/widgets/goal_card.dart';
 import 'package:kise/features/goals/presentation/widgets/new_goal_bottom_sheet.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
-class GoalsScreen extends StatefulWidget {
+class GoalsScreen extends ConsumerStatefulWidget {
   const GoalsScreen({super.key});
 
   @override
-  State<GoalsScreen> createState() => _GoalsScreenState();
+  ConsumerState<GoalsScreen> createState() => _GoalsScreenState();
 }
 
-class _GoalsScreenState extends State<GoalsScreen> {
+class _GoalsScreenState extends ConsumerState<GoalsScreen> {
   String _selectedFilter = 'All';
 
-  final List<Goal> _goals = [
-    Goal(id: '1', title: 'Vacation', period: 'Monthly', dueDate: 'Due Mon Feb 25 2026', currentAmount: 1000, targetAmount: 1000, isCompleted: true),
-    Goal(id: '2', title: 'Buy Sneakers', period: 'Monthly', dueDate: 'Due Mon Feb 25 2026', currentAmount: 1200, targetAmount: 3800, isCompleted: false),
-    Goal(id: '3', title: 'Buy Food', period: 'Weekly', dueDate: 'Due Mon Feb 25 2026', currentAmount: 413, targetAmount: 800, isCompleted: false),
-    Goal(id: '4', title: 'New Laptop', period: 'Monthly', dueDate: 'Due Wed Jun 10 2026', currentAmount: 50000, targetAmount: 120000, isCompleted: false),
-    Goal(id: '5', title: 'Emergency Fund', period: 'Monthly', dueDate: 'Due Fri Jan 1 2027', currentAmount: 10000, targetAmount: 50000, isCompleted: false),
-    Goal(id: '6', title: 'Car Paint Job', period: 'One-time', dueDate: 'Due Tue Oct 12 2026', currentAmount: 0, targetAmount: 15000, isCompleted: false),
-  ];
-
-  List<Goal> get _filteredGoals {
-    if (_selectedFilter == 'All') return _goals;
-    if (_selectedFilter == 'Active') return _goals.where((g) => !g.isCompleted && g.currentAmount > 0).toList();
-    if (_selectedFilter == 'Completed') return _goals.where((g) => g.isCompleted).toList();
-    // For demonstration, Canceled is empty
-    if (_selectedFilter == 'Canceled') return []; 
-    return _goals;
+  void _showError(Object error) {
+    if (!mounted) {
+      return;
+    }
+    final message =
+        error is ApiException ? error.userMessage : error.toString();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
-  void _handleDelete(String id) {
-    setState(() {
-      _goals.removeWhere((g) => g.id == id);
-    });
+  Future<void> _onFilterSelected(String val) async {
+    setState(() => _selectedFilter = val);
+    try {
+      await ref.read(goalsNotifierProvider.notifier).applyUiFilter(val);
+    } catch (error) {
+      _showError(error);
+    }
   }
 
-  void _handleDeposit(Goal goal, double amount, String source) {
-    setState(() {
-      final newAmount = goal.currentAmount + amount;
-      final index = _goals.indexWhere((g) => g.id == goal.id);
-      if (index != -1) {
-        _goals[index] = Goal(
-          id: goal.id,
-          title: goal.title,
-          period: goal.period,
-          dueDate: goal.dueDate,
-          currentAmount: newAmount,
-          targetAmount: goal.targetAmount,
-          isCompleted: newAmount >= goal.targetAmount,
-          isLocked: goal.isLocked,
-        );
-      }
-    });
+  Future<void> _handleDelete(String id) async {
+    try {
+      await ref.read(goalsNotifierProvider.notifier).deleteGoal(id);
+    } catch (error) {
+      _showError(error);
+    }
   }
 
-  void _handleEdit(Goal goal, String newTitle, double newTarget, String newDeadline, String newPeriod) {
-    setState(() {
-      final index = _goals.indexWhere((g) => g.id == goal.id);
-      if (index != -1) {
-        _goals[index] = Goal(
-          id: goal.id,
-          title: newTitle,
-          period: newPeriod,
-          dueDate: newDeadline,
-          currentAmount: goal.currentAmount,
-          targetAmount: newTarget,
-          isCompleted: goal.currentAmount >= newTarget,
-          isLocked: goal.isLocked,
-        );
-      }
-    });
+  Future<void> _handleDeposit(
+    GoalEntity goal,
+    double amount,
+    String source,
+  ) async {
+    try {
+      await ref.read(goalsNotifierProvider.notifier).logDeposit(
+            goal: goal,
+            amount: amount,
+            source: source,
+          );
+    } catch (error) {
+      _showError(error);
+    }
+  }
+
+  Future<void> _handleEdit(
+    GoalEntity goal,
+    String newTitle,
+    double newTarget,
+    String newDeadline,
+    String newPeriod,
+  ) async {
+    final parsedDue =
+        GoalDateParser.parseDueDate(newDeadline) ?? DateTime.now();
+    try {
+      await ref.read(goalsNotifierProvider.notifier).updateGoal(
+            goal.id,
+            UpdateGoalInput(
+              title: newTitle.trim(),
+              targetAmount: newTarget,
+              dueDate: GoalDateParser.toIsoDate(parsedDue),
+              period: GoalDateParser.normalizePeriod(newPeriod),
+            ),
+          );
+    } catch (error) {
+      _showError(error);
+    }
+  }
+
+  Future<void> _handleLock(GoalEntity goal) async {
+    try {
+      await ref.read(goalsNotifierProvider.notifier).toggleLock(goal);
+    } catch (error) {
+      _showError(error);
+    }
   }
 
   void _handleAddGoal() {
@@ -83,24 +104,24 @@ class _GoalsScreenState extends State<GoalsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
+      builder: (BuildContext sheetContext) {
         return NewGoalBottomSheet(
-          onSave: (title, targetAmount, currentAmount, deadline, period, note) {
-            setState(() {
-              _goals.add(
-                Goal(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  title: title,
-                  period: period,
-                  dueDate: deadline,
-                  currentAmount: currentAmount,
-                  targetAmount: targetAmount,
-                  isCompleted: currentAmount >= targetAmount,
-                  isLocked: false,
-                ),
-              );
-            });
-            Navigator.of(context).pop();
+          onSave: (title, targetAmount, currentAmount, deadline, period, note) async {
+            try {
+              await ref.read(goalsNotifierProvider.notifier).addGoal(
+                    title: title,
+                    period: period,
+                    targetAmount: targetAmount,
+                    currentAmount: currentAmount,
+                    dueDateDisplay: deadline,
+                    note: note,
+                  );
+              if (sheetContext.mounted) {
+                Navigator.of(sheetContext).pop();
+              }
+            } catch (error) {
+              _showError(error);
+            }
           },
         );
       },
@@ -109,7 +130,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool isDark = Theme.of(context).brightness == Brightness.dark;
+    ref.listen<AsyncValue<List<GoalEntity>>>(goalsNotifierProvider, (prev, next) {
+      if (next.hasError && next.error != prev?.error) {
+        _showError(next.error!);
+      }
+    });
+
+    // states
+    final goalsAsync = ref.watch(goalsNotifierProvider);
+    final filter = ref.read(goalsNotifierProvider.notifier).filter;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: isDark ? AppColorsDark.scaffold : AppColorsLight.scaffold,
@@ -120,7 +150,6 @@ class _GoalsScreenState extends State<GoalsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppDimensions.lg),
-              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -135,52 +164,76 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Track your savings targets',
-                        style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColorsDark.textHint : AppColorsLight.textHint),
+                        style: AppTextStyles.bodySm.copyWith(
+                          color: isDark
+                              ? AppColorsDark.textHint
+                              : AppColorsLight.textHint,
+                        ),
                       ),
                     ],
                   ),
                   KiseActionButton(
-                    leadingIcon: LucideIcons.plus, 
-                    label: 'New', 
-                    onPressed: _handleAddGoal, 
-                    expanded: false, 
+                    leadingIcon: LucideIcons.plus,
+                    label: 'New',
+                    onPressed: _handleAddGoal,
+                    expanded: false,
                     width: 110.0,
                   ),
                 ],
               ),
               const SizedBox(height: AppDimensions.xl),
-              // Pill Filters
               KisePillFilter(
                 options: const ['All', 'Active', 'Completed', 'Canceled'],
                 selected: _selectedFilter,
-                onSelected: (val) {
-                  setState(() {
-                    _selectedFilter = val;
-                  });
-                },
+                onSelected: _onFilterSelected,
               ),
               const SizedBox(height: AppDimensions.lg),
-              // Goal Cards List
-              _filteredGoals.isEmpty
-                  ? const Expanded(
-                      child: KiseEmptyIndicator(
+              Expanded(
+                child: goalsAsync.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (error, _) => KiseEmptyIndicator(
+                    title: 'Could not load goals',
+                    subtitle: error is ApiException
+                        ? error.userMessage
+                        : error.toString(),
+                    icon: LucideIcons.target,
+                  ),
+                  data: (goals) {
+                    final displayGoals =
+                        goals.where(filter.matches).toList();
+
+                    if (displayGoals.isEmpty) {
+                      return const KiseEmptyIndicator(
                         title: 'No goals found',
-                        subtitle: 'Try adjusting your filters or add a new goal.',
+                        subtitle:
+                            'Try adjusting your filters or add a new goal.',
                         icon: LucideIcons.target,
-                      ),
-                    )
-                  : Expanded(
-                child: ListView.builder(
-                  itemCount: _filteredGoals.length,
-                  // padding: const EdgeInsets.only(bottom: AppDimensions.lg),
-                  itemBuilder: (context, index) {
-                    final Goal goal = _filteredGoals[index];
-                    return GoalCard(
-                      key: ValueKey(goal.id),
-                      goal: goal,
-                      onDelete: () => _handleDelete(goal.id),
-                      onDeposit: (amount, source) => _handleDeposit(goal, amount, source),
-                      onEdit: (title, target, deadline, period) => _handleEdit(goal, title, target, deadline, period),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: displayGoals.length,
+                      itemBuilder: (context, index) {
+                        final goal = displayGoals[index];
+                        return GoalCard(
+                          key: ValueKey(goal.id),
+                          goal: goal,
+                          onDelete: () => _handleDelete(goal.id),
+                          onLock: () => _handleLock(goal),
+                          onDeposit: (amount, source) =>
+                              _handleDeposit(goal, amount, source),
+                          onEdit: (title, target, deadline, period) =>
+                              _handleEdit(
+                            goal,
+                            title,
+                            target,
+                            deadline,
+                            period,
+                          ),
+                        );
+                      },
                     );
                   },
                 ),

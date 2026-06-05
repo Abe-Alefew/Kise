@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/network/api_endpoints.dart';
 import 'package:kise/core/network/auth_interceptor.dart';
-import 'package:kise/features/auth/data/token_storage.dart';
-import 'package:kise/features/auth/presentation/providers/auth_notifier.dart';
+import 'package:kise/features/auth/data/datasources/token_storage.dart';
+import 'package:kise/features/auth/presentation/state/auth_notifier.dart';
 
 class ApiException implements Exception {
   final String message;
@@ -20,6 +20,54 @@ class ApiException implements Exception {
 
   @override
   String toString() => 'ApiException($code): $message';
+
+  /// User-facing message including validation field details when present.
+  String get userMessage {
+    if (details.isEmpty) {
+      return message;
+    }
+
+    final detailLines = details
+        .map((detail) {
+          final label = _fieldLabel(detail.field);
+          return label.isEmpty ? detail.message : '$label: ${detail.message}';
+        })
+        .join('\n');
+
+    if (code == 'VALIDATION_ERROR' ||
+        message == 'Request validation failed' ||
+        message == 'Request failed') {
+      return detailLines;
+    }
+
+    return '$message\n$detailLines';
+  }
+
+  static String _fieldLabel(String field) {
+    switch (field) {
+      case 'title':
+        return 'Title';
+      case 'targetAmount':
+        return 'Target amount';
+      case 'currentAmount':
+        return 'Current amount';
+      case 'dueDate':
+        return 'Due date';
+      case 'period':
+        return 'Period';
+      case 'amount':
+        return 'Amount';
+      case 'source':
+        return 'Source';
+      case 'note':
+        return 'Note';
+      default:
+        if (field.isEmpty) {
+          return '';
+        }
+        return field[0].toUpperCase() + field.substring(1);
+    }
+  }
 }
 
 class ApiFieldError {

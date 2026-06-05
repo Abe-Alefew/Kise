@@ -3,6 +3,7 @@ import 'package:kise/core/theme/colors.dart';
 import 'package:kise/core/theme/text_theme.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/widgets/kise_form_system/kise_text_field.dart';
+import 'package:kise/features/goals/domain/goal_inputs.dart';
 
 class NewGoalBottomSheet extends StatefulWidget {
   final void Function(
@@ -63,12 +64,30 @@ class _NewGoalBottomSheetState extends State<NewGoalBottomSheet> {
     }
   }
 
-  void _handleSave() {
-    final title = _titleController.text.trim();
-    if (title.isEmpty) return; // Optional simple boundary-check
+  void _showValidationError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
 
-    final target = double.tryParse(_targetController.text) ?? 0.0;
-    final saved = double.tryParse(_savedController.text) ?? 0.0;
+  void _handleSave() {
+    final validationError = GoalFormValidator.validateCreate(
+      title: _titleController.text,
+      targetAmountText: _targetController.text,
+      currentAmountText: _savedController.text,
+      deadlineText: _deadlineController.text,
+    );
+
+    if (validationError != null) {
+      _showValidationError(validationError);
+      return;
+    }
+
+    final title = _titleController.text.trim();
+    final target = double.parse(_targetController.text.trim());
+    final saved = _savedController.text.trim().isEmpty
+        ? 0.0
+        : double.parse(_savedController.text.trim());
     final deadline = _deadlineController.text;
     final note = _noteController.text;
 

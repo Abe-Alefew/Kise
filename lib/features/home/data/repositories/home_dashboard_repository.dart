@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/network/api_endpoints.dart';
 import 'package:kise/core/network/dio_client.dart';
-import 'package:kise/features/home/data/home_dashboard_dto.dart';
+import 'package:kise/features/home/data/dtos/home_dashboard_dto.dart';
 import 'package:kise/features/home/domain/home_dashboard_models.dart';
 
 abstract class HomeDashboardRepository {
@@ -14,6 +14,7 @@ class HomeDashboardRepositoryImpl implements HomeDashboardRepository {
       : _dioClient = dioClient;
 
   final DioClient _dioClient;
+  
 
   @override
   Future<HomeDashboardBundle> fetchHome({String range = '6m'}) async {

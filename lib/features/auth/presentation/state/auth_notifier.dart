@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/constants/app_constants.dart';
 import 'package:kise/core/network/dio_client.dart';
 import 'package:kise/core/routing/app_router.dart';
-import 'package:kise/features/auth/data/auth_repository.dart';
+import 'package:kise/features/auth/data/repositories/auth_repository.dart';
 import 'package:kise/features/auth/domain/auth_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

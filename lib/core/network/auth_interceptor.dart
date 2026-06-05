@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:kise/core/network/api_endpoints.dart';
 import 'package:kise/core/network/dio_client.dart';
-import 'package:kise/features/auth/data/token_storage.dart';
+import 'package:kise/features/auth/data/datasources/token_storage.dart';
 
 typedef SessionExpiredCallback = void Function();
 

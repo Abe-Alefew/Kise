@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:kise/core/theme/colors.dart';
 import 'package:kise/core/theme/app_dimensions.dart';
 import 'package:kise/core/widgets/kise_form_system/kise_text_field.dart';
+import 'package:kise/features/goals/domain/goal_inputs.dart';
 
 class GoalEditForm extends StatefulWidget {
   final String initialTitle;
@@ -11,6 +12,7 @@ class GoalEditForm extends StatefulWidget {
   final String initialPeriod;
   final void Function(String title, double targetAmount, String deadline, String period) onSave;
   final VoidCallback onCancel;
+  final bool isLocked;
 
   const GoalEditForm({
     super.key,
@@ -20,6 +22,7 @@ class GoalEditForm extends StatefulWidget {
     required this.initialPeriod,
     required this.onSave,
     required this.onCancel,
+    this.isLocked = false,
   });
 
   @override
@@ -80,8 +83,22 @@ class _GoalEditFormState extends State<GoalEditForm> {
   }
 
   void _handleSave() {
-    final title = _titleController.text;
-    final target = double.tryParse(_targetController.text) ?? widget.initialTarget;
+    final validationError = GoalFormValidator.validateEdit(
+      title: _titleController.text,
+      targetAmountText: _targetController.text,
+      deadlineText: _deadlineController.text,
+      isLocked: widget.isLocked,
+    );
+
+    if (validationError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(validationError)),
+      );
+      return;
+    }
+
+    final title = _titleController.text.trim();
+    final target = double.parse(_targetController.text.trim());
     final deadline = _deadlineController.text;
     widget.onSave(title, target, deadline, _selectedPeriod);
   }

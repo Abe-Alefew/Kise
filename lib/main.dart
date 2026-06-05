@@ -4,15 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/routing/app_router.dart';
 import 'package:kise/core/theme/app_theme.dart';
 import 'package:kise/core/providers/theme_provider.dart';
-import 'package:kise/features/auth/presentation/providers/auth_notifier.dart';
-import 'package:kise/features/settings/presentation/providers/settings_notifier.dart';
+import 'package:kise/features/auth/presentation/state/auth_notifier.dart';
+import 'package:kise/features/settings/presentation/state/settings_notifier.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (kIsWeb) {
-    databaseFactory = databaseFactoryFfiWeb;
+    databaseFactory = databaseFactoryFfiWebNoWebWorker;
   } else if (defaultTargetPlatform == TargetPlatform.linux ||
       defaultTargetPlatform == TargetPlatform.windows ||
       defaultTargetPlatform == TargetPlatform.macOS) {

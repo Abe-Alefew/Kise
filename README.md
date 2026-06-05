@@ -5,14 +5,14 @@
 Kise is an offline-first mobile app designed to help university students track their incomes and expenses in a financially constrained environment. The core features of our app are aimed at alleviating the mental stress of juggling monthly costs in our head and making students aware of their financial status at every moment. We believe this will help students spend smarter and develop discipline over their finances. 
 
 ## Group Members
-### Section - 2
-| Name | ID NO. |
+
+| Full Name | ID |
 | :--- | :--- |
-| 1. Abraham Alemtesfa | UGR/9689/16 |
-| 2. Betsinat Wendwesen | UGR/2787/16 |
-| 3. Efrata Melese | UGR/6776/16 |
-| 4. Kirubel Wubet | UGR/7041/16 |
-| 5. Zeamanuel Mebit | UGR/9677/16 |
+| Abraham Alemtesfa | UGR/9689/16 |
+| Betsinat Wendwesen | UGR/2787/16 |
+| Efrata Melese | UGR/6776/16 |
+| Kirubel Wubet | UGR/7041/16 |
+| Zeamanuel Mebit | UGR/9677/16 |
 
 ## Features
 

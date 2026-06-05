@@ -15,7 +15,7 @@ import 'package:kise/core/widgets/kise_pill_filter.dart';
 import 'package:kise/core/widgets/kise_progress_bar.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
 import 'package:kise/features/debt/domain/debt_filters.dart';
-import 'package:kise/features/debt/presentation/providers/debts_notifier.dart';
+import 'package:kise/features/debt/presentation/state/debts_notifier.dart';
 import 'package:kise/features/debt/presentation/widgets/debt_cart.dart';
 import 'package:kise/features/debt/presentation/widgets/status_badge.dart';
 import 'package:kise/features/debt/presentation/widgets/toggle_actual_adjusted.dart';
@@ -1073,3 +1073,4 @@ class _PersonBalanceRow extends StatelessWidget {
     );
   }
 }
+
