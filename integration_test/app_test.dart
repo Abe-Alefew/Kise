@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:kise/main.dart';
+import 'package:kise/core/providers/theme_provider.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +25,12 @@ void main() {
       // Give SharedPreferences a clean slate for each integration run.
       SharedPreferences.setMockInitialValues({});
 
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          initialThemeModeProvider.overrideWithValue(ThemeMode.system),
+        ],
+        child: const KiseApp(),
+      ));
 
       // Let async providers settle (auth bootstrap, router redirect, etc.).
       await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -37,7 +43,12 @@ void main() {
         (tester) async {
       SharedPreferences.setMockInitialValues({});
 
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          initialThemeModeProvider.overrideWithValue(ThemeMode.system),
+        ],
+        child: const KiseApp(),
+      ));
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       // Any screen the app lands on (splash, onboarding, login) has a Scaffold.
@@ -55,7 +66,12 @@ void main() {
       // Simulate a brand-new install: no session, onboarding not seen.
       SharedPreferences.setMockInitialValues({});
 
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          initialThemeModeProvider.overrideWithValue(ThemeMode.system),
+        ],
+        child: const KiseApp(),
+      ));
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       // The app should be showing either the onboarding carousel or login form.
@@ -73,7 +89,12 @@ void main() {
         'onboarding_seen': true,
       });
 
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          initialThemeModeProvider.overrideWithValue(ThemeMode.system),
+        ],
+        child: const KiseApp(),
+      ));
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       // With onboarding seen, the auth router redirects to login.
@@ -98,7 +119,12 @@ void main() {
       };
 
       SharedPreferences.setMockInitialValues({});
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          initialThemeModeProvider.overrideWithValue(ThemeMode.system),
+        ],
+        child: const KiseApp(),
+      ));
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       FlutterError.onError = originalHandler;

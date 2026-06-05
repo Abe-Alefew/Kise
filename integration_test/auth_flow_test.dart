@@ -11,6 +11,14 @@ import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:kise/main.dart';
+import 'package:kise/core/providers/theme_provider.dart';
+
+Widget _app() => ProviderScope(
+      overrides: [
+        initialThemeModeProvider.overrideWithValue(ThemeMode.system),
+      ],
+      child: const KiseApp(),
+    );
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +27,7 @@ void main() {
     // ── First-launch → onboarding ────────────────────────────────
     testWidgets('first launch shows onboarding screen', (tester) async {
       SharedPreferences.setMockInitialValues({});
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
+      await tester.pumpWidget(_app());
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       // First launch with no session → onboarding or login
@@ -29,7 +37,7 @@ void main() {
     // ── Returning user → login ───────────────────────────────────
     testWidgets('returning user sees login screen', (tester) async {
       SharedPreferences.setMockInitialValues({'onboarding_seen': true});
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
+      await tester.pumpWidget(_app());
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       // With onboarding seen → login
@@ -39,7 +47,7 @@ void main() {
     // ── Login form renders ───────────────────────────────────────
     testWidgets('login screen has email and password fields', (tester) async {
       SharedPreferences.setMockInitialValues({'onboarding_seen': true});
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
+      await tester.pumpWidget(_app());
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       // Login form fields
@@ -59,7 +67,7 @@ void main() {
         errors.add(details.exception);
       };
 
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
+      await tester.pumpWidget(_app());
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       FlutterError.onError = original;

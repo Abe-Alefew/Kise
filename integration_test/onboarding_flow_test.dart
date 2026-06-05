@@ -11,6 +11,14 @@ import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:kise/main.dart';
+import 'package:kise/core/providers/theme_provider.dart';
+
+Widget _app() => ProviderScope(
+      overrides: [
+        initialThemeModeProvider.overrideWithValue(ThemeMode.system),
+      ],
+      child: const KiseApp(),
+    );
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +28,7 @@ void main() {
 
     testWidgets('app boots and shows onboarding on fresh install',
         (tester) async {
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
+      await tester.pumpWidget(_app());
       await tester.pumpAndSettle(const Duration(seconds: 3));
       // Onboarding or equivalent first screen is visible
       expect(find.byType(Scaffold), findsAtLeast(1));
@@ -28,7 +36,7 @@ void main() {
 
     testWidgets('first slide title "Track Every Birr" is visible',
         (tester) async {
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
+      await tester.pumpWidget(_app());
       await tester.pumpAndSettle(const Duration(seconds: 3));
       // If onboarding is the initial route, first slide is shown
       expect(
@@ -41,7 +49,7 @@ void main() {
 
     testWidgets('can swipe through onboarding pages without crashing',
         (tester) async {
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
+      await tester.pumpWidget(_app());
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       final pageViews = find.byType(PageView);
