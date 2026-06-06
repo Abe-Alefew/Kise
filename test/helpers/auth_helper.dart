@@ -15,9 +15,11 @@ import 'package:kise/features/auth/presentation/state/auth_notifier.dart';
 import 'test_data/auth_fixtures.dart';
 import 'widget_helper.dart';
 
-// ── Token helpers ─────────────────────────────────────────────────────────────
+// Token helpers 
 
-
+/// Injects [accessToken] and [refreshToken] into the SharedPreferences mock
+/// store so that [TokenStorage] reads them without a real secure-storage
+/// backend.
 Future<void> setMockTokens({
   String accessToken = 'test-access-token',
   String refreshToken = 'test-refresh-token',
@@ -35,7 +37,8 @@ Future<void> clearMockTokens() async {
 
 // ── AuthUser factory ──────────────────────────────────────────────────────────
 
-
+/// Creates a test [AuthUser] with sane defaults.  Pass only the fields you
+/// care about overriding.
 AuthUser makeTestUser({
   String id = 'user-test-001',
   String email = 'test@kise.app',
@@ -61,7 +64,8 @@ AuthUser makeTestUser({
 
 // ── Pre-authenticated widget builder ─────────────────────────────────────────
 
-
+/// Fake [AuthNotifier] that immediately emits [authenticatedState].
+/// Avoids hitting the real repository / SharedPreferences bootstrap.
 class FakeAuthenticatedNotifier extends AuthNotifier {
   final AuthState? overrideState;
 
