@@ -15,11 +15,11 @@ import 'package:kise/features/auth/presentation/state/auth_notifier.dart';
 import '../../helpers/provider_helper.dart';
 import '../../helpers/test_data/auth_fixtures.dart';
 
-// ── Mock ──────────────────────────────────────────────────────────────────────
+// Mock 
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
-// ── Helper ────────────────────────────────────────────────────────────────────
+// Helper
 
 /// Creates a container with [mockRepo] bound to [authRepositoryProvider].
 /// SharedPreferences is always reset to a clean slate.
@@ -37,7 +37,7 @@ ProviderContainer _makeContainer(
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+//─
 
 void main() {
   late MockAuthRepository mockRepo;
@@ -60,9 +60,9 @@ void main() {
     );
   });
 
-  // ────────────────────────────────────────────────────
+  //
   // Bootstrap — no stored session
-  // ────────────────────────────────────────────────────
+  //
   group('bootstrap — no stored session', () {
     setUp(() {
       when(() => mockRepo.hasStoredSession()).thenAnswer((_) async => false);
@@ -88,9 +88,9 @@ void main() {
     });
   });
 
-  // ────────────────────────────────────────────────────
+  //
   // Bootstrap — session exists → restore succeeds
-  // ────────────────────────────────────────────────────
+  //
   group('bootstrap — valid stored session', () {
     setUp(() {
       when(() => mockRepo.hasStoredSession()).thenAnswer((_) async => true);
@@ -113,9 +113,9 @@ void main() {
     });
   });
 
-  // ────────────────────────────────────────────────────
+  //
   // Bootstrap — session exists → restore returns null
-  // ────────────────────────────────────────────────────
+  //
   group('bootstrap — stored session but restore returns null', () {
     setUp(() {
       when(() => mockRepo.hasStoredSession()).thenAnswer((_) async => true);
@@ -129,9 +129,9 @@ void main() {
     });
   });
 
-  // ────────────────────────────────────────────────────
+  //
   // Bootstrap — restore throws ApiException
-  // ────────────────────────────────────────────────────
+  //
   group('bootstrap — restore throws', () {
     setUp(() {
       when(() => mockRepo.hasStoredSession()).thenAnswer((_) async => true);
@@ -148,9 +148,9 @@ void main() {
     });
   });
 
-  // ────────────────────────────────────────────────────
+  //
   // login()
-  // ────────────────────────────────────────────────────
+  //
   group('login()', () {
     setUp(() {
       // Bootstrap always skips session check in these tests
@@ -202,9 +202,9 @@ void main() {
     });
   });
 
-  // ────────────────────────────────────────────────────
+  //
   // register()
-  // ────────────────────────────────────────────────────
+  //
   group('register()', () {
     setUp(() {
       when(() => mockRepo.hasStoredSession()).thenAnswer((_) async => false);
@@ -269,9 +269,9 @@ void main() {
     });
   });
 
-  // ────────────────────────────────────────────────────
+  //
   // logout()
-  // ────────────────────────────────────────────────────
+  //
   group('logout()', () {
     setUp(() {
       when(() => mockRepo.hasStoredSession()).thenAnswer((_) async => true);
@@ -311,9 +311,9 @@ void main() {
     });
   });
 
-  // ────────────────────────────────────────────────────
+  //
   // clearError()
-  // ────────────────────────────────────────────────────
+  //
   group('clearError()', () {
     setUp(() {
       when(() => mockRepo.hasStoredSession()).thenAnswer((_) async => false);
@@ -349,9 +349,9 @@ void main() {
     });
   });
 
-  // ────────────────────────────────────────────────────
+  //
   // clearRedirectRoute()
-  // ────────────────────────────────────────────────────
+  //
   group('clearRedirectRoute()', () {
     setUp(() {
       when(() => mockRepo.hasStoredSession()).thenAnswer((_) async => false);
@@ -376,9 +376,9 @@ void main() {
     });
   });
 
-  // ────────────────────────────────────────────────────
+  //
   // Derived providers
-  // ────────────────────────────────────────────────────
+  //
   group('derived providers', () {
     test('authStateProvider returns value from authNotifierProvider', () async {
       when(() => mockRepo.hasStoredSession()).thenAnswer((_) async => true);
