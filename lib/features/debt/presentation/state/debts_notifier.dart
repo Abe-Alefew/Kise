@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/network/dio_client.dart';
-import 'package:kise/features/debt/data/debt_dto.dart';
-import 'package:kise/features/debt/data/debt_repository.dart';
+import 'package:kise/features/debt/data/dtos/debt_dto.dart';
+import 'package:kise/features/debt/data/repositories/debt_repository.dart';
 import 'package:kise/features/debt/domain/debt_entity.dart';
 import 'package:kise/features/debt/domain/debt_filters.dart';
 import 'package:kise/features/debt/domain/debt_inputs.dart';

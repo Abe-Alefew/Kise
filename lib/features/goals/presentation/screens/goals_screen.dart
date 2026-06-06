@@ -8,7 +8,7 @@ import 'package:kise/core/widgets/widgets.dart';
 import 'package:kise/features/goals/domain/goal_entity.dart';
 import 'package:kise/features/goals/domain/goal_filters.dart';
 import 'package:kise/features/goals/domain/goal_inputs.dart';
-import 'package:kise/features/goals/presentation/providers/goals_notifier.dart';
+import 'package:kise/features/goals/presentation/state/goals_notifier.dart';
 import 'package:kise/features/goals/presentation/widgets/goal_card.dart';
 import 'package:kise/features/goals/presentation/widgets/new_goal_bottom_sheet.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -136,6 +136,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
       }
     });
 
+    // states
     final goalsAsync = ref.watch(goalsNotifierProvider);
     final filter = ref.read(goalsNotifierProvider.notifier).filter;
     final isDark = Theme.of(context).brightness == Brightness.dark;

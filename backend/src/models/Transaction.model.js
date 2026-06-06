@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const db = require('../config/database');
 
+
 const TRANSACTIONS_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS transactions (
     id TEXT PRIMARY KEY,
@@ -20,6 +21,7 @@ const TRANSACTIONS_TABLE_SQL = `
     FOREIGN KEY (account_id) REFERENCES payment_accounts(id) ON DELETE SET NULL
   );
 `;
+
 
 const TRANSACTION_TYPES = ['Income', 'Expense'];
 

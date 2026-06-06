@@ -6,9 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
 
-import '../../data/transaction_dto.dart';
+import '../../data/dtos/transaction_dto.dart';
 
-import '../providers/transactions_analytics_provider.dart';
+import '../state/transactions_analytics_provider.dart';
 
 
 

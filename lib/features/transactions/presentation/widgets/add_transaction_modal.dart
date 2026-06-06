@@ -5,10 +5,10 @@ import 'package:kise/core/network/dio_client.dart';
 import 'package:kise/core/routing/app_router.dart';
 import 'package:kise/core/widgets/kise_action_button.dart';
 import 'package:kise/features/settings/domain/settings_models.dart';
-import 'package:kise/features/settings/presentation/providers/settings_notifier.dart';
+import 'package:kise/features/settings/presentation/state/settings_notifier.dart';
 import 'package:kise/features/transactions/domain/transaction_entity.dart';
 import 'package:kise/features/transactions/domain/transaction_inputs.dart';
-import 'package:kise/features/transactions/presentation/providers/transactions_notifier.dart';
+import 'package:kise/features/transactions/presentation/state/transactions_notifier.dart';
 
 class AddTransactionModal extends ConsumerStatefulWidget {
   final TransactionEntity? transactionToEdit;
