@@ -1,31 +1,34 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kise/core/providers/theme_provider.dart';
 import 'package:kise/main.dart';
 
-/// Pumps [KiseApp] inside a [ProviderScope] and waits for it to settle.
+/// Pumps [KiseApp] inside a [ProviderScope] and waits for the widget tree to
+/// settle.
 ///
-/// Installs a [FlutterError.onError] filter that silently drops google_fonts
-/// font-loading errors for the duration of the pump. Those errors are benign
-/// in tests: the font just falls back to the system default because
-/// [GoogleFonts.config.allowRuntimeFetching] is false and the font is not
-/// bundled in assets.
-///
-/// The filter is installed AFTER [LiveTestWidgetsFlutterBinding.runTest]
-/// replaces the handler (that replacement happens before the test body runs),
-/// so this is the only reliable place to intercept font errors.
+/// google_fonts v6+ rethrows font-loading failures as unhandled [Future]
+/// rejections that go to the zone's [ZoneSpecification.handleUncaughtError],
+/// **not** [FlutterError.onError]. This function forks the current zone and
+/// suppresses any font-loading errors in the child zone so they do not fail
+/// the test. All other uncaught errors are forwarded to the parent zone
+/// (the test framework) so the test still fails on real problems.
 Future<void> pumpApp(
   WidgetTester tester, {
-  Map<String, Object> prefs = const {},
   Duration settle = const Duration(seconds: 3),
 }) async {
-  final saved = FlutterError.onError;
-  FlutterError.onError = (details) {
-    if (_isFontError(details)) return;
-    saved?.call(details);
-  };
-  try {
+  await Zone.current
+      .fork(
+        specification: ZoneSpecification(
+          handleUncaughtError: (self, parent, zone, error, stackTrace) {
+            if (_isFontError(error)) return;
+            parent.handleUncaughtError(zone, error, stackTrace);
+          },
+        ),
+      )
+      .run<Future<void>>(() async {
     await tester.pumpWidget(ProviderScope(
       overrides: [
         initialThemeModeProvider.overrideWithValue(ThemeMode.system),
@@ -33,12 +36,10 @@ Future<void> pumpApp(
       child: const KiseApp(),
     ));
     await tester.pumpAndSettle(settle);
-  } finally {
-    FlutterError.onError = saved;
-  }
+  });
 }
 
-bool _isFontError(FlutterErrorDetails details) {
-  final msg = details.exception.toString();
+bool _isFontError(Object error) {
+  final msg = error.toString();
   return msg.contains('google_fonts') || msg.contains('GoogleFonts');
 }

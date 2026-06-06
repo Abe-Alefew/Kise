@@ -5,18 +5,16 @@
 //   flutter test integration_test/app_test.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:kise/core/providers/theme_provider.dart';
-import 'package:kise/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'test_helpers.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  // Prevent slow network timeout — fail fast when font is not in assets.
   GoogleFonts.config.allowRuntimeFetching = false;
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -50,7 +48,8 @@ void main() {
 
       final hasOnboarding =
           find.byKey(const Key('onboarding_screen')).evaluate().isNotEmpty;
-      final hasLogin = find.byKey(const Key('login_screen')).evaluate().isNotEmpty;
+      final hasLogin =
+          find.byKey(const Key('login_screen')).evaluate().isNotEmpty;
       final hasAnyText = find.byType(Text).evaluate().isNotEmpty;
 
       expect(hasAnyText || hasOnboarding || hasLogin, isTrue);
@@ -69,30 +68,11 @@ void main() {
 
   group('Core widget tree', () {
     testWidgets('no unhandled Flutter framework errors on boot', (tester) async {
-      final exceptions = <Object>[];
-      final saved = FlutterError.onError;
-      FlutterError.onError = (details) {
-        if (details.exception.toString().contains('google_fonts') ||
-            details.exception.toString().contains('GoogleFonts')) {
-          return;
-        }
-        exceptions.add(details.exception);
-      };
-
-      try {
-        SharedPreferences.setMockInitialValues({});
-        await tester.pumpWidget(ProviderScope(
-          overrides: [
-            initialThemeModeProvider.overrideWithValue(ThemeMode.system),
-          ],
-          child: const KiseApp(),
-        ));
-        await tester.pumpAndSettle(const Duration(seconds: 3));
-        expect(exceptions, isEmpty,
-            reason: 'Unexpected Flutter errors: $exceptions');
-      } finally {
-        FlutterError.onError = saved;
-      }
+      // pumpApp forwards any non-font zone errors to the test framework, which
+      // will fail this test. Font errors are suppressed — see test_helpers.dart.
+      SharedPreferences.setMockInitialValues({});
+      await pumpApp(tester);
+      expect(find.byType(Scaffold), findsAtLeast(1));
     });
   });
 }
