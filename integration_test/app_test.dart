@@ -15,9 +15,7 @@ import 'package:kise/main.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  // ─────────────────────────────────────────────────────────────────────────
   // App boot smoke test
-  // ─────────────────────────────────────────────────────────────────────────
 
   group('App boot', () {
     testWidgets('app starts without throwing a fatal error', (tester) async {
@@ -45,9 +43,7 @@ void main() {
     });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
   // First-launch flow (no stored session, no onboarding seen)
-  // ─────────────────────────────────────────────────────────────────────────
 
   group('First-launch flow', () {
     testWidgets('unauthenticated user lands on onboarding or login',
@@ -83,9 +79,7 @@ void main() {
     });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
   // Core widget availability checks (not logged-in state)
-  // ─────────────────────────────────────────────────────────────────────────
 
   group('Core widget tree', () {
     testWidgets('no unhandled Flutter framework errors on boot', (tester) async {
