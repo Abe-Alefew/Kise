@@ -1,6 +1,3 @@
-// Tests for DebtRepositoryImpl — cache fallback, sync on refresh, error mapping.
-// Requires MockDioClient + in-memory SQLite (DebtCacheDao).
-
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
