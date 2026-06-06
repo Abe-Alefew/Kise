@@ -5,40 +5,29 @@
 //   flutter test integration_test/onboarding_flow_test.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:kise/main.dart';
-import 'package:kise/core/providers/theme_provider.dart';
-
-Widget _app() => ProviderScope(
-      overrides: [
-        initialThemeModeProvider.overrideWithValue(ThemeMode.system),
-      ],
-      child: const KiseApp(),
-    );
+import 'test_helpers.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   group('Onboarding flow', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
     testWidgets('app boots and shows onboarding on fresh install',
         (tester) async {
-      await tester.pumpWidget(_app());
-      await tester.pumpAndSettle(const Duration(seconds: 3));
-      // Onboarding or equivalent first screen is visible
+      await pumpApp(tester);
       expect(find.byType(Scaffold), findsAtLeast(1));
     });
 
     testWidgets('first slide title "Track Every Birr" is visible',
         (tester) async {
-      await tester.pumpWidget(_app());
-      await tester.pumpAndSettle(const Duration(seconds: 3));
-      // If onboarding is the initial route, first slide is shown
+      await pumpApp(tester);
       expect(
         find.textContaining('Birr').evaluate().isNotEmpty ||
             find.byType(PageView).evaluate().isNotEmpty ||
@@ -49,15 +38,13 @@ void main() {
 
     testWidgets('can swipe through onboarding pages without crashing',
         (tester) async {
-      await tester.pumpWidget(_app());
-      await tester.pumpAndSettle(const Duration(seconds: 3));
+      await pumpApp(tester);
 
       final pageViews = find.byType(PageView);
       if (pageViews.evaluate().isNotEmpty) {
         await tester.drag(pageViews.first, const Offset(-400, 0));
         await tester.pumpAndSettle();
       }
-      // No crash = pass
       expect(find.byType(Scaffold), findsAtLeast(1));
     });
   });

@@ -7,72 +7,62 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:kise/core/providers/theme_provider.dart';
+import 'package:kise/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:kise/main.dart';
-import 'package:kise/core/providers/theme_provider.dart';
-
-Widget _app() => ProviderScope(
-      overrides: [
-        initialThemeModeProvider.overrideWithValue(ThemeMode.system),
-      ],
-      child: const KiseApp(),
-    );
+import 'test_helpers.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   group('Auth flow', () {
-    // ── First-launch → onboarding ────────────────────────────────
     testWidgets('first launch shows onboarding screen', (tester) async {
       SharedPreferences.setMockInitialValues({});
-      await tester.pumpWidget(_app());
-      await tester.pumpAndSettle(const Duration(seconds: 3));
-
-      // First launch with no session → onboarding or login
+      await pumpApp(tester);
       expect(find.byType(Scaffold), findsAtLeast(1));
     });
 
-    // ── Returning user → login ───────────────────────────────────
     testWidgets('returning user sees login screen', (tester) async {
       SharedPreferences.setMockInitialValues({'onboarding_seen': true});
-      await tester.pumpWidget(_app());
-      await tester.pumpAndSettle(const Duration(seconds: 3));
-
-      // With onboarding seen → login
+      await pumpApp(tester);
       expect(find.byType(Scaffold), findsAtLeast(1));
     });
 
-    // ── Login form renders ───────────────────────────────────────
     testWidgets('login screen has email and password fields', (tester) async {
       SharedPreferences.setMockInitialValues({'onboarding_seen': true});
-      await tester.pumpWidget(_app());
-      await tester.pumpAndSettle(const Duration(seconds: 3));
-
-      // Login form fields
+      await pumpApp(tester);
       expect(find.byType(TextField), findsAtLeast(2));
     });
 
-    // ── Error on bad credentials ─────────────────────────────────
-    // Note: full login test requires a test backend.
-    // The form validation layer is covered by unit tests.
     testWidgets('no crash on app boot regardless of stored session',
         (tester) async {
-      SharedPreferences.setMockInitialValues({});
       final errors = <Object>[];
-      final original = FlutterError.onError;
+      final saved = FlutterError.onError;
       FlutterError.onError = (details) {
-        if (details.exception.toString().contains('GoogleFonts')) return;
+        if (details.exception.toString().contains('google_fonts') ||
+            details.exception.toString().contains('GoogleFonts')) {
+          return;
+        }
         errors.add(details.exception);
       };
-
-      await tester.pumpWidget(_app());
-      await tester.pumpAndSettle(const Duration(seconds: 3));
-
-      FlutterError.onError = original;
-      expect(errors, isEmpty,
-          reason: 'Unexpected Flutter errors on boot: $errors');
+      try {
+        SharedPreferences.setMockInitialValues({});
+        await tester.pumpWidget(ProviderScope(
+          overrides: [
+            initialThemeModeProvider.overrideWithValue(ThemeMode.system),
+          ],
+          child: const KiseApp(),
+        ));
+        await tester.pumpAndSettle(const Duration(seconds: 3));
+        expect(errors, isEmpty,
+            reason: 'Unexpected Flutter errors on boot: $errors');
+      } finally {
+        FlutterError.onError = saved;
+      }
     });
   });
 }
