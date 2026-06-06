@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kise/core/network/dio_client.dart';
-import 'package:kise/features/auth/presentation/providers/auth_notifier.dart';
+import 'package:kise/features/auth/presentation/state/auth_notifier.dart';
 import 'package:kise/features/goals/data/goal_repository.dart';
 import 'package:kise/features/goals/domain/goal_entity.dart';
 import 'package:kise/features/goals/domain/goal_filters.dart';

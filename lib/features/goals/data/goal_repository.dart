@@ -7,7 +7,7 @@ import 'package:kise/core/database/app_database.dart';
 import 'package:kise/core/database/daos/goal_cache_dao.dart';
 import 'package:kise/core/network/api_endpoints.dart';
 import 'package:kise/core/network/dio_client.dart';
-import 'package:kise/features/auth/presentation/providers/auth_notifier.dart';
+import 'package:kise/features/auth/presentation/state/auth_notifier.dart';
 import 'package:kise/features/goals/data/goal_dto.dart';
 import 'package:kise/features/goals/domain/goal_entity.dart';
 import 'package:kise/features/goals/domain/goal_filters.dart';
