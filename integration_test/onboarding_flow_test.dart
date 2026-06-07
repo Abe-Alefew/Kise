@@ -5,12 +5,11 @@
 //   flutter test integration_test/onboarding_flow_test.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:kise/main.dart';
+import 'test_helpers.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -20,16 +19,14 @@ void main() {
 
     testWidgets('app boots and shows onboarding on fresh install',
         (tester) async {
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
-      await tester.pumpAndSettle(const Duration(seconds: 3));
+      await pumpApp(tester);
       // Onboarding or equivalent first screen is visible
       expect(find.byType(Scaffold), findsAtLeast(1));
     });
 
     testWidgets('first slide title "Track Every Birr" is visible',
         (tester) async {
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
-      await tester.pumpAndSettle(const Duration(seconds: 3));
+      await pumpApp(tester);
       // If onboarding is the initial route, first slide is shown
       expect(
         find.textContaining('Birr').evaluate().isNotEmpty ||
@@ -41,8 +38,7 @@ void main() {
 
     testWidgets('can swipe through onboarding pages without crashing',
         (tester) async {
-      await tester.pumpWidget(const ProviderScope(child: KiseApp()));
-      await tester.pumpAndSettle(const Duration(seconds: 3));
+      await pumpApp(tester);
 
       final pageViews = find.byType(PageView);
       if (pageViews.evaluate().isNotEmpty) {
