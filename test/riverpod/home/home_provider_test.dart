@@ -1,5 +1,5 @@
 // Tests for HomeDashboardBundle model aggregations — covers what the
-.
+
 
 import 'package:flutter_test/flutter_test.dart';
 
