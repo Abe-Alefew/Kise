@@ -8,21 +8,22 @@ Map<String, dynamic> _validJson({
   double total = 1000,
   double paid = 0,
   String status = 'pending',
-}) => {
-  'id': 'debt-dto-001',
-  'personName': 'Alice',
-  'type': type,
-  'totalAmount': total,
-  'paidAmount': paid,
-  'status': status,
-  'debtDate': '2025-06-01',
-  'payments': [],
-};
+}) =>
+    {
+      'id': 'debt-dto-001',
+      'personName': 'Alice',
+      'type': type,
+      'totalAmount': total,
+      'paidAmount': paid,
+      'status': status,
+      'debtDate': '2025-06-01',
+      'payments': [],
+    };
 
 void main() {
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtDto.fromJson
+  // ────────────────────────────────────────────────────
   group('DebtDto.fromJson', () {
     test('parses all required fields', () {
       final dto = DebtDto.fromJson(_validJson());
@@ -88,9 +89,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtDto.listFromEnvelope
+  // ────────────────────────────────────────────────────
   group('DebtDto.listFromEnvelope', () {
     test('parses flat list', () {
       final list = DebtDto.listFromEnvelope([_validJson(), _validJson()]);
@@ -98,9 +99,7 @@ void main() {
     });
 
     test('parses {items:[...]} envelope', () {
-      final list = DebtDto.listFromEnvelope({
-        'items': [_validJson()],
-      });
+      final list = DebtDto.listFromEnvelope({'items': [_validJson()]});
       expect(list, hasLength(1));
     });
 
@@ -113,9 +112,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtDto.toEntity
+  // ────────────────────────────────────────────────────
   group('DebtDto.toEntity', () {
     test('maps lent type to DebtType.lent', () {
       final entity = DebtDto.fromJson(_validJson(type: 'lent')).toEntity();
@@ -143,30 +142,29 @@ void main() {
     });
 
     test('maps settled status correctly', () {
-      final entity = DebtDto.fromJson(
-        _validJson(status: 'settled', total: 500, paid: 500),
-      ).toEntity();
+      final entity =
+          DebtDto.fromJson(_validJson(status: 'settled', total: 500, paid: 500))
+              .toEntity();
       expect(entity.status, DebtStatus.settled);
     });
 
     test('derives personInitial from personName when not provided', () {
       final entity = DebtDto.fromJson(_validJson()).toEntity();
-      expect(entity.personInitial, 'A'); 
+      expect(entity.personInitial, 'A'); // Alice → 'A'
     });
 
     test('preserves all amounts in entity', () {
-      final entity = DebtDto.fromJson(
-        _validJson(total: 1000, paid: 300),
-      ).toEntity();
+      final entity =
+          DebtDto.fromJson(_validJson(total: 1000, paid: 300)).toEntity();
       expect(entity.totalAmount, 1000.0);
       expect(entity.paidAmount, 300.0);
       expect(entity.remaining, 700.0);
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtDto.applyUpdate
+  // ────────────────────────────────────────────────────
   group('DebtDto.applyUpdate', () {
     final base = DebtDto.fromJson(_validJson(total: 1000, paid: 0));
     final updatedAt = DateTime(2025, 7, 1);
@@ -185,13 +183,13 @@ void main() {
         updatedAt: updatedAt,
       );
       expect(updated.totalAmount, 500.0);
-      expect(updated.remaining, 500.0); 
+      expect(updated.remaining, 500.0); // paid=0
     });
 
     test('recomputes status as settled when newTotal <= paidAmount', () {
       final partialBase = DebtDto.fromJson(_validJson(total: 1000, paid: 500));
       final updated = partialBase.applyUpdate(
-        const UpdateDebtInput(totalAmount: 500), 
+        const UpdateDebtInput(totalAmount: 500), // new total == paid
         updatedAt: updatedAt,
       );
       expect(updated.status, 'settled');
@@ -202,14 +200,14 @@ void main() {
         const UpdateDebtInput(personName: 'Charlie'),
         updatedAt: updatedAt,
       );
-      expect(updated.totalAmount, 1000.0); 
-      expect(updated.type, 'lent'); 
+      expect(updated.totalAmount, 1000.0); // unchanged
+      expect(updated.type, 'lent'); // unchanged
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtDto.applyPayment
+  // ────────────────────────────────────────────────────
   group('DebtDto.applyPayment', () {
     final base = DebtDto.fromJson(_validJson(total: 1000, paid: 0));
     final payment = DebtPaymentDto.fromJson({
@@ -220,17 +218,26 @@ void main() {
     final updatedAt = DateTime(2025, 7, 1);
 
     test('adds payment amount to paidAmount', () {
-      final updated = base.applyPayment(payment: payment, updatedAt: updatedAt);
+      final updated = base.applyPayment(
+        payment: payment,
+        updatedAt: updatedAt,
+      );
       expect(updated.paidAmount, 400.0);
     });
 
     test('reduces remaining by payment amount', () {
-      final updated = base.applyPayment(payment: payment, updatedAt: updatedAt);
+      final updated = base.applyPayment(
+        payment: payment,
+        updatedAt: updatedAt,
+      );
       expect(updated.remaining, 600.0);
     });
 
     test('status becomes partial after partial payment', () {
-      final updated = base.applyPayment(payment: payment, updatedAt: updatedAt);
+      final updated = base.applyPayment(
+        payment: payment,
+        updatedAt: updatedAt,
+      );
       expect(updated.status, 'partial');
     });
 
@@ -249,15 +256,18 @@ void main() {
     });
 
     test('appends payment to payments list', () {
-      final updated = base.applyPayment(payment: payment, updatedAt: updatedAt);
+      final updated = base.applyPayment(
+        payment: payment,
+        updatedAt: updatedAt,
+      );
       expect(updated.payments, hasLength(1));
       expect(updated.payments.first.id, 'pay-new');
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtPaymentDto.fromJson
+  // ────────────────────────────────────────────────────
   group('DebtPaymentDto.fromJson', () {
     test('parses id, amount, paymentDate', () {
       final dto = DebtPaymentDto.fromJson({
@@ -289,9 +299,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtDto.fromCacheRow
+  // ────────────────────────────────────────────────────
   group('DebtDto.fromCacheRow', () {
     final row = {
       'id': 'debt-cache-001',
@@ -330,166 +340,3 @@ void main() {
     });
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

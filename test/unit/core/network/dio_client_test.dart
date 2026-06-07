@@ -4,8 +4,10 @@ import 'package:kise/core/network/api_endpoints.dart';
 import 'package:kise/core/network/dio_client.dart';
 
 void main() {
-    // ApiException basic behaviour
-    group('ApiException', () {
+  // ────────────────────────────────────────────────────
+  // ApiException basic behaviour
+  // ────────────────────────────────────────────────────
+  group('ApiException', () {
     test('toString includes code and message', () {
       const ex = ApiException(message: 'Not found', code: 'NOT_FOUND');
       expect(ex.toString(), contains('NOT_FOUND'));
@@ -57,8 +59,10 @@ void main() {
     });
   });
 
-    // ApiFieldError
-    group('ApiFieldError.fromJson', () {
+  // ────────────────────────────────────────────────────
+  // ApiFieldError
+  // ────────────────────────────────────────────────────
+  group('ApiFieldError.fromJson', () {
     test('parses field and message', () {
       final err = ApiFieldError.fromJson({'field': 'email', 'message': 'invalid'});
       expect(err.field, 'email');
@@ -76,8 +80,10 @@ void main() {
     });
   });
 
-    // ApiEnvelopeParser
-    group('ApiEnvelopeParser.parseErrorFromMap', () {
+  // ────────────────────────────────────────────────────
+  // ApiEnvelopeParser
+  // ────────────────────────────────────────────────────
+  group('ApiEnvelopeParser.parseErrorFromMap', () {
     test('parses structured error envelope', () {
       final body = {
         'error': {
@@ -194,8 +200,10 @@ void main() {
     });
   });
 
-    // DioClient.createBaseDio
-    group('DioClient.createBaseDio', () {
+  // ────────────────────────────────────────────────────
+  // DioClient.createBaseDio
+  // ────────────────────────────────────────────────────
+  group('DioClient.createBaseDio', () {
     late Dio dio;
 
     setUp(() {
@@ -282,8 +290,10 @@ void main() {
     });
   });
 
-    // ApiEndpoints constants
-    group('ApiEndpoints', () {
+  // ────────────────────────────────────────────────────
+  // ApiEndpoints constants
+  // ────────────────────────────────────────────────────
+  group('ApiEndpoints', () {
     test('authRefresh path is "/auth/refresh"', () {
       expect(ApiEndpoints.authRefresh, '/auth/refresh');
     });

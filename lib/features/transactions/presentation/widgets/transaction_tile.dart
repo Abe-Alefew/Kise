@@ -18,7 +18,7 @@ class TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isIncome = transaction.type == "Income";
+    final bool isIncome = transaction.type.toLowerCase() == "income";
     final cs = Theme.of(context).colorScheme;
 
     return Padding(

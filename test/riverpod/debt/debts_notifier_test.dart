@@ -1,3 +1,6 @@
+// Tests for DebtsNotifier — initial load, filteredItems per DebtListFilter,
+// applyUiFilter(), meta state, and DebtsViewState computed properties.
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -12,11 +15,11 @@ import 'package:kise/features/debt/presentation/state/debts_notifier.dart';
 import '../../helpers/provider_helper.dart';
 import '../../helpers/test_data/debt_fixtures.dart';
 
-
+// ── Mock ──────────────────────────────────────────────────────────────────────
 
 class MockDebtRepository extends Mock implements DebtRepository {}
 
-
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 DebtSummary _emptySummary() => const DebtSummary(
       owedToMe: 0,
@@ -44,7 +47,7 @@ ProviderContainer _makeContainer(MockDebtRepository mockRepo) {
   );
 }
 
-
+// ── Default repo stubs ────────────────────────────────────────────────────────
 
 void _stubEmpty(MockDebtRepository repo) {
   when(() => repo.getDebts(
@@ -64,7 +67,7 @@ void _stubWithDebts(MockDebtRepository repo, List<DebtEntity> debts) {
       .thenAnswer((_) async => _emptySummary());
 }
 
-
+// ─────────────────────────────────────────────────────────────────────────────
 
 void main() {
   late MockDebtRepository mockRepo;
@@ -77,13 +80,13 @@ void main() {
       totalAmount: 100,
       debtDate: '2025-01-01',
     ));
-    
+    // Enum types used with any() require a fallback value registration.
     registerFallbackValue(DebtListFilter.all);
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // Initial load
+  // ────────────────────────────────────────────────────
   group('initial load', () {
     test('state is loading then resolves to data', () async {
       _stubEmpty(mockRepo);
@@ -117,9 +120,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // filteredItems — DebtListFilter.all
+  // ────────────────────────────────────────────────────
   group('filteredItems — all filter', () {
     test('returns all debts regardless of type or status', () async {
       _stubWithDebts(
@@ -134,9 +137,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // filteredItems — DebtListFilter.lent
+  // ────────────────────────────────────────────────────
   group('filteredItems — lent filter', () {
     test('returns only lent debts', () async {
       _stubWithDebts(
@@ -153,13 +156,13 @@ void main() {
       final filtered =
           container.read(debtsNotifierProvider.notifier).filteredItems;
       expect(filtered.every((d) => d.type == DebtType.lent), isTrue);
-      expect(filtered, hasLength(2)); 
+      expect(filtered, hasLength(2)); // pendingLent + settledLent
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // filteredItems — DebtListFilter.borrowed
+  // ────────────────────────────────────────────────────
   group('filteredItems — borrowed filter', () {
     test('returns only borrowed debts', () async {
       _stubWithDebts(
@@ -180,9 +183,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // filteredItems — DebtListFilter.settled
+  // ────────────────────────────────────────────────────
   group('filteredItems — settled filter', () {
     test('returns only settled debts', () async {
       _stubWithDebts(
@@ -206,9 +209,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // filteredItems — DebtListFilter.active
+  // ────────────────────────────────────────────────────
   group('filteredItems — active filter', () {
     test('excludes settled debts', () async {
       _stubWithDebts(
@@ -228,13 +231,13 @@ void main() {
         filtered.every((d) => d.status != DebtStatus.settled),
         isTrue,
       );
-      expect(filtered, hasLength(2)); 
+      expect(filtered, hasLength(2)); // pending + partial
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // applyUiFilter() — filter state changes
+  // ────────────────────────────────────────────────────
   group('applyUiFilter()', () {
     test('changes internal filter to lent', () async {
       _stubEmpty(mockRepo);
@@ -270,9 +273,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // refresh()
+  // ────────────────────────────────────────────────────
   group('refresh()', () {
     test('state goes back to loading then resolves', () async {
       _stubEmpty(mockRepo);
@@ -300,9 +303,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // isPendingSyncDebtId (pure function tested here for completeness)
+  // ────────────────────────────────────────────────────
   group('isPendingSyncDebtId', () {
     test('recognises optimistic- prefix', () {
       expect(isPendingSyncDebtId('optimistic-123'), isTrue);
@@ -312,699 +315,3 @@ void main() {
     });
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

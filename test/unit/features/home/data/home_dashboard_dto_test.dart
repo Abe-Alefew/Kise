@@ -1,7 +1,11 @@
+// Tests for HomeDashboardDto.fromJson — full parse, field defaults,
+// null/wrong-type resilience, and all six sub-parsers.
+
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:kise/features/home/data/dtos/home_dashboard_dto.dart';
 
-// Fixture builder
+// ── Fixture builder ───────────────────────────────────────────────────────────
 
 Map<String, dynamic> _fullJson({
   Map<String, dynamic>? user,
@@ -65,12 +69,12 @@ Map<String, dynamic> _fullJson({
           ],
     };
 
-// 
+// ─────────────────────────────────────────────────────────────────────────────
 
 void main() {
- 
+  // ────────────────────────────────────────────────────
   // HomeDashboardDto.fromJson — user section
-
+  // ────────────────────────────────────────────────────
   group('fromJson — user', () {
     test('parses firstName, lastName, email, currency', () {
       final bundle = HomeDashboardDto.fromJson(_fullJson());
@@ -106,9 +110,9 @@ void main() {
     });
   });
 
- 
+  // ────────────────────────────────────────────────────
   // balance section
-
+  // ────────────────────────────────────────────────────
   group('fromJson — balance', () {
     test('parses total, income, expenses, currency', () {
       final bundle = HomeDashboardDto.fromJson(_fullJson());
@@ -146,9 +150,9 @@ void main() {
     });
   });
 
-
+  // ────────────────────────────────────────────────────
   // allowance section
-
+  // ────────────────────────────────────────────────────
   group('fromJson — allowance', () {
     test('parses all allowance fields', () {
       final bundle = HomeDashboardDto.fromJson(_fullJson());
@@ -185,9 +189,9 @@ void main() {
     });
   });
 
-
+  // ────────────────────────────────────────────────────
   // budgetStatus section
-
+  // ────────────────────────────────────────────────────
   group('fromJson — budgetStatus', () {
     test('parses spendRatio, personality, tip', () {
       final bundle = HomeDashboardDto.fromJson(_fullJson());
@@ -210,9 +214,9 @@ void main() {
     });
   });
 
-
+  // ────────────────────────────────────────────────────
   // trend section
- 
+  // ────────────────────────────────────────────────────
   group('fromJson — trend', () {
     test('parses list of HomeTrendPoint', () {
       final bundle = HomeDashboardDto.fromJson(_fullJson());
@@ -241,9 +245,9 @@ void main() {
     });
   });
 
-
+  // ────────────────────────────────────────────────────
   // categorySpending section
-
+  // ────────────────────────────────────────────────────
   group('fromJson — categorySpending', () {
     test('parses category, amount, percentage', () {
       final bundle = HomeDashboardDto.fromJson(_fullJson());
@@ -266,9 +270,9 @@ void main() {
     });
   });
 
-
+  // ────────────────────────────────────────────────────
   // recentTransactions section
-
+  // ────────────────────────────────────────────────────
   group('fromJson — recentTransactions', () {
     test('parses all transaction fields', () {
       final bundle = HomeDashboardDto.fromJson(_fullJson());
@@ -319,7 +323,10 @@ void main() {
       expect(bundle.recentTransactions, hasLength(1));
     });
   });
+
+  // ────────────────────────────────────────────────────
   // displayName (via HomeDashboardBundle)
+  // ────────────────────────────────────────────────────
   group('displayName', () {
     test('returns "firstName lastName" when both present', () {
       final bundle = HomeDashboardDto.fromJson(_fullJson());

@@ -3,9 +3,9 @@ import 'package:kise/features/debt/domain/debt_entity.dart';
 import 'package:kise/features/debt/domain/debt_inputs.dart';
 
 void main() {
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtDateParser.toIsoDate
+  // ────────────────────────────────────────────────────
   group('DebtDateParser.toIsoDate', () {
     test('pads single-digit month and day with zeros', () {
       expect(DebtDateParser.toIsoDate(DateTime(2025, 3, 5)), '2025-03-05');
@@ -20,9 +20,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtDateParser.parseIsoDate
+  // ────────────────────────────────────────────────────
   group('DebtDateParser.parseIsoDate', () {
     test('parses valid ISO date string', () {
       final result = DebtDateParser.parseIsoDate('2025-06-15');
@@ -52,9 +52,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // CreateDebtInput.toJson
+  // ────────────────────────────────────────────────────
   group('CreateDebtInput.toJson', () {
     test('includes all required fields', () {
       const input = CreateDebtInput(
@@ -123,9 +123,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // RecordPaymentInput.toJson
+  // ────────────────────────────────────────────────────
   group('RecordPaymentInput.toJson', () {
     test('includes amount and paymentDate', () {
       const input = RecordPaymentInput(
@@ -161,9 +161,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // UpdateDebtInput.toJson / isEmpty
+  // ────────────────────────────────────────────────────
   group('UpdateDebtInput.isEmpty', () {
     test('is true when no fields set', () {
       const input = UpdateDebtInput();

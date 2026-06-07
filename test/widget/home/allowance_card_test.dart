@@ -34,7 +34,7 @@ void main() {
         await tester.pumpWidget(buildWithRouter(
           AllowanceCard(allowance: _configured),
         ));
-      
+        // "1200.00 / 3000.00 spent this cycle"
         expect(find.textContaining('1200.00'), findsOneWidget);
         expect(find.textContaining('3000.00'), findsOneWidget);
       });
@@ -51,7 +51,7 @@ void main() {
           monthlyAmount: 1000,
           cycleStartDay: 1,
           isConfigured: true,
-          cycleSpend: 1500, 
+          cycleSpend: 1500, // 150% → clamped to 1.0
         );
         await tester.pumpWidget(buildWithRouter(
           AllowanceCard(allowance: overspent),

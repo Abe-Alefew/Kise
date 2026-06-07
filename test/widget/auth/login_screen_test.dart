@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../helpers/test_data/auth_fixtures.dart';
 import '../../helpers/widget_helper.dart';
 
-//  Fake notifiers 
+// ── Fake notifiers ────────────────────────────────────────────────────────────
 // All fakes extend AuthNotifier so they satisfy the typed overrideWith contract.
 
 /// Returns an unauthenticated state immediately — simulates cold start.
@@ -22,7 +22,7 @@ class _LoadingNotifier extends AuthNotifier {
   Future<AuthState> build() async => loadingState;
 }
 
-//  Helper 
+// ── Helper ────────────────────────────────────────────────────────────────────
 
 Widget _buildLoginScreen(AuthNotifier notifier) {
   SharedPreferences.setMockInitialValues({});
@@ -34,11 +34,11 @@ Widget _buildLoginScreen(AuthNotifier notifier) {
   );
 }
 
-// ─
+// ─────────────────────────────────────────────────────────────────────────────
 
 void main() {
   group('LoginScreen', () {
-    //  Widget structure ─
+    // ── Widget structure ───────────────────────────────────────────
     group('widget structure', () {
       testWidgets('renders a Scaffold', (tester) async {
         await tester.pumpWidget(_buildLoginScreen(_UnauthNotifier()));
@@ -89,7 +89,7 @@ void main() {
       });
     });
 
-    //  Loading state 
+    // ── Loading state ──────────────────────────────────────────────
     group('loading state', () {
       testWidgets(
           'shows CircularProgressIndicator on SIGN IN button when loading',
@@ -106,7 +106,7 @@ void main() {
       });
     });
 
-    //  Form input ─
+    // ── Form input ─────────────────────────────────────────────────
     group('form input', () {
       testWidgets('can type into the email field', (tester) async {
         await tester.pumpWidget(_buildLoginScreen(_UnauthNotifier()));
@@ -129,7 +129,7 @@ void main() {
       });
     });
 
-    //  Back button 
+    // ── Back button ────────────────────────────────────────────────
     testWidgets('shows a back arrow button', (tester) async {
       await tester.pumpWidget(_buildLoginScreen(_UnauthNotifier()));
       await tester.pumpAndSettle();
@@ -137,7 +137,7 @@ void main() {
       expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     });
 
-    //  No error by default 
+    // ── No error by default ────────────────────────────────────────
     testWidgets('shows no error message on initial render', (tester) async {
       await tester.pumpWidget(_buildLoginScreen(_UnauthNotifier()));
       await tester.pumpAndSettle();

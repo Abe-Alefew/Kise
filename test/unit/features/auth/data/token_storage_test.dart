@@ -15,7 +15,9 @@ void main() {
     storage = TokenStorage();
   });
 
+  // ────────────────────────────────────────────────────
   // Key constants
+  // ────────────────────────────────────────────────────
   group('TokenStorageKeys', () {
     test('accessToken key is "kise_access_token"', () {
       expect(TokenStorageKeys.accessToken, 'kise_access_token');
@@ -30,7 +32,9 @@ void main() {
     });
   });
 
+  // ────────────────────────────────────────────────────
   // readAccessToken
+  // ────────────────────────────────────────────────────
   group('readAccessToken', () {
     test('returns null when nothing stored', () async {
       expect(await storage.readAccessToken(), isNull);
@@ -50,7 +54,9 @@ void main() {
     });
   });
 
+  // ────────────────────────────────────────────────────
   // readRefreshToken
+  // ────────────────────────────────────────────────────
   group('readRefreshToken', () {
     test('returns null when nothing stored', () async {
       expect(await storage.readRefreshToken(), isNull);
@@ -70,7 +76,9 @@ void main() {
     });
   });
 
+  // ────────────────────────────────────────────────────
   // saveTokens
+  // ────────────────────────────────────────────────────
   group('saveTokens', () {
     test('stores both tokens simultaneously', () async {
       await storage.saveTokens(
@@ -106,7 +114,9 @@ void main() {
     });
   });
 
+  // ────────────────────────────────────────────────────
   // clearTokens
+  // ────────────────────────────────────────────────────
   group('clearTokens', () {
     test('removes both tokens', () async {
       await storage.saveTokens(
@@ -127,7 +137,9 @@ void main() {
     });
   });
 
+  // ────────────────────────────────────────────────────
   // Persistence across multiple TokenStorage instances
+  // ────────────────────────────────────────────────────
   group('multiple instances share the same store', () {
     test('token written by one instance is readable by another', () async {
       final writer = TokenStorage();

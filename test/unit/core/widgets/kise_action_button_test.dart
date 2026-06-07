@@ -9,7 +9,9 @@ Widget _wrap(Widget child) => MaterialApp(
 
 void main() {
   group('KiseActionButton', () {
+    // ────────────────────────────────────────────────────
     // Rendering — Primary variant (default)
+    // ────────────────────────────────────────────────────
     group('primary variant', () {
       testWidgets('renders label text', (tester) async {
         await tester.pumpWidget(
@@ -45,7 +47,9 @@ void main() {
       });
     });
 
+    // ────────────────────────────────────────────────────
     // Rendering — Outline variant
+    // ────────────────────────────────────────────────────
     group('outline variant', () {
       testWidgets('renders OutlinedButton for outline variant', (tester) async {
         await tester.pumpWidget(
@@ -60,7 +64,9 @@ void main() {
       });
     });
 
+    // ────────────────────────────────────────────────────
     // Rendering — Ghost variant
+    // ────────────────────────────────────────────────────
     group('ghost variant', () {
       testWidgets('renders TextButton for ghost variant', (tester) async {
         await tester.pumpWidget(
@@ -75,7 +81,9 @@ void main() {
       });
     });
 
+    // ────────────────────────────────────────────────────
     // Loading state
+    // ────────────────────────────────────────────────────
     group('loading state', () {
       testWidgets('shows CircularProgressIndicator when isLoading=true',
           (tester) async {
@@ -117,7 +125,9 @@ void main() {
       });
     });
 
+    // ────────────────────────────────────────────────────
     // onPressed callback
+    // ────────────────────────────────────────────────────
     group('onPressed', () {
       testWidgets('fires callback when tapped and not loading', (tester) async {
         int taps = 0;
@@ -143,7 +153,9 @@ void main() {
       });
     });
 
+    // ────────────────────────────────────────────────────
     // Leading icon
+    // ────────────────────────────────────────────────────
     group('leading icon', () {
       testWidgets('renders icon when leadingIcon is provided', (tester) async {
         await tester.pumpWidget(
@@ -165,7 +177,9 @@ void main() {
       });
     });
 
+    // ────────────────────────────────────────────────────
     // Width / expanded behaviour
+    // ────────────────────────────────────────────────────
     group('width behaviour', () {
       testWidgets('fixed width renders SizedBox with that width', (tester) async {
         await tester.pumpWidget(

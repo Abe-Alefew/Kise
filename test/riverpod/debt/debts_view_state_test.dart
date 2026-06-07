@@ -4,7 +4,7 @@ import 'package:kise/features/debt/domain/debt_entity.dart';
 import 'package:kise/features/debt/domain/debt_filters.dart';
 import 'package:kise/features/debt/presentation/state/debts_notifier.dart';
 
-
+// ── helpers ──────────────────────────────────────────────────────────────────
 
 DebtEntity _debt({
   String id = 'debt-1',
@@ -55,12 +55,12 @@ DebtSummary _summary({
       outstandingIOwe: iOwe,
     );
 
-
+// ─────────────────────────────────────────────────────────────────────────────
 
 void main() {
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // owedToMe — from summary
+  // ────────────────────────────────────────────────────
   group('DebtsViewState.owedToMe', () {
     test('returns summary.owedToMe when summary is present', () {
       final state = _state([], summary: _summary(owedToMe: 750));
@@ -69,8 +69,8 @@ void main() {
 
     test('computes owedToMe from lent non-settled items when no summary', () {
       final items = [
-        _debt(type: DebtType.lent, total: 500, paid: 0),    
-        _debt(id: 'd2', type: DebtType.lent, total: 200, paid: 50), 
+        _debt(type: DebtType.lent, total: 500, paid: 0),    // remaining=500
+        _debt(id: 'd2', type: DebtType.lent, total: 200, paid: 50), // remaining=150
       ];
       final state = _state(items);
       expect(state.owedToMe, 650.0);
@@ -103,9 +103,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // iOwe — from summary
+  // ────────────────────────────────────────────────────
   group('DebtsViewState.iOwe', () {
     test('returns summary.iOwe when summary present', () {
       final state = _state([], summary: _summary(iOwe: 350));
@@ -117,7 +117,7 @@ void main() {
         _debt(id: 'b1', type: DebtType.borrowed, total: 200, paid: 50),
         _debt(id: 'b2', type: DebtType.borrowed, total: 100, paid: 0),
       ];
-      expect(_state(items).iOwe, 250.0); 
+      expect(_state(items).iOwe, 250.0); // 150 + 100
     });
 
     test('excludes settled borrowed debts', () {
@@ -135,9 +135,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // netPosition
+  // ────────────────────────────────────────────────────
   group('DebtsViewState.netPosition', () {
     test('returns summary.netPosition when summary present', () {
       final state = _state([], summary: _summary(netPosition: 400));
@@ -149,7 +149,7 @@ void main() {
         _debt(type: DebtType.lent, total: 1000, paid: 0),
         _debt(id: 'b', type: DebtType.borrowed, total: 400, paid: 0),
       ];
-      expect(_state(items).netPosition, 600.0); 
+      expect(_state(items).netPosition, 600.0); // 1000 - 400
     });
 
     test('netPosition is negative when iOwe > owedToMe', () {
@@ -161,16 +161,16 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // adjustedNetPosition (includes settled records)
+  // ────────────────────────────────────────────────────
   group('DebtsViewState.adjustedNetPosition', () {
     test('sums all lent totalAmount minus all borrowed totalAmount', () {
       final items = [
         _debt(type: DebtType.lent, total: 800, paid: 800, status: DebtStatus.settled),
         _debt(id: 'b', type: DebtType.borrowed, total: 300, paid: 0),
       ];
-      expect(_state(items).adjustedNetPosition, 500.0); 
+      expect(_state(items).adjustedNetPosition, 500.0); // 800 - 300
     });
 
     test('is 0 for empty list', () {
@@ -186,9 +186,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // recoveryRate
+  // ────────────────────────────────────────────────────
   group('DebtsViewState.recoveryRate', () {
     test('returns summary.recoveryRate when summary present', () {
       final state = _state([], summary: _summary(recoveryRate: 0.75));
@@ -200,7 +200,7 @@ void main() {
         _debt(type: DebtType.lent, total: 1000, paid: 500),
         _debt(id: 'd2', type: DebtType.borrowed, total: 500, paid: 250),
       ];
-      
+      // total=1500, paid=750 → 0.5
       expect(_state(items).recoveryRate, closeTo(0.5, 0.001));
     });
 
@@ -217,9 +217,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // copyWith
+  // ────────────────────────────────────────────────────
   group('DebtsViewState.copyWith', () {
     test('preserves all fields when no args passed', () {
       final original = _state([_debt()]);
@@ -256,755 +256,3 @@ void main() {
     });
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

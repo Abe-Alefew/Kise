@@ -1,10 +1,14 @@
+// Tests for DebtCacheDao — full CRUD, filter queries, soft-delete,
+// computeLocalSummary, dirty-row tracking, and sync metadata.
+// All tests run against an in-memory SQLite database via sqflite_common_ffi.
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:kise/core/database/daos/debt_cache_dao.dart';
 
 import '../../../../helpers/database_helper.dart';
 
-
+// ── Fixtures ──────────────────────────────────────────────────────────────────
 
 const _userId = 'user-test-001';
 const _syncedAt = '2025-06-01T00:00:00.000Z';
@@ -61,7 +65,7 @@ Map<String, dynamic> _paymentRow({
       'created_at': _now,
     };
 
-
+// ─────────────────────────────────────────────────────────────────────────────
 
 void main() {
   late DebtCacheDao dao;
@@ -73,9 +77,9 @@ void main() {
     dao = DebtCacheDao(db);
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // upsertDebt / findDebtById
+  // ────────────────────────────────────────────────────
   group('upsertDebt / findDebtById', () {
     test('inserts a debt and retrieves it by id', () async {
       await dao.upsertDebt(_debtRow());
@@ -102,9 +106,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // queryDebts — filter variations
+  // ────────────────────────────────────────────────────
   group('queryDebts filters', () {
     setUp(() async {
       await dao.upsertDebt(_debtRow(
@@ -142,7 +146,7 @@ void main() {
 
     test('"active" filter excludes settled debts', () async {
       final rows = await dao.queryDebts(userId: _userId, filter: 'active');
-      expect(rows, hasLength(3)); 
+      expect(rows, hasLength(3)); // d1 pending, d2 partial, d4 pending
       expect(rows.every((r) => r['status'] != 'settled'), isTrue);
     });
 
@@ -167,9 +171,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // deleteDebtById / softDeleteDebtById
+  // ────────────────────────────────────────────────────
   group('deleteDebtById', () {
     test('hard-deletes the debt row', () async {
       await dao.upsertDebt(_debtRow());
@@ -201,9 +205,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // Payments
+  // ────────────────────────────────────────────────────
   group('upsertPayment / queryPaymentsForDebt', () {
     setUp(() async {
       await dao.upsertDebt(_debtRow());
@@ -237,9 +241,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // replaceAllDebtsForUser
+  // ────────────────────────────────────────────────────
   group('replaceAllDebtsForUser', () {
     test('replaces non-dirty debts with new rows', () async {
       await dao.upsertDebt(_debtRow(id: 'old-1'));
@@ -265,9 +269,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // computeLocalSummary
+  // ────────────────────────────────────────────────────
   group('computeLocalSummary', () {
     test('returns zeros for empty database', () async {
       final summary = await dao.computeLocalSummary(_userId);
@@ -284,7 +288,7 @@ void main() {
           id: 'l2', type: 'lent', status: 'partial', total: 800, paid: 300));
 
       final summary = await dao.computeLocalSummary(_userId);
-      
+      // owedToMe = 500 (l1 remaining) + 500 (l2 remaining)
       expect(summary.owedToMe, 1000.0);
     });
 
@@ -339,14 +343,14 @@ void main() {
           id: 'r2', type: 'borrowed', status: 'pending', total: 500, paid: 0));
 
       final summary = await dao.computeLocalSummary(_userId);
-      
+      // total=1500, paid=400 → rate=0.267
       expect(summary.recoveryRate, closeTo(0.267, 0.001));
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // getDirtyDebts / clearDirtyEntriesForUser
+  // ────────────────────────────────────────────────────
   group('getDirtyDebts / clearDirtyEntriesForUser', () {
     test('getDirtyDebts returns only dirty non-deleted rows', () async {
       await dao.upsertDebt(_debtRow(id: 'd1', isDirty: 1));
@@ -366,9 +370,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // hasAnyDebtsForUser
+  // ────────────────────────────────────────────────────
   group('hasAnyDebtsForUser', () {
     test('returns false for empty database', () async {
       expect(await dao.hasAnyDebtsForUser(_userId), isFalse);
@@ -385,9 +389,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // getLastSyncAt / setLastSyncAt
+  // ────────────────────────────────────────────────────
   group('getLastSyncAt / setLastSyncAt', () {
     test('returns null when no sync has been recorded', () async {
       final ts = await dao.getLastSyncAt();
@@ -414,9 +418,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // clearAllForUser
+  // ────────────────────────────────────────────────────
   group('clearAllForUser', () {
     test('removes all debts and payments for the given user', () async {
       await dao.upsertDebt(_debtRow());
@@ -435,8 +439,8 @@ void main() {
 
       await dao.clearAllForUser(_userId);
 
-      
-      
+      // Only the first debt was cleared; the other user's debt may fail FK if
+      // user_id differs — we verify our user's debts are gone.
       final rows = await dao.queryDebts(userId: _userId, includeDeleted: true);
       expect(rows, isEmpty);
     });
