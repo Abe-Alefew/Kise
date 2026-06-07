@@ -52,9 +52,9 @@ HomeDashboardBundle _makeBundle({
 }
 
 void main() {
- 
+  // ────────────────────────────────────────────────────
   // HomeDashboardBundle.displayName
-
+  // ────────────────────────────────────────────────────
   group('HomeDashboardBundle.displayName', () {
     test('returns "firstName lastName" when both are present', () {
       final bundle = _makeBundle(firstName: 'Abel', lastName: 'Bekele');
@@ -84,9 +84,9 @@ void main() {
     });
   });
 
-
+  // ────────────────────────────────────────────────────
   // HomeDashboardBalance
-
+  // ────────────────────────────────────────────────────
   group('HomeDashboardBalance', () {
     test('stores income, expenses, and total', () {
       const balance = HomeDashboardBalance(
@@ -112,8 +112,9 @@ void main() {
     });
   });
 
+  // ────────────────────────────────────────────────────
   // HomeDashboardAllowance
-
+  // ────────────────────────────────────────────────────
   group('HomeDashboardAllowance', () {
     test('stores all required fields', () {
       const allowance = HomeDashboardAllowance(
@@ -144,9 +145,9 @@ void main() {
     });
   });
 
-
+  // ────────────────────────────────────────────────────
   // HomeDashboardBudgetStatus
- 
+  // ────────────────────────────────────────────────────
   group('HomeDashboardBudgetStatus', () {
     test('stores spendRatio, personality, tip', () {
       const status = HomeDashboardBudgetStatus(
@@ -160,8 +161,9 @@ void main() {
     });
   });
 
+  // ────────────────────────────────────────────────────
   // HomeTrendPoint
-
+  // ────────────────────────────────────────────────────
   group('HomeTrendPoint', () {
     test('stores month, income, expense', () {
       const point = HomeTrendPoint(month: 'Jun', income: 5000, expense: 2000);
@@ -171,9 +173,9 @@ void main() {
     });
   });
 
- 
+  // ────────────────────────────────────────────────────
   // HomeCategorySpending
- 
+  // ────────────────────────────────────────────────────
   group('HomeCategorySpending', () {
     test('stores category, amount, percentage', () {
       const spending = HomeCategorySpending(
@@ -187,8 +189,9 @@ void main() {
     });
   });
 
+  // ────────────────────────────────────────────────────
   // HomeRecentTransaction
-
+  // ────────────────────────────────────────────────────
   group('HomeRecentTransaction', () {
     test('isExpense returns true for lowercase "expense"', () {
       const tx = HomeRecentTransaction(

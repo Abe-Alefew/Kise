@@ -6,7 +6,7 @@ import '../../../helpers/widget_helper.dart';
 
 void main() {
   group('KiseCardHolder', () {
-    
+    // ── Rendering ──────────────────────────────────────────────────
     group('rendering', () {
       testWidgets('renders its child', (tester) async {
         await tester.pumpWidget(buildSimple(
@@ -41,7 +41,7 @@ void main() {
           const KiseCardHolder(child: SizedBox()),
         ));
         final card = tester.widget<KiseCardHolder>(find.byType(KiseCardHolder));
-        expect(card.padding, isNull); 
+        expect(card.padding, isNull); // null means default EdgeInsets.all(16)
       });
 
       testWidgets('default showShadow is true', (tester) async {
@@ -53,7 +53,7 @@ void main() {
       });
     });
 
-    
+    // ── Custom properties ──────────────────────────────────────────
     group('custom properties', () {
       testWidgets('custom borderRadius is applied', (tester) async {
         await tester.pumpWidget(buildSimple(
@@ -102,7 +102,7 @@ void main() {
       });
     });
 
-    
+    // ── Dark theme ─────────────────────────────────────────────────
     testWidgets('renders under dark theme without error', (tester) async {
       await tester.pumpWidget(buildSimpleDark(
         const KiseCardHolder(child: Text('dark mode')),
@@ -111,197 +111,3 @@ void main() {
     });
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

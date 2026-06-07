@@ -9,7 +9,7 @@ import '../../helpers/widget_helper.dart';
 
 void main() {
   group('DebtCard', () {
-    
+    // ── Rendering ──────────────────────────────────────────────────
     group('rendering', () {
       testWidgets('shows person name', (tester) async {
         await tester.pumpWidget(buildSimple(
@@ -69,17 +69,17 @@ void main() {
 
       testWidgets('shows the remaining amount for non-settled debt',
           (tester) async {
-        
+        // pendingLentDebt: total=500, paid=0, remaining=500
         await tester.pumpWidget(buildSimple(
           DebtCard(debt: pendingLentDebt, onTap: () {}),
         ));
-        
+        // Amount formatted as "#,##0.00" → "500.00 ETB"
         expect(find.textContaining('500.00 ETB'), findsWidgets);
       });
 
       testWidgets('shows total amount (not remaining) for settled debt',
           (tester) async {
-        
+        // settledLentDebt: total=300, paid=300 → mainAmount=totalAmount=300
         await tester.pumpWidget(buildSimple(
           DebtCard(debt: settledLentDebt, onTap: () {}),
         ));
@@ -87,7 +87,7 @@ void main() {
       });
     });
 
-    
+    // ── Tap interaction ────────────────────────────────────────────
     group('onTap', () {
       testWidgets('fires onTap when the card is tapped', (tester) async {
         int tapCount = 0;
@@ -103,7 +103,7 @@ void main() {
       });
     });
 
-    
+    // ── All debt types render ──────────────────────────────────────
     group('all DebtType variants', () {
       testWidgets('lent debt renders without error', (tester) async {
         await tester.pumpWidget(buildSimple(
@@ -126,7 +126,7 @@ void main() {
       });
     });
 
-    
+    // ── Dark theme ─────────────────────────────────────────────────
     testWidgets('renders under dark theme without error', (tester) async {
       await tester.pumpWidget(buildSimpleDark(
         DebtCard(debt: pendingLentDebt, onTap: () {}),
@@ -135,254 +135,3 @@ void main() {
     });
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

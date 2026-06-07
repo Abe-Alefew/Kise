@@ -1,5 +1,5 @@
 // Tests for HomeEntity aggregation fields.
-
+// home_entity.dart is currently an empty stub.
 
 import 'package:flutter_test/flutter_test.dart';
 

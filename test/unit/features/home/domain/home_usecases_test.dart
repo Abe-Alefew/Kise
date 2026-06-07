@@ -1,5 +1,5 @@
 // Tests for GetDashboardUseCase.
-
+// home_usecases.dart is currently an empty stub.
 
 import 'package:flutter_test/flutter_test.dart';
 

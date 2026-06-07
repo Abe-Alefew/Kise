@@ -1,4 +1,5 @@
 // Tests for HomeDatasource.
+// home_datasource.dart is currently an empty stub.
 
 import 'package:flutter_test/flutter_test.dart';
 

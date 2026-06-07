@@ -54,7 +54,7 @@ void main() {
             tip: '',
           ),
         ));
-      
+        // 0.75 * 100 = 75 → "75%"
         expect(find.text('75%'), findsOneWidget);
       });
 

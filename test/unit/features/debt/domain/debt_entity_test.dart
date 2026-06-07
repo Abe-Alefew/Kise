@@ -22,9 +22,9 @@ DebtEntity _makeDebt({
 }
 
 void main() {
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtEntity.deriveInitial
+  // ────────────────────────────────────────────────────
   group('DebtEntity.deriveInitial', () {
     test('returns first uppercase letter of name', () {
       expect(DebtEntity.deriveInitial('Alice'), 'A');
@@ -47,9 +47,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtEntity.deriveRemaining
+  // ────────────────────────────────────────────────────
   group('DebtEntity.deriveRemaining', () {
     test('returns total - paid when positive', () {
       expect(DebtEntity.deriveRemaining(1000, 200), 800.0);
@@ -68,9 +68,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtEntity.deriveStatus
+  // ────────────────────────────────────────────────────
   group('DebtEntity.deriveStatus', () {
     test('is pending when paidAmount is 0', () {
       expect(
@@ -123,9 +123,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtEntity.statusFromApi / statusToApi
+  // ────────────────────────────────────────────────────
   group('DebtEntity.statusFromApi', () {
     test('parses "settled"', () {
       expect(
@@ -149,7 +149,7 @@ void main() {
     });
 
     test('null falls back to derived status', () {
-      
+      // paidAmount=0 → pending
       expect(
         DebtEntity.statusFromApi(null, paidAmount: 0, totalAmount: 100),
         DebtStatus.pending,
@@ -176,9 +176,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtEntity constructor — computed defaults
+  // ────────────────────────────────────────────────────
   group('DebtEntity constructor', () {
     test('derives personInitial automatically', () {
       final debt = _makeDebt(personName: 'David');
@@ -218,9 +218,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtEntity.copyWith
+  // ────────────────────────────────────────────────────
   group('DebtEntity.copyWith', () {
     test('preserves all fields when no args', () {
       final debt = _makeDebt();
@@ -250,9 +250,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtEntity.fromJson
+  // ────────────────────────────────────────────────────
   group('DebtEntity.fromJson', () {
     final json = {
       'id': 'debt-abc',
@@ -312,9 +312,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // DebtEntity.toJson / round-trip
+  // ────────────────────────────────────────────────────
   group('DebtEntity.toJson', () {
     test('includes required fields', () {
       final debt = _makeDebt(type: DebtType.borrowed);
@@ -336,9 +336,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // isPendingSyncDebtId
+  // ────────────────────────────────────────────────────
   group('isPendingSyncDebtId', () {
     test('returns true for optimistic- prefix', () {
       expect(isPendingSyncDebtId('optimistic-1234'), isTrue);
@@ -353,9 +353,9 @@ void main() {
     });
   });
 
-  
-  
-  
+  // ────────────────────────────────────────────────────
+  // PaymentRecord
+  // ────────────────────────────────────────────────────
   group('PaymentRecord', () {
     test('fromJson parses amount as double', () {
       final json = {

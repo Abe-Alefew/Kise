@@ -22,12 +22,12 @@ import 'package:kise/features/auth/domain/auth_models.dart';
 import '../../../../helpers/database_helper.dart';
 import '../../../../helpers/dio_helper.dart';
 
-//  Mocks 
+// ── Mocks ──────────────────────────────────────────────────────────────────────
 
 class MockTokenStorage extends Mock implements TokenStorage {}
 class MockDio extends Mock implements Dio {}
 
-//  Fixtures 
+// ── Fixtures ──────────────────────────────────────────────────────────────────
 
 const _testUser = {
   'id': 'user-001',
@@ -82,7 +82,7 @@ DioException _dioError(String path, int statusCode) {
   );
 }
 
-//  Factory ─
+// ── Factory ───────────────────────────────────────────────────────────────────
 
 AuthRepositoryImpl _makeRepo({
   required MockDioClient dioClient,
@@ -98,7 +98,7 @@ AuthRepositoryImpl _makeRepo({
       appDatabase: Future.value(appDb),
     );
 
-// ─
+// ─────────────────────────────────────────────────────────────────────────────
 
 void main() {
   late MockDioClient mockClient;
@@ -135,9 +135,9 @@ void main() {
 
   tearDown(() => appDb.close());
 
-  // 
+  // ────────────────────────────────────────────────────
   // hasStoredSession
-  // 
+  // ────────────────────────────────────────────────────
   group('hasStoredSession', () {
     test('returns false when no tokens are stored', () async {
       expect(await repo.hasStoredSession(), isFalse);
@@ -163,9 +163,9 @@ void main() {
     });
   });
 
-  // 
+  // ────────────────────────────────────────────────────
   // login
-  // 
+  // ────────────────────────────────────────────────────
   group('login', () {
     test('returns AuthSession on 200 success', () async {
       when(() => mockClient.post<Map<String, dynamic>>(
@@ -253,9 +253,9 @@ void main() {
     });
   });
 
-
+  // ────────────────────────────────────────────────────
   // register
- 
+  // ────────────────────────────────────────────────────
   group('register', () {
     final request = RegisterRequest(
       firstName: 'Abel',
@@ -317,9 +317,9 @@ void main() {
     });
   });
 
-  // 
+  // ────────────────────────────────────────────────────
   // logout
-  // 
+  // ────────────────────────────────────────────────────
   group('logout', () {
     test('calls logout endpoint when refresh token is present', () async {
       when(() => mockStorage.readRefreshToken())
@@ -372,9 +372,9 @@ void main() {
     });
   });
 
-  // 
+  // ────────────────────────────────────────────────────
   // fetchCurrentUser
-  // 
+  // ────────────────────────────────────────────────────
   group('fetchCurrentUser', () {
     test('returns AuthUser on 200 success', () async {
       when(() => mockClient.get<Map<String, dynamic>>(
@@ -421,9 +421,9 @@ void main() {
     });
   });
 
-  // 
+  // ────────────────────────────────────────────────────
   // restoreSession
-  // 
+  // ────────────────────────────────────────────────────
   group('restoreSession', () {
     test('returns null when no session is stored', () async {
       final session = await repo.restoreSession();

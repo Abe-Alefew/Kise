@@ -18,11 +18,11 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:kise/core/network/dio_client.dart';
 
-// Mock class
+// ── Mock class ─────────────────────────────────────────────────────────────────
 
 class MockDioClient extends Mock implements DioClient {}
 
-// Factory 
+// ── Factory ───────────────────────────────────────────────────────────────────
 
 /// Creates a [MockDioClient] with fallback values pre-registered.
 /// Call once per test (or in [setUp]).
@@ -34,7 +34,7 @@ MockDioClient createMockDioClient() {
   return client;
 }
 
-// Envelope helpers
+// ── Envelope helpers ──────────────────────────────────────────────────────────
 
 /// Wraps [data] in the standard Kise API success envelope:
 /// `{ "success": true, "data": <data> }`
@@ -58,7 +58,7 @@ Map<String, dynamic> errorEnvelope({
       },
     };
 
-// Response builder
+// ── Response builder ──────────────────────────────────────────────────────────
 
 Response<Map<String, dynamic>> _makeResponse(
   String path,

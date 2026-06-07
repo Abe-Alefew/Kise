@@ -15,7 +15,7 @@ import 'package:kise/features/auth/presentation/state/auth_notifier.dart';
 import 'test_data/auth_fixtures.dart';
 import 'widget_helper.dart';
 
-// Token helpers 
+// ── Token helpers ─────────────────────────────────────────────────────────────
 
 /// Injects [accessToken] and [refreshToken] into the SharedPreferences mock
 /// store so that [TokenStorage] reads them without a real secure-storage

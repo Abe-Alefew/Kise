@@ -7,7 +7,7 @@ import '../../helpers/widget_helper.dart';
 
 void main() {
   group('StatusBadge', () {
-    
+    // ── Label text per status ──────────────────────────────────────
     group('label text', () {
       testWidgets('shows "pending" for DebtStatus.pending', (tester) async {
         await tester.pumpWidget(buildSimple(
@@ -31,7 +31,7 @@ void main() {
       });
     });
 
-    
+    // ── Widget structure ───────────────────────────────────────────
     group('widget structure', () {
       testWidgets('renders a Container (pill shape)', (tester) async {
         await tester.pumpWidget(buildSimple(
@@ -65,7 +65,7 @@ void main() {
       });
     });
 
-    
+    // ── Each status renders without error ──────────────────────────
     group('all statuses render cleanly', () {
       for (final status in DebtStatus.values) {
         testWidgets('${status.name} renders without error', (tester) async {
@@ -75,7 +75,7 @@ void main() {
       }
     });
 
-    
+    // ── Dark theme ─────────────────────────────────────────────────
     testWidgets('renders under dark theme without error', (tester) async {
       await tester.pumpWidget(buildSimpleDark(
         const StatusBadge(status: DebtStatus.settled),

@@ -14,11 +14,12 @@ import 'package:kise/core/network/api_endpoints.dart';
 import 'package:kise/core/network/auth_interceptor.dart';
 import 'package:kise/features/auth/data/datasources/token_storage.dart';
 
-//Mocks
+// ── Mocks ──────────────────────────────────────────────────────────────────────
+
 class MockTokenStorage extends Mock implements TokenStorage {}
 class MockDio extends Mock implements Dio {}
 
-//Handler Spies
+// ── Handler Spies ─────────────────────────────────────────────────────────────
 // Lightweight subclasses that record which method was called, avoiding the
 // need to mock Dio's internal final/private handler machinery.
 
@@ -44,7 +45,7 @@ class _ErrorHandlerSpy extends ErrorInterceptorHandler {
   }
 }
 
-//Factories
+// ── Factories ─────────────────────────────────────────────────────────────────
 
 RequestOptions _requestOptions({
   String path = '/transactions',
@@ -85,7 +86,7 @@ Response<Map<String, dynamic>> _refreshSuccessResponse() => Response(
       },
     );
 
-
+// ─────────────────────────────────────────────────────────────────────────────
 
 void main() {
   late MockTokenStorage mockStorage;
@@ -118,8 +119,10 @@ void main() {
     registerFallbackValue(<String, dynamic>{});
   });
 
-    // onRequest — token attachment
-    group('onRequest — token attachment', () {
+  // ────────────────────────────────────────────────────
+  // onRequest — token attachment
+  // ────────────────────────────────────────────────────
+  group('onRequest — token attachment', () {
     test('attaches Authorization header when access token is available',
         () async {
       when(() => mockStorage.readAccessToken())
@@ -164,8 +167,10 @@ void main() {
     });
   });
 
-    // onError — guard conditions (passthrough)
-    group('onError — passthrough guards', () {
+  // ────────────────────────────────────────────────────
+  // onError — guard conditions (passthrough)
+  // ────────────────────────────────────────────────────
+  group('onError — passthrough guards', () {
     test('non-401 error passes through without triggering refresh', () async {
       final handler = _ErrorHandlerSpy();
       await interceptor.onError(_dioError(statusCode: 403), handler);
@@ -213,8 +218,10 @@ void main() {
     });
   });
 
-    // onError — 401 with no refresh token
-    group('onError — 401 with no refresh token', () {
+  // ────────────────────────────────────────────────────
+  // onError — 401 with no refresh token
+  // ────────────────────────────────────────────────────
+  group('onError — 401 with no refresh token', () {
     test('clears tokens and fires onSessionExpired', () async {
       when(() => mockStorage.readRefreshToken()).thenAnswer((_) async => null);
 
@@ -236,8 +243,10 @@ void main() {
     });
   });
 
-    // onError — 401 with refresh Dio throwing
-    group('onError — 401 where refresh HTTP call throws', () {
+  // ────────────────────────────────────────────────────
+  // onError — 401 with refresh Dio throwing
+  // ────────────────────────────────────────────────────
+  group('onError — 401 where refresh HTTP call throws', () {
     setUp(() {
       when(() => mockStorage.readRefreshToken())
           .thenAnswer((_) async => 'valid-refresh');
@@ -263,8 +272,10 @@ void main() {
     });
   });
 
-    // onError — 401 where refresh returns non-200
-    group('onError — 401 where refresh returns non-200 status', () {
+  // ────────────────────────────────────────────────────
+  // onError — 401 where refresh returns non-200
+  // ────────────────────────────────────────────────────
+  group('onError — 401 where refresh returns non-200 status', () {
     setUp(() {
       when(() => mockStorage.readRefreshToken())
           .thenAnswer((_) async => 'valid-refresh');
@@ -289,8 +300,10 @@ void main() {
     });
   });
 
-    // onError — 401 where refresh succeeds
-    group('onError — 401 where refresh HTTP call succeeds', () {
+  // ────────────────────────────────────────────────────
+  // onError — 401 where refresh succeeds
+  // ────────────────────────────────────────────────────
+  group('onError — 401 where refresh HTTP call succeeds', () {
     setUp(() {
       when(() => mockStorage.readRefreshToken())
           .thenAnswer((_) async => 'valid-refresh');
@@ -341,8 +354,10 @@ void main() {
     });
   });
 
-    // _cloneRequestOptions — Authorization header update
-    group('_cloneRequestOptions (via onRequest)', () {
+  // ────────────────────────────────────────────────────
+  // _cloneRequestOptions — Authorization header update
+  // ────────────────────────────────────────────────────
+  group('_cloneRequestOptions (via onRequest)', () {
     test('cloned options carry the new access token as Authorization header',
         () async {
       // Verify via onRequest since _cloneRequestOptions is private
@@ -358,8 +373,10 @@ void main() {
     });
   });
 
-    // TokenStorage — standalone
-    group('TokenStorage (standalone — uses SharedPreferences mock)', () {
+  // ────────────────────────────────────────────────────
+  // TokenStorage — standalone
+  // ────────────────────────────────────────────────────
+  group('TokenStorage (standalone — uses SharedPreferences mock)', () {
     late TokenStorage storage;
 
     setUp(() {

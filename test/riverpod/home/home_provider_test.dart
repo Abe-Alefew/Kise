@@ -1,11 +1,13 @@
 // Tests for HomeDashboardBundle model aggregations — covers what the
-
+// planned homeProvider will expose once implemented.
+// HomeDashboardNotifier is already tested in home_dashboard_notifier_test.dart.
 
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:kise/features/home/domain/home_dashboard_models.dart';
 
-// ── Fixtures 
+// ── Fixtures ──────────────────────────────────────────────────────────────────
+
 HomeDashboardBundle _bundle({
   double income = 5000,
   double expense = 2000,
@@ -44,11 +46,13 @@ HomeDashboardBundle _bundle({
       categorySpending: categorySpending,
       recentTransactions: recent,
     );
- 
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 void main() {
-
+  // ────────────────────────────────────────────────────
   // HomeDashboardBalance derived values
-
+  // ────────────────────────────────────────────────────
   group('HomeDashboardBalance', () {
     test('balance = income - expenses', () {
       final bundle = _bundle(income: 5000, expense: 2000);
@@ -66,8 +70,9 @@ void main() {
     });
   });
 
+  // ────────────────────────────────────────────────────
   // HomeDashboardAllowance cycle progress
-
+  // ────────────────────────────────────────────────────
   group('HomeDashboardAllowance', () {
     test('cycle spend is tracked correctly', () {
       final bundle = _bundle(allowanceSpend: 1200, allowanceMonthly: 3000);
@@ -89,9 +94,9 @@ void main() {
     });
   });
 
-  
+  // ────────────────────────────────────────────────────
   // HomeDashboardBudgetStatus
- 
+  // ────────────────────────────────────────────────────
   group('HomeDashboardBudgetStatus', () {
     test('spendRatio is stored correctly', () {
       final bundle = _bundle();
@@ -107,9 +112,9 @@ void main() {
     });
   });
 
-
+  // ────────────────────────────────────────────────────
   // HomeTrendPoint
-
+  // ────────────────────────────────────────────────────
   group('HomeTrendPoint', () {
     const trend = [
       HomeTrendPoint(month: 'Jan', income: 5000, expense: 2000),
@@ -135,9 +140,9 @@ void main() {
     });
   });
 
-
+  // ────────────────────────────────────────────────────
   // HomeCategorySpending
-
+  // ────────────────────────────────────────────────────
   group('HomeCategorySpending', () {
     const categories = [
       HomeCategorySpending(category: 'Food', amount: 500, percentage: 0.25),
@@ -158,8 +163,9 @@ void main() {
     });
   });
 
+  // ────────────────────────────────────────────────────
   // HomeRecentTransaction
-
+  // ────────────────────────────────────────────────────
   group('HomeRecentTransaction', () {
     const txs = [
       HomeRecentTransaction(
@@ -182,8 +188,9 @@ void main() {
     });
   });
 
+  // ────────────────────────────────────────────────────
   // HomeDashboardBundle.displayName
-
+  // ────────────────────────────────────────────────────
   group('HomeDashboardBundle.displayName', () {
     test('shows first + last name', () {
       expect(_bundle().displayName, 'Abel Bekele');
